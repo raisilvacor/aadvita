@@ -21,8 +21,19 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'aadvita-secret-key-2024'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aadvita.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'aadvita-secret-key-2024')
+# Configurar banco de dados - usar variável de ambiente se disponível, senão usar SQLite local
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Render usa PostgreSQL, mas se for SQLite, ajustar o formato
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # SQLite local - usar caminho absoluto para persistência no Render
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'aadvita.db')
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['LANGUAGES'] = {
     'pt': 'Português',
@@ -8355,7 +8366,31 @@ def init_db():
         except Exception as e:
             print(f"Aviso: Erro ao gerar mensalidades automaticamente: {str(e)}")
 
+# Inicializar banco de dados quando o app for importado (para produção com gunicorn)
+# Isso garante que o banco seja criado antes do servidor iniciar
+with app.app_context():
+    try:
+        # Verificar se as tabelas existem
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        if not tables:
+            # Se não houver tabelas, inicializar o banco
+            print("Banco de dados não encontrado. Inicializando...")
+            init_db()
+        else:
+            # Garantir que o banco está atualizado
+            db.create_all()
+    except Exception as e:
+        print(f"Aviso: Erro ao verificar/inicializar banco de dados: {e}")
+        # Tentar criar as tabelas mesmo assim
+        try:
+            db.create_all()
+        except Exception as e2:
+            print(f"Erro ao criar tabelas: {e2}")
+
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
 
