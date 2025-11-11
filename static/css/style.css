@@ -552,6 +552,10 @@ textarea:focus {
     height: 600px;
     overflow: hidden;
     background: transparent;
+    /* Melhor performance em mobile */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: contents;
 }
 
 .slider-container {
@@ -611,6 +615,13 @@ textarea:focus {
     object-position: center;
     display: block;
     opacity: 1;
+    /* Otimização para mobile */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    /* Melhor renderização em mobile */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 /* Botões de Navegação (Setas) */
@@ -1663,18 +1674,67 @@ textarea:focus {
     }
 }
 
+/* Responsividade para Tablets */
+@media (max-width: 768px) {
+    .hero-slider {
+        height: 450px;
+    }
+    
+    .slider-nav {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .slider-prev {
+        left: 15px;
+    }
+    
+    .slider-next {
+        right: 15px;
+    }
+    
+    .slider-indicators {
+        bottom: 18px;
+        gap: 8px;
+    }
+    
+    .slider-indicator {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .slider-indicator.active {
+        width: 28px;
+    }
+}
+
+/* Responsividade para Mobile */
 @media (max-width: 480px) {
     .container {
         padding: 0 15px;
     }
     
     .hero-slider {
-        height: 400px;
+        height: 300px;
+        min-height: 250px;
     }
     
     .slider-nav {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px; /* Área mínima de toque recomendada */
+        min-height: 44px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        /* Melhor área de toque em mobile */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .slider-nav svg {
+        width: 20px;
+        height: 20px;
+        pointer-events: none; /* Evita conflitos de toque */
     }
     
     .slider-prev {
@@ -1686,17 +1746,77 @@ textarea:focus {
     }
     
     .slider-indicators {
-        bottom: 15px;
+        bottom: 12px;
+        gap: 6px;
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 20px;
+        backdrop-filter: blur(5px);
     }
     
     .slider-indicator {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
+        min-width: 8px;
+        min-height: 8px;
+        border-width: 1.5px;
+        /* Melhor área de toque */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
+        /* Aumentar área de toque sem aumentar visualmente */
+        padding: 4px;
+        margin: -4px;
     }
     
     .slider-indicator.active {
-        width: 24px;
+        width: 20px;
     }
+    
+    .slider-image {
+        object-fit: cover;
+        object-position: center;
+    }
+}
+
+/* Mobile muito pequeno */
+@media (max-width: 360px) {
+    .hero-slider {
+        height: 250px;
+        min-height: 200px;
+    }
+    
+    .slider-nav {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .slider-nav svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .slider-prev {
+        left: 8px;
+    }
+    
+    .slider-next {
+        right: 8px;
+    }
+    
+    .slider-indicators {
+        bottom: 10px;
+        gap: 5px;
+    }
+    
+    .slider-indicator {
+        width: 7px;
+        height: 7px;
+    }
+    
+    .slider-indicator.active {
+        width: 18px;
+    }
+}
     
     .page-header {
         padding: 2rem 0;

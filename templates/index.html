@@ -968,11 +968,65 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Pausar autoplay ao passar o mouse sobre o slider
+    // Suporte para touch/swipe em dispositivos móveis
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+    const minSwipeDistance = 50; // Distância mínima para considerar um swipe
+    
+    if (sliderTrack) {
+        sliderTrack.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+        
+        sliderTrack.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
+    }
+    
+    function handleSwipe() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const absDeltaX = Math.abs(deltaX);
+        const absDeltaY = Math.abs(deltaY);
+        
+        // Verificar se é um swipe horizontal (não vertical)
+        if (absDeltaX > absDeltaY && absDeltaX > minSwipeDistance) {
+            stopAutoplay();
+            if (deltaX > 0) {
+                // Swipe para direita = slide anterior
+                prevSlide();
+            } else {
+                // Swipe para esquerda = próximo slide
+                nextSlide();
+            }
+            startAutoplay();
+        }
+    }
+    
+    // Pausar autoplay ao passar o mouse sobre o slider (desktop)
     const sliderWrapper = document.querySelector('.slider-wrapper');
     if (sliderWrapper) {
         sliderWrapper.addEventListener('mouseenter', stopAutoplay);
         sliderWrapper.addEventListener('mouseleave', startAutoplay);
+        
+        // Pausar autoplay ao tocar no slider (mobile)
+        sliderWrapper.addEventListener('touchstart', function() {
+            stopAutoplay();
+        }, { passive: true });
+        
+        // Retomar autoplay após 3 segundos sem toque (mobile)
+        let touchTimeout = null;
+        sliderWrapper.addEventListener('touchend', function() {
+            if (touchTimeout) clearTimeout(touchTimeout);
+            touchTimeout = setTimeout(function() {
+                startAutoplay();
+            }, 3000);
+        }, { passive: true });
     }
     
     // Navegação por teclado
