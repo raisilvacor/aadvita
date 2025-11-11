@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block page_title %}Gerenciar Usuários Administrativos{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Usuários do Painel Administrativo</h2>
+        <a href="{{ url_for('admin_usuarios_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Usuário
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nome Completo</th>
+                    <th>Nome de Usuário</th>
+                    <th>Tipo</th>
+                    <th>Permissões</th>
+                    <th>Data de Cadastro</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if usuarios %}
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.nome }}</td>
+                        <td>{{ usuario.username }}</td>
+                        <td>
+                            {% if usuario.is_super_admin %}
+                            <span style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                🔑 Super Admin
+                            </span>
+                            {% else %}
+                            <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem;">
+                                👤 Usuário
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.is_super_admin %}
+                            <span style="color: #6b7280; font-size: 0.875rem;">Acesso total</span>
+                            {% else %}
+                            <span style="color: #6b7280; font-size: 0.875rem;">
+                                {{ usuario.permissoes|length }} permissão(ões)
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ usuario.created_at.strftime('%d/%m/%Y %H:%M') if usuario.created_at else '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_usuarios_editar', id=usuario.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            {% if session.get('admin_username') != usuario.username %}
+                                <form method="POST" action="{{ url_for('admin_usuarios_excluir', id=usuario.id) }}" 
+                                      style="display: inline; margin-left: 0.5rem;" 
+                                      onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
+                                    <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                        <span>🗑️</span> Excluir
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span style="margin-left: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+                                    (Usuário atual)
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhum usuário cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

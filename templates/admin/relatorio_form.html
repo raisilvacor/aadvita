@@ -1,0 +1,86 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if relatorio %}Editar{% else %}Novo{% endif %} Relatório Financeiro{% endblock %}
+
+{% block page_title %}{% if relatorio %}Editar{% else %}Novo{% endif %} Relatório Financeiro{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="titulo_pt">Título (Português) *</label>
+            <input type="text" id="titulo_pt" name="titulo_pt" value="{% if relatorio %}{{ relatorio.titulo_pt }}{% endif %}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="titulo_es">Título (Espanhol)</label>
+            <input type="text" id="titulo_es" name="titulo_es" value="{% if relatorio %}{{ relatorio.titulo_es }}{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="titulo_en">Título (Inglês)</label>
+            <input type="text" id="titulo_en" name="titulo_en" value="{% if relatorio %}{{ relatorio.titulo_en }}{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao_pt">Descrição (Português)</label>
+            <textarea id="descricao_pt" name="descricao_pt" rows="4">{% if relatorio %}{{ relatorio.descricao_pt }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao_es">Descrição (Espanhol)</label>
+            <textarea id="descricao_es" name="descricao_es" rows="4">{% if relatorio %}{{ relatorio.descricao_es }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao_en">Descrição (Inglês)</label>
+            <textarea id="descricao_en" name="descricao_en" rows="4">{% if relatorio %}{{ relatorio.descricao_en }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo">Tipo *</label>
+                <select id="tipo" name="tipo" required>
+                    <option value="relatorio" {% if relatorio and relatorio.tipo == 'relatorio' %}selected{% endif %}>Relatório</option>
+                    <option value="demonstrativo" {% if relatorio and relatorio.tipo == 'demonstrativo' %}selected{% endif %}>Demonstrativo</option>
+                    <option value="balanco" {% if relatorio and relatorio.tipo == 'balanco' %}selected{% endif %}>Balanço</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="data_relatorio">Data do Relatório</label>
+                <input type="date" id="data_relatorio" name="data_relatorio" value="{% if relatorio and relatorio.data_relatorio %}{{ relatorio.data_relatorio.strftime('%Y-%m-%d') }}{% endif %}">
+            </div>
+            
+            <div class="form-group">
+                <label for="ordem">Ordem de Exibição</label>
+                <input type="number" id="ordem" name="ordem" value="{% if relatorio %}{{ relatorio.ordem }}{% else %}0{% endif %}" min="0">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="arquivo">Arquivo (PDF, DOC, DOCX, XLS, XLSX, TXT, ODT, ODS)</label>
+            <input type="file" id="arquivo" name="arquivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.odt,.ods">
+            {% if relatorio and relatorio.arquivo %}
+                <div style="margin-top: 1rem;">
+                    <label>Arquivo Atual:</label>
+                    <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small" style="margin-left: 0.5rem;">
+                        <span>📄</span> Ver Arquivo
+                    </a>
+                </div>
+            {% endif %}
+            <small style="color: var(--text-light);">Formatos aceitos: PDF, DOC, DOCX, XLS, XLSX, TXT, ODT, ODS (máx. 16MB)</small>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_transparencia') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

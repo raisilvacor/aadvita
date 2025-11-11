@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if info %}Editar{% else %}Nova{% endif %} Informação de Doação{% endblock %}
+
+{% block page_title %}{% if info %}Editar{% else %}Nova{% endif %} Informação de Doação{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="titulo_pt">Título (Português) *</label>
+            <input type="text" id="titulo_pt" name="titulo_pt" value="{% if info %}{{ info.titulo_pt }}{% endif %}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="titulo_es">Título (Espanhol)</label>
+            <input type="text" id="titulo_es" name="titulo_es" value="{% if info %}{{ info.titulo_es }}{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="titulo_en">Título (Inglês)</label>
+            <input type="text" id="titulo_en" name="titulo_en" value="{% if info %}{{ info.titulo_en }}{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao_pt">Descrição (Português)</label>
+            <textarea id="descricao_pt" name="descricao_pt" rows="4">{% if info %}{{ info.descricao_pt }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao_es">Descrição (Espanhol)</label>
+            <textarea id="descricao_es" name="descricao_es" rows="4">{% if info %}{{ info.descricao_es }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao_en">Descrição (Inglês)</label>
+            <textarea id="descricao_en" name="descricao_en" rows="4">{% if info %}{{ info.descricao_en }}{% endif %}</textarea>
+        </div>
+        
+        <h3 style="margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">Como Contribuir</h3>
+        
+        <div class="form-group">
+            <label for="como_contribuir_pt">Como Contribuir (Português)</label>
+            <textarea id="como_contribuir_pt" name="como_contribuir_pt" rows="6">{% if info %}{{ info.como_contribuir_pt }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="como_contribuir_es">Como Contribuir (Espanhol)</label>
+            <textarea id="como_contribuir_es" name="como_contribuir_es" rows="6">{% if info %}{{ info.como_contribuir_es }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="como_contribuir_en">Como Contribuir (Inglês)</label>
+            <textarea id="como_contribuir_en" name="como_contribuir_en" rows="6">{% if info %}{{ info.como_contribuir_en }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="ordem">Ordem de Exibição</label>
+            <input type="number" id="ordem" name="ordem" value="{% if info %}{{ info.ordem }}{% else %}0{% endif %}" min="0">
+            <small style="color: var(--text-light);">Use para ordenar as informações (menor número aparece primeiro)</small>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_transparencia') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

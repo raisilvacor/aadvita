@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Eventos') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Próximos Eventos') }}</h1>
+        <p class="page-description">{{ _('Confira os eventos que a AADVITA organiza e participa') }}</p>
+    </div>
+</section>
+
+<section class="eventos-section" aria-labelledby="eventos-title">
+    <div class="container">
+        {% if eventos %}
+            <div class="card-grid" role="list">
+                {% for evento in eventos %}
+                <article class="card evento-card" role="listitem">
+                    {% if evento.imagem %}
+                    <div class="card-image">
+                        <img src="{{ url_for('static', filename=evento.imagem) }}" alt="{{ evento.titulo }}">
+                    </div>
+                    {% endif %}
+                    <div class="card-header">
+                        <h2 class="card-title">{{ evento.titulo }}</h2>
+                        <span class="badge badge-{{ 'primary' if evento.tipo == 'Presencial' else 'secondary' }}">
+                            {{ evento.tipo }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ evento.descricao }}</p>
+                        <div class="evento-meta">
+                            <time datetime="{{ evento.data.strftime('%Y-%m-%d') }}">
+                                <strong>Data:</strong> {{ evento.data.strftime('%d/%m/%Y') }}
+                            </time>
+                            {% if evento.hora %}
+                            <p><strong>Horário:</strong> {{ evento.hora }}</p>
+                            {% endif %}
+                            {% if evento.local %}
+                            <p><strong>Local:</strong> {{ evento.local }}</p>
+                            {% endif %}
+                            {% if evento.endereco %}
+                            <p><strong>Endereço:</strong> {{ evento.endereco }}</p>
+                            {% endif %}
+                            {% if evento.link %}
+                            <p>
+                                <a href="{{ evento.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                                    {{ _('Acessar Evento') }}
+                                </a>
+                            </p>
+                            {% endif %}
+                            {% if evento.albuns %}
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                                <strong>{{ _('Álbuns:') }}</strong>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                                    {% for album in evento.albuns %}
+                                    <a href="{{ url_for('galeria_album', id=album.id) }}" 
+                                       class="btn btn-secondary btn-sm"
+                                       style="text-decoration: none;">
+                                        📁 {{ get_titulo_album(album) }}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">{{ _('Não há eventos cadastrados no momento.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

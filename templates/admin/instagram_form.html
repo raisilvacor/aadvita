@@ -1,0 +1,131 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if post %}Editar{% else %}Novo{% endif %} Post do Instagram{% endblock %}
+
+{% block page_title %}{% if post %}Editar{% else %}Novo{% endif %} Post do Instagram{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="imagem_url">URL da Imagem *</label>
+            <input type="url" id="imagem_url" name="imagem_url" 
+                   value="{% if post %}{{ post.imagem_url }}{% endif %}" 
+                   required
+                   placeholder="https://instagram.com/p/.../media/?size=l"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                URL da imagem do post do Instagram. Veja as instruções na página de listagem para obter a URL.
+            </small>
+            {% if post and post.imagem_url %}
+            <div style="margin-top: 1rem;">
+                <img src="{{ post.imagem_url }}" 
+                     alt="Preview" 
+                     style="max-width: 300px; max-height: 300px; border-radius: 0.5rem; border: 2px solid #e5e7eb;"
+                     id="image-preview">
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="url_instagram">URL do Post no Instagram (Opcional)</label>
+            <input type="url" id="url_instagram" name="url_instagram" 
+                   value="{% if post and post.url_instagram %}{{ post.url_instagram }}{% endif %}" 
+                   placeholder="https://www.instagram.com/p/..."
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Link completo do post no Instagram. Se não fornecido, usará o link do perfil configurado no rodapé.
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="legenda">Legenda (Opcional)</label>
+            <textarea id="legenda" name="legenda" rows="4"
+                      placeholder="Legenda do post do Instagram..."
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; resize: vertical;">{% if post and post.legenda %}{{ post.legenda }}{% endif %}</textarea>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Legenda do post (aparecerá abaixo da imagem na página inicial).
+            </small>
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="data_post">Data do Post</label>
+                <input type="date" id="data_post" name="data_post" 
+                       value="{% if post and post.data_post %}{{ post.data_post.strftime('%Y-%m-%d') }}{% else %}{{ datetime.now().strftime('%Y-%m-%d') }}{% endif %}"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                    Data de publicação do post no Instagram.
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label for="ordem">Ordem de Exibição</label>
+                <input type="number" id="ordem" name="ordem" 
+                       value="{% if post %}{{ post.ordem }}{% else %}0{% endif %}"
+                       min="0"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                    Menor número aparece primeiro (usado para ordenar posts da mesma data).
+                </small>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="ativo" name="ativo" 
+                       {% if not post or post.ativo %}checked{% endif %}
+                       style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                <span style="font-weight: 600; color: #374151;">Post Ativo</span>
+            </label>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Apenas posts ativos serão exibidos na página inicial.
+            </small>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if post %}Atualizar{% else %}Criar{% endif %} Post
+            </button>
+            <a href="{{ url_for('admin_instagram') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imagemUrlInput = document.getElementById('imagem_url');
+    const imagePreview = document.getElementById('image-preview');
+    
+    if (imagemUrlInput && imagePreview) {
+        imagemUrlInput.addEventListener('input', function() {
+            if (this.value && this.value.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
+                imagePreview.src = this.value;
+                if (imagePreview.parentElement.style.display === 'none') {
+                    imagePreview.parentElement.style.display = 'block';
+                }
+            }
+        });
+    } else if (imagemUrlInput && !imagePreview) {
+        // Criar preview se não existir
+        const previewContainer = document.createElement('div');
+        previewContainer.style.marginTop = '1rem';
+        previewContainer.innerHTML = '<img src="" alt="Preview" style="max-width: 300px; max-height: 300px; border-radius: 0.5rem; border: 2px solid #e5e7eb; display: none;" id="image-preview">';
+        imagemUrlInput.parentElement.appendChild(previewContainer);
+        
+        const newPreview = document.getElementById('image-preview');
+        imagemUrlInput.addEventListener('input', function() {
+            if (this.value && this.value.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
+                newPreview.src = this.value;
+                newPreview.style.display = 'block';
+            } else {
+                newPreview.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

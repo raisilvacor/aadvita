@@ -1,0 +1,132 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if programa %}Editar{% else %}Novo{% endif %} Programa de Rádio{% endblock %}
+
+{% block page_title %}{% if programa %}Editar{% else %}Novo{% endif %} Programa de Rádio{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="nome" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Nome do Programa *
+            </label>
+            <input type="text" id="nome" name="nome" value="{% if programa %}{{ programa.nome }}{% endif %}" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Descrição
+            </label>
+            <textarea id="descricao" name="descricao" rows="4"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if programa and programa.descricao %}{{ programa.descricao }}{% endif %}</textarea>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Descrição do programa de rádio.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="apresentador" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Apresentador
+            </label>
+            <input type="text" id="apresentador" name="apresentador" value="{% if programa and programa.apresentador %}{{ programa.apresentador }}{% endif %}"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Nome do apresentador">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="horario" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Horário
+            </label>
+            <input type="text" id="horario" name="horario" value="{% if programa and programa.horario %}{{ programa.horario }}{% endif %}"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Ex: Segunda a Sexta, 14h às 16h">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Horário de transmissão do programa.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="url_streaming" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                URL de Streaming (Ao Vivo)
+            </label>
+            <input type="url" id="url_streaming" name="url_streaming" 
+                   value="{% if programa and programa.url_streaming %}{{ programa.url_streaming }}{% endif %}"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="https://exemplo.com/stream.m3u8 ou https://exemplo.com/stream.mp3">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                URL para transmissão ao vivo (streaming). Formatos suportados: MP3, M3U8, etc.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="url_arquivo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                URL do Arquivo de Áudio (Episódio)
+            </label>
+            <input type="url" id="url_arquivo" name="url_arquivo" 
+                   value="{% if programa and programa.url_arquivo %}{{ programa.url_arquivo }}{% endif %}"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="https://exemplo.com/episodio.mp3">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                URL para arquivo de áudio do episódio (opcional). Formatos suportados: MP3, OGG, etc.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Imagem do Programa
+            </label>
+            {% if programa and programa.imagem %}
+            <div style="margin-bottom: 1rem;">
+                <img src="{{ url_for('static', filename=programa.imagem) }}" 
+                     alt="Imagem atual" 
+                     style="max-width: 300px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db;">
+                <p style="color: var(--text-light); font-size: 0.875rem; margin-top: 0.5rem;">
+                    Imagem atual. Selecione uma nova imagem para substituir.
+                </p>
+            </div>
+            {% endif %}
+            <input type="file" id="imagem" name="imagem" accept="image/*"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP. Máximo: 16MB.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="ordem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Ordem de Exibição
+            </label>
+            <input type="number" id="ordem" name="ordem" 
+                   value="{% if programa %}{{ programa.ordem }}{% else %}0{% endif %}"
+                   min="0"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Número para ordenar os programas (menor número aparece primeiro).
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="ativo" name="ativo" {% if programa and programa.ativo or not programa %}checked{% endif %}
+                       style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                <span style="font-weight: 600; color: #374151;">Programa Ativo</span>
+            </label>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Programas inativos não aparecem na página pública.
+            </small>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if programa %}Atualizar{% else %}Salvar{% endif %}
+            </button>
+            <a href="{{ url_for('admin_radio') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

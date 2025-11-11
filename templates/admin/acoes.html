@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Ações{% endblock %}
+
+{% block page_title %}Gerenciar Ações{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Ações</h2>
+        <a href="{{ url_for('admin_acoes_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Ação
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Data</th>
+                    <th>Categoria</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if acoes %}
+                    {% for acao in acoes %}
+                    <tr>
+                        <td>{{ acao.titulo }}</td>
+                        <td>{{ acao.data.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ acao.categoria or '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_acoes_editar', id=acao.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <a href="{{ url_for('admin_acoes_fotos', id=acao.id) }}" 
+                               class="btn-admin btn-admin-secondary btn-admin-small">
+                                <span>📷</span> Fotos
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_acoes_excluir', id=acao.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir esta ação?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem;">
+                            Nenhuma ação cadastrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

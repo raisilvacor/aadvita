@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}{{ get_titulo_album(album) }} - {{ _('Galeria') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <div style="margin-bottom: 1rem;">
+            <a href="{{ url_for('galeria') }}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">
+                ← {{ _('Voltar para Galeria') }}
+            </a>
+        </div>
+        <h1 id="page-title" class="page-title">{{ get_titulo_album(album) }}</h1>
+        {% if get_descricao_album(album) %}
+        <p class="page-description">{{ get_descricao_album(album) }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="galeria-section" aria-labelledby="galeria-title">
+    <div class="container">
+        {% if fotos %}
+            <div class="image-grid" id="image-gallery" role="list" style="margin-top: 2rem;">
+                {% for foto in fotos %}
+                <div class="image-item" role="listitem">
+                    <a href="{{ url_for('static', filename=foto.caminho) }}" class="image-link" 
+                       data-title="{% if get_titulo_foto(foto) %}{{ get_titulo_foto(foto) }}{% endif %}{% if get_descricao_foto(foto) %} - {{ get_descricao_foto(foto) }}{% endif %}"
+                       aria-label="{{ _('Imagem ampliada') }}: {{ get_titulo_foto(foto) or 'Foto' }}">
+                        <img src="{{ url_for('static', filename=foto.caminho) }}" 
+                             alt="{{ get_titulo_foto(foto) or 'Foto do álbum' }}" 
+                             class="gallery-image"
+                             loading="lazy">
+                        {% if get_titulo_foto(foto) %}
+                        <div class="image-overlay">
+                            <p class="image-title">{{ get_titulo_foto(foto) }}</p>
+                            {% if get_descricao_foto(foto) %}
+                            <p class="image-subtitle" style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem;">{{ get_descricao_foto(foto) }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert" style="text-align: center; padding: 4rem 2rem;">
+                <p class="empty-message" style="font-size: 1.25rem; color: #6b7280;">{{ _('Este álbum ainda não possui fotos.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" class="lightbox-modal" role="dialog" aria-labelledby="lightbox-title" aria-hidden="true">
+    <button class="lightbox-close" aria-label="{{ _('Fechar') }}">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    <button class="lightbox-prev" aria-label="{{ _('Anterior') }}">
+        <span aria-hidden="true">&#8249;</span>
+    </button>
+    <button class="lightbox-next" aria-label="{{ _('Próxima') }}">
+        <span aria-hidden="true">&#8250;</span>
+    </button>
+    <div class="lightbox-content">
+        <img id="lightbox-image" src="" alt="{{ _('Imagem ampliada') }}" class="lightbox-img">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+</div>
+{% endblock %}
+

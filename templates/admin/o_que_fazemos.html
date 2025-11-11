@@ -1,0 +1,109 @@
+{% extends "admin/base.html" %}
+
+{% block title %}O que fazemos - Gerenciar Serviços{% endblock %}
+
+{% block page_title %}O que fazemos - Gerenciar Serviços{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Serviços do Módulo "O que fazemos"</h2>
+        <a href="{{ url_for('admin_o_que_fazemos_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Serviço
+        </a>
+    </div>
+    
+    <div style="padding: 1.5rem;">
+        <p style="color: #6b7280; margin-bottom: 1.5rem;">
+            Gerencie os serviços exibidos no módulo "O que fazemos" da página inicial. Os serviços são organizados em 3 colunas.
+        </p>
+        
+        {% if servicos %}
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Coluna</th>
+                        <th>Ordem</th>
+                        <th>Título</th>
+                        <th>Cor do Ícone</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for servico in servicos %}
+                    <tr>
+                        <td>
+                            <span class="badge badge-secondary">{{ servico.coluna }}</span>
+                        </td>
+                        <td>{{ servico.ordem }}</td>
+                        <td>
+                            <strong>{{ servico.titulo }}</strong>
+                            <br>
+                            <small style="color: #6b7280;">{{ servico.descricao[:50] }}{% if servico.descricao|length > 50 %}...{% endif %}</small>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="width: 30px; height: 30px; border-radius: 50%; background: {{ servico.cor_icone }}; border: 2px solid #d1d5db;"></div>
+                                <span style="font-family: monospace; font-size: 0.875rem;">{{ servico.cor_icone }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if servico.ativo else 'secondary' }}">
+                                {{ 'Ativo' if servico.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{{ url_for('admin_o_que_fazemos_editar', id=servico.id) }}" 
+                                   class="btn-admin btn-admin-edit btn-admin-small">
+                                    <span>✏️</span> Editar
+                                </a>
+                                <form method="POST" action="{{ url_for('admin_o_que_fazemos_excluir', id=servico.id) }}" 
+                                      style="display: inline; margin: 0;"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir este serviço?');">
+                                    <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                        <span>🗑️</span> Excluir
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem; color: #6b7280;">
+            <p style="margin: 0 0 1rem 0; font-size: 1.1rem;">Nenhum serviço cadastrado.</p>
+            <a href="{{ url_for('admin_o_que_fazemos_novo') }}" class="btn-admin btn-admin-primary">
+                <span>➕</span> Criar Primeiro Serviço
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="admin-card" style="margin-top: 2rem; background: #fef3c7; border: 2px solid #f59e0b;">
+    <div class="admin-card-header">
+        <h3 style="color: #92400e; margin: 0;">💡 Dicas</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <ul style="margin: 0; padding-left: 1.5rem; color: #92400e;">
+            <li>Os serviços são organizados em 3 colunas na página inicial.</li>
+            <li>A ordem dentro de cada coluna é definida pelo campo "Ordem".</li>
+            <li>Use cores diferentes para cada serviço para melhor visualização.</li>
+            <li>O SVG do ícone é opcional - você pode usar ícones SVG personalizados.</li>
+            <li>Apenas serviços marcados como "Ativo" serão exibidos na página inicial.</li>
+        </ul>
+    </div>
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="{{ url_for('admin_dados_associacao') }}" class="btn-admin btn-admin-secondary">
+        <span>↩️</span> Voltar para Dados da Associação
+    </a>
+</div>
+{% endblock %}
+

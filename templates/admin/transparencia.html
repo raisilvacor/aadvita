@@ -1,0 +1,268 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gerenciar Transparência{% endblock %}
+
+{% block page_title %}Gerenciar Transparência{% endblock %}
+
+{% block content %}
+<!-- Relatórios Financeiros -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Relatórios Financeiros</h2>
+        <a href="{{ url_for('admin_relatorio_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Relatório
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título (PT)</th>
+                    <th>Tipo</th>
+                    <th>Data</th>
+                    <th>Arquivo</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if relatorios %}
+                    {% for relatorio in relatorios %}
+                    <tr>
+                        <td>{{ relatorio.titulo_pt }}</td>
+                        <td>
+                            {% if relatorio.tipo == 'relatorio' %}
+                                Relatório
+                            {% elif relatorio.tipo == 'demonstrativo' %}
+                                Demonstrativo
+                            {% elif relatorio.tipo == 'balanco' %}
+                                Balanço
+                            {% else %}
+                                {{ relatorio.tipo }}
+                            {% endif %}
+                        </td>
+                        <td>{% if relatorio.data_relatorio %}{{ relatorio.data_relatorio.strftime('%d/%m/%Y') }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if relatorio.arquivo %}
+                                <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small">
+                                    <span>📄</span> Ver
+                                </a>
+                            {% else %}
+                                <span style="color: var(--text-light);">Sem arquivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ relatorio.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_relatorio_editar', id=relatorio.id) }}" class="btn-admin btn-admin-edit btn-admin-small" style="margin-right: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_relatorio_excluir', id=relatorio.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este relatório?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            Nenhum relatório financeiro cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Estatuto e Documentos -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Estatuto e Documentos</h2>
+        <a href="{{ url_for('admin_documento_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Documento
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título (PT)</th>
+                    <th>Tipo</th>
+                    <th>Data</th>
+                    <th>Arquivo</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if documentos %}
+                    {% for documento in documentos %}
+                    <tr>
+                        <td>{{ documento.titulo_pt }}</td>
+                        <td>
+                            {% if documento.tipo == 'estatuto' %}
+                                Estatuto
+                            {% elif documento.tipo == 'ata' %}
+                                Ata
+                            {% elif documento.tipo == 'documento' %}
+                                Documento
+                            {% else %}
+                                {{ documento.tipo }}
+                            {% endif %}
+                        </td>
+                        <td>{% if documento.data_documento %}{{ documento.data_documento.strftime('%d/%m/%Y') }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if documento.arquivo %}
+                                <a href="{{ url_for('static', filename=documento.arquivo) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small">
+                                    <span>📄</span> Ver
+                                </a>
+                            {% else %}
+                                <span style="color: var(--text-light);">Sem arquivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ documento.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_documento_editar', id=documento.id) }}" class="btn-admin btn-admin-edit btn-admin-small" style="margin-right: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_documento_excluir', id=documento.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este documento?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            Nenhum documento cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Prestação de Contas -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Prestação de Contas</h2>
+        <a href="{{ url_for('admin_prestacao_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Prestação
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título (PT)</th>
+                    <th>Período</th>
+                    <th>Arquivo</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if prestacoes %}
+                    {% for prestacao in prestacoes %}
+                    <tr>
+                        <td>{{ prestacao.titulo_pt }}</td>
+                        <td>
+                            {% if prestacao.periodo_inicio and prestacao.periodo_fim %}
+                                {{ prestacao.periodo_inicio.strftime('%d/%m/%Y') }} - {{ prestacao.periodo_fim.strftime('%d/%m/%Y') }}
+                            {% elif prestacao.periodo_inicio %}
+                                A partir de {{ prestacao.periodo_inicio.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if prestacao.arquivo %}
+                                <a href="{{ url_for('static', filename=prestacao.arquivo) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small">
+                                    <span>📄</span> Ver
+                                </a>
+                            {% else %}
+                                <span style="color: var(--text-light);">Sem arquivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ prestacao.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_prestacao_editar', id=prestacao.id) }}" class="btn-admin btn-admin-edit btn-admin-small" style="margin-right: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_prestacao_excluir', id=prestacao.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta prestação de contas?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            Nenhuma prestação de contas cadastrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Doações e Recursos -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Doações e Recursos</h2>
+        <a href="{{ url_for('admin_doacao_info_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Informação
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título (PT)</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if informacoes_doacao %}
+                    {% for info in informacoes_doacao %}
+                    <tr>
+                        <td>{{ info.titulo_pt }}</td>
+                        <td>{{ info.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_doacao_info_editar', id=info.id) }}" class="btn-admin btn-admin-edit btn-admin-small" style="margin-right: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_doacao_info_excluir', id=info.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta informação?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            Nenhuma informação de doação cadastrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

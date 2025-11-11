@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Informativo') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem;">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Informativo') }}</h1>
+        <p class="page-description">{{ _('Fique por dentro das notícias e podcasts da AADVITA') }}</p>
+    </div>
+</section>
+
+<section class="informativo-section" aria-labelledby="informativo-title" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <div class="container">
+        <!-- Filtros/Tabs -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; border-bottom: 2px solid #e5e7eb; padding-bottom: 1rem;">
+            <a href="{{ url_for('informativo', tipo='todos') }}" 
+               class="btn {% if tipo_filtro == 'todos' %}btn-primary{% else %}btn-secondary{% endif %}"
+               style="text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;">
+                {{ _('Todos') }}
+            </a>
+            <a href="{{ url_for('informativo', tipo='Noticia') }}" 
+               class="btn {% if tipo_filtro == 'Noticia' %}btn-primary{% else %}btn-secondary{% endif %}"
+               style="text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;">
+                {{ _('Notícias') }}
+            </a>
+            <a href="{{ url_for('informativo', tipo='Podcast') }}" 
+               class="btn {% if tipo_filtro == 'Podcast' %}btn-primary{% else %}btn-secondary{% endif %}"
+               style="text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;">
+                {{ _('Podcast') }}
+            </a>
+        </div>
+
+        <!-- Lista de Informativos -->
+        {% if informativos %}
+            <div class="card-grid" role="list" style="margin-top: 2rem;">
+                {% for informativo in informativos %}
+                <article class="card informativo-card" role="listitem">
+                    {% if informativo.tipo == 'Noticia' and informativo.imagem %}
+                    <div class="card-image">
+                        <img src="{{ url_for('static', filename=informativo.imagem) }}" alt="{{ informativo.titulo }}">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-header">
+                        <h2 class="card-title">{{ informativo.titulo }}</h2>
+                        {% if informativo.subtitulo %}
+                        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                            {{ informativo.subtitulo }}
+                        </p>
+                        {% endif %}
+                        <span class="badge badge-{{ 'info' if informativo.tipo == 'Noticia' else 'warning' }}">
+                            {{ _('Notícia') if informativo.tipo == 'Noticia' else _('Podcast') }}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body">
+                        {% if informativo.tipo == 'Noticia' %}
+                            {% if informativo.conteudo %}
+                            <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color); margin-bottom: 1rem;">
+                                {{ informativo.conteudo[:200] }}{% if informativo.conteudo|length > 200 %}...{% endif %}
+                            </div>
+                            {% endif %}
+                        {% elif informativo.tipo == 'Podcast' %}
+                            <div style="margin-bottom: 1rem;">
+                                <p style="color: var(--text-color); font-style: italic;">
+                                    {{ _('Clique no botão abaixo para escutar o podcast completo') }}
+                                </p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="informativo-meta" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; margin-bottom: 1rem;">
+                            <time datetime="{{ informativo.data_publicacao.strftime('%Y-%m-%d') }}" style="color: var(--text-light); font-size: 0.875rem;">
+                                <strong>{{ _('Publicado em') }}:</strong> {{ informativo.data_publicacao.strftime('%d/%m/%Y') }}
+                            </time>
+                        </div>
+                        
+                        <div style="margin-top: 1rem;">
+                            <a href="{{ url_for('informativo_detalhe', id=informativo.id) }}" class="btn btn-primary" style="display: inline-block; width: 100%; text-align: center;">
+                                {% if informativo.tipo == 'Noticia' %}
+                                    {{ _('Ler Notícia') }}
+                                {% else %}
+                                    {{ _('Escutar Podcast') }}
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">
+                    {% if tipo_filtro == 'Noticia' %}
+                        {{ _('Não há notícias cadastradas no momento.') }}
+                    {% elif tipo_filtro == 'Podcast' %}
+                        {{ _('Não há podcasts cadastrados no momento.') }}
+                    {% else %}
+                        {{ _('Não há informativos cadastrados no momento.') }}
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,376 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Configurar Mensalidade - {{ associado.nome_completo }}{% endblock %}
+
+{% block page_title %}Configurar Mensalidade{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Configurar Mensalidade - {{ associado.nome_completo }}</h2>
+        <a href="{{ url_for('admin_financeiro') }}" class="btn-admin btn-admin-secondary">
+            <span>←</span> Voltar
+        </a>
+    </div>
+    
+    <form method="POST" class="admin-form" id="formConfiguracao" onsubmit="return validarFormulario()">
+        <div class="form-group">
+            <label for="valor_mensalidade">Valor da Mensalidade (R$):</label>
+            <input type="number" 
+                   id="valor_mensalidade" 
+                   name="valor_mensalidade" 
+                   step="0.01" 
+                   min="0" 
+                   value="{{ associado.valor_mensalidade or '' }}" 
+                   class="form-input" 
+                   required>
+            <small style="color: #6b7280; font-size: 0.875rem;">
+                Valor base da mensalidade que será cobrado mensalmente.
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="dia_vencimento">Dia do Vencimento:</label>
+            <input type="number" 
+                   id="dia_vencimento" 
+                   name="dia_vencimento" 
+                   min="1" 
+                   max="31" 
+                   value="{{ dia_vencimento_atual }}" 
+                   class="form-input" 
+                   required>
+            <small style="color: #6b7280; font-size: 0.875rem;">
+                Dia do mês em que a mensalidade vence (1-31). Ao alterar, todas as mensalidades já emitidas (exceto as pagas) terão o dia de vencimento atualizado.
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="desconto_tipo">Tipo de Desconto:</label>
+            <select id="desconto_tipo" name="desconto_tipo" class="form-input">
+                <option value="">Sem desconto</option>
+                <option value="porcentagem" {% if associado.desconto_tipo == 'porcentagem' %}selected{% endif %}>Porcentagem (%)</option>
+                <option value="real" {% if associado.desconto_tipo == 'real' %}selected{% endif %}>Valor em R$</option>
+            </select>
+        </div>
+        
+        <div id="mensagem_validacao" style="display: none; margin-top: 1rem; padding: 1rem; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0.5rem;">
+            <p style="margin: 0; color: #92400e; font-weight: 600;">
+                ⚠️ Selecione pelo menos uma mensalidade para aplicar o desconto.
+            </p>
+        </div>
+        
+        <div class="form-group" id="desconto_valor_group" style="display: none;">
+            <label for="desconto_valor">Valor do Desconto:</label>
+            <input type="number" 
+                   id="desconto_valor" 
+                   name="desconto_valor" 
+                   step="0.01" 
+                   min="0" 
+                   value="{{ associado.desconto_valor or '' }}" 
+                   class="form-input">
+            <small style="color: #6b7280; font-size: 0.875rem;" id="desconto_help">
+                Informe o valor do desconto.
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" 
+                       name="ativo" 
+                       {% if associado.ativo %}checked{% endif %}>
+                <span>Ativo (gerar mensalidades automaticamente)</span>
+            </label>
+            <small style="color: #6b7280; font-size: 0.875rem;">
+                Quando ativo, o sistema gerará mensalidades automaticamente todo mês para este associado.
+                Quando inativo, o sistema não gerará novas mensalidades.
+            </small>
+        </div>
+        
+        <div class="form-actions">
+            <a href="{{ url_for('admin_financeiro') }}" class="btn-admin btn-admin-secondary">
+                Cancelar
+            </a>
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar Configuração
+            </button>
+        </div>
+    </form>
+    
+    {% if associado.valor_mensalidade %}
+    <div style="margin-top: 2rem; padding: 1.5rem; background: #f3f4f6; border-radius: 0.5rem;">
+        <h3 style="margin-top: 0;">Resumo da Configuração:</h3>
+        <p><strong>Valor Base:</strong> R$ {{ "%.2f"|format(associado.valor_mensalidade) }}</p>
+        {% if associado.desconto_tipo %}
+            <p><strong>Desconto Padrão:</strong> 
+                {% if associado.desconto_tipo == 'porcentagem' %}
+                    {{ "%.2f"|format(associado.desconto_valor) }}%
+                {% else %}
+                    R$ {{ "%.2f"|format(associado.desconto_valor) }}
+                {% endif %}
+            </p>
+        {% endif %}
+        <p><strong>Valor Final (com desconto padrão):</strong> <span style="font-size: 1.25rem; font-weight: 700; color: #059669;">R$ {{ "%.2f"|format(associado.calcular_valor_final()) }}</span></p>
+        <p><strong>Status:</strong> {% if associado.ativo %}✅ Ativo (gerando mensalidades){% else %}❌ Inativo (não gera mensalidades){% endif %}</p>
+    </div>
+    {% endif %}
+</div>
+
+{% if mensalidades %}
+<div class="admin-card" style="margin-top: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Aplicar Desconto em Mensalidades Específicas</h2>
+    </div>
+    
+    <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <input type="checkbox" id="selecionar_todas" onchange="selecionarTodasMensalidades(this)">
+            <span style="font-weight: 600;">Selecionar Todas</span>
+        </label>
+        <small style="color: #6b7280; font-size: 0.875rem;">
+            Selecione as mensalidades que receberão o desconto configurado acima. Ao salvar a configuração, o desconto será aplicado automaticamente nas mensalidades selecionadas.
+        </small>
+    </div>
+    
+    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid #e5e7eb; background: #f9fafb;">
+                    <th style="padding: 0.75rem; text-align: left; width: 40px;">
+                        <input type="checkbox" id="check_todas_header" onchange="selecionarTodasMensalidades(this)">
+                    </th>
+                    <th style="padding: 0.75rem; text-align: left;">Mês/Ano</th>
+                    <th style="padding: 0.75rem; text-align: left;">Vencimento</th>
+                    <th style="padding: 0.75rem; text-align: right;">Valor Base</th>
+                    <th style="padding: 0.75rem; text-align: right;">Desconto Atual</th>
+                    <th style="padding: 0.75rem; text-align: right;">Valor Final</th>
+                    <th style="padding: 0.75rem; text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mensalidade in mensalidades %}
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 0.75rem;">
+                        <input type="checkbox" 
+                               name="mensalidades_selecionadas" 
+                               value="{{ mensalidade.id }}"
+                               class="checkbox-mensalidade"
+                               onchange="atualizarPreview(); verificarValidacao();">
+                    </td>
+                    <td style="padding: 0.75rem;">
+                        {{ '%02d/%s'|format(mensalidade.mes_referencia, mensalidade.ano_referencia) }}
+                    </td>
+                    <td style="padding: 0.75rem;">
+                        {{ mensalidade.data_vencimento.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td style="padding: 0.75rem; text-align: right;">
+                        R$ {{ "%.2f"|format(mensalidade.valor_base) }}
+                    </td>
+                    <td style="padding: 0.75rem; text-align: right;">
+                        {% if mensalidade.desconto_tipo %}
+                            {% if mensalidade.desconto_tipo == 'porcentagem' %}
+                                {{ "%.2f"|format(mensalidade.desconto_valor) }}%
+                            {% else %}
+                                R$ {{ "%.2f"|format(mensalidade.desconto_valor) }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="padding: 0.75rem; text-align: right; font-weight: 600;">
+                        R$ {{ "%.2f"|format(mensalidade.valor_final) }}
+                    </td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        {% set hoje = date.today() %}
+                        {% set vencida = mensalidade.status == 'pendente' and mensalidade.data_vencimento < hoje %}
+                        {% if mensalidade.status == 'pendente' %}
+                            {% if vencida %}
+                                <span class="status-badge" style="background: #dc2626; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⚠️ Atrasada
+                                </span>
+                            {% else %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⏳ Pendente
+                                </span>
+                            {% endif %}
+                        {% elif mensalidade.status == 'paga' %}
+                            <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                ✅ Paga
+                            </span>
+                        {% elif mensalidade.status == 'cancelada' %}
+                            <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                ❌ Cancelada
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div style="margin-top: 1rem; padding: 1rem; background: #eff6ff; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+        <p style="margin: 0; font-weight: 600; color: #1e40af;">
+            <span id="preview_texto">Selecione mensalidades e configure o desconto acima para ver o preview</span>
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Script para configuração geral
+document.getElementById('desconto_tipo').addEventListener('change', function() {
+    const descontoValorGroup = document.getElementById('desconto_valor_group');
+    const descontoHelp = document.getElementById('desconto_help');
+    
+    if (this.value) {
+        descontoValorGroup.style.display = 'block';
+        if (this.value === 'porcentagem') {
+            descontoHelp.textContent = 'Informe a porcentagem de desconto (ex: 10 para 10%).';
+        } else {
+            descontoHelp.textContent = 'Informe o valor do desconto em reais (ex: 50.00).';
+        }
+    } else {
+        descontoValorGroup.style.display = 'none';
+    }
+    atualizarPreview();
+    {% if mensalidades %}
+    if (typeof verificarValidacao === 'function') {
+        verificarValidacao();
+    }
+    {% endif %}
+});
+
+document.getElementById('desconto_valor').addEventListener('input', function() {
+    atualizarPreview();
+    {% if mensalidades %}
+    if (typeof verificarValidacao === 'function') {
+        verificarValidacao();
+    }
+    {% endif %}
+});
+
+// Atualizar display ao carregar
+document.getElementById('desconto_tipo').dispatchEvent(new Event('change'));
+
+// Função para validar formulário antes de submeter
+function validarFormulario() {
+    const descontoTipo = document.getElementById('desconto_tipo').value;
+    const descontoValor = parseFloat(document.getElementById('desconto_valor').value) || 0;
+    const mensagemValidacao = document.getElementById('mensagem_validacao');
+    
+    {% if mensalidades %}
+    // Se tem tipo de desconto configurado e valor > 0
+    if (descontoTipo && descontoValor > 0) {
+        const checkboxesChecked = document.querySelectorAll('.checkbox-mensalidade:checked');
+        
+        if (checkboxesChecked.length === 0) {
+            // Mostrar mensagem em laranja
+            mensagemValidacao.style.display = 'block';
+            mensagemValidacao.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Prevenir envio do formulário
+            return false;
+        }
+    }
+    {% endif %}
+    
+    // Ocultar mensagem se validação passou
+    mensagemValidacao.style.display = 'none';
+    return true;
+}
+
+// Script para aplicar desconto em mensalidades específicas
+{% if mensalidades %}
+function selecionarTodasMensalidades(checkbox) {
+    const checkboxes = document.querySelectorAll('.checkbox-mensalidade');
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+    // Sincronizar todos os checkboxes "selecionar todas"
+    document.getElementById('check_todas_header').checked = checkbox.checked;
+    document.getElementById('selecionar_todas').checked = checkbox.checked;
+    atualizarPreview();
+    verificarValidacao();
+}
+
+function verificarValidacao() {
+    const descontoTipo = document.getElementById('desconto_tipo').value;
+    const descontoValor = parseFloat(document.getElementById('desconto_valor').value) || 0;
+    const mensagemValidacao = document.getElementById('mensagem_validacao');
+    const checkboxesChecked = document.querySelectorAll('.checkbox-mensalidade:checked');
+    
+    // Se tem tipo de desconto mas não tem mensalidades selecionadas
+    if (descontoTipo && descontoValor > 0 && checkboxesChecked.length === 0) {
+        mensagemValidacao.style.display = 'block';
+    } else {
+        mensagemValidacao.style.display = 'none';
+    }
+}
+
+function atualizarPreview() {
+    const descontoTipo = document.getElementById('desconto_tipo').value;
+    const descontoValor = parseFloat(document.getElementById('desconto_valor').value) || 0;
+    const checkboxes = document.querySelectorAll('.checkbox-mensalidade');
+    const checkboxesChecked = document.querySelectorAll('.checkbox-mensalidade:checked');
+    const previewTexto = document.getElementById('preview_texto');
+    
+    if (!previewTexto) return;
+    
+    // Atualizar estado dos checkboxes "Selecionar Todas"
+    const todasSelecionadas = checkboxes.length > 0 && checkboxesChecked.length === checkboxes.length;
+    if (document.getElementById('check_todas_header')) {
+        document.getElementById('check_todas_header').checked = todasSelecionadas;
+    }
+    if (document.getElementById('selecionar_todas')) {
+        document.getElementById('selecionar_todas').checked = todasSelecionadas;
+    }
+    
+    // Verificar validação se a função existir
+    {% if mensalidades %}
+    if (typeof verificarValidacao === 'function') {
+        verificarValidacao();
+    }
+    {% endif %}
+    
+    if (checkboxesChecked.length === 0) {
+        previewTexto.textContent = 'Selecione pelo menos uma mensalidade para aplicar o desconto.';
+        return;
+    }
+    
+    if (!descontoTipo || descontoValor <= 0) {
+        previewTexto.textContent = `${checkboxesChecked.length} mensalidade(s) selecionada(s). Configure o desconto acima para ver o preview.`;
+        return;
+    }
+    
+    // Calcular preview
+    let totalSemDesconto = 0;
+    let totalComDesconto = 0;
+    
+    checkboxesChecked.forEach(cb => {
+        const row = cb.closest('tr');
+        const valorBase = parseFloat(row.querySelector('td:nth-child(4)').textContent.replace('R$', '').trim());
+        totalSemDesconto += valorBase;
+        
+        let valorFinal = valorBase;
+        if (descontoTipo === 'porcentagem') {
+            valorFinal = valorBase * (1 - descontoValor / 100);
+        } else if (descontoTipo === 'real') {
+            valorFinal = valorBase - descontoValor;
+        }
+        valorFinal = Math.max(0, valorFinal);
+        totalComDesconto += valorFinal;
+    });
+    
+    const economia = totalSemDesconto - totalComDesconto;
+    previewTexto.innerHTML = `
+        <strong>${checkboxesChecked.length} mensalidade(s) selecionada(s)</strong><br>
+        Total sem desconto: R$ ${totalSemDesconto.toFixed(2)}<br>
+        Total com desconto: R$ ${totalComDesconto.toFixed(2)}<br>
+        <strong style="color: #059669;">Economia: R$ ${economia.toFixed(2)}</strong><br>
+        <small style="color: #6b7280; font-size: 0.875rem;">O desconto será aplicado automaticamente ao salvar a configuração.</small>
+    `;
+}
+{% endif %}
+</script>
+{% endblock %}
+

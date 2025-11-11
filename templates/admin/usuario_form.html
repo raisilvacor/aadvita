@@ -1,0 +1,193 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+
+{% block page_title %}{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}</h2>
+        <a href="{{ url_for('admin_usuarios') }}" class="btn-admin btn-admin-secondary">
+            <span>←</span> Voltar
+        </a>
+    </div>
+    
+    <form method="POST" style="max-width: 600px; margin-top: 1.5rem;">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="nome" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Nome Completo *
+            </label>
+            <input type="text" 
+                   id="nome" 
+                   name="nome" 
+                   value="{{ usuario.nome if usuario else '' }}" 
+                   required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Digite o nome completo">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="username" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Nome de Usuário *
+            </label>
+            <input type="text" 
+                   id="username" 
+                   name="username" 
+                   value="{{ usuario.username if usuario else '' }}" 
+                   required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Digite o nome de usuário para login">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Este será o nome usado para fazer login no painel administrativo
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="password" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                {% if usuario %}Nova Senha{% else %}Senha{% endif %} {% if not usuario %}*{% else %}(deixe em branco para manter a atual){% endif %}
+            </label>
+            <input type="password" 
+                   id="password" 
+                   name="password" 
+                   {% if not usuario %}required{% endif %}
+                   minlength="6"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Digite a senha">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Mínimo de 6 caracteres
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="password_confirm" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Confirmar {% if usuario %}Nova {% endif %}Senha {% if not usuario %}*{% else %}(deixe em branco se não alterar){% endif %}
+            </label>
+            <input type="password" 
+                   id="password_confirm" 
+                   name="password_confirm" 
+                   {% if not usuario %}required{% endif %}
+                   minlength="6"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Digite a senha novamente">
+        </div>
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #374151; cursor: pointer;">
+                    <input type="checkbox" 
+                           id="is_super_admin" 
+                           name="is_super_admin"
+                           {% if usuario and usuario.is_super_admin %}checked{% endif %}
+                           onchange="togglePermissoes(this.checked)"
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                    <span>🔑 Super Administrador (acesso total a todas as funções)</span>
+                </label>
+                <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                    Super administradores têm acesso a todas as funcionalidades sem necessidade de selecionar permissões individuais
+                </small>
+            </div>
+            
+            <div id="permissoes-container" style="{% if usuario and usuario.is_super_admin %}display: none;{% endif %}">
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: #374151; margin-bottom: 1rem;">
+                    Permissões de Acesso
+                </h3>
+                <p style="color: #6b7280; margin-bottom: 1.5rem; font-size: 0.875rem;">
+                    Selecione as funcionalidades que este usuário poderá acessar no painel administrativo:
+                </p>
+                
+                {% if permissoes_por_categoria %}
+                    {% for categoria, permissoes in permissoes_por_categoria.items() %}
+                    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+                        <h4 style="font-size: 1.125rem; font-weight: 600; color: #374151; margin-bottom: 1rem; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem;">
+                            {{ categoria }}
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.75rem;">
+                            {% for permissao in permissoes %}
+                            <label style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.75rem; background: white; border: 1px solid #d1d5db; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;"
+                                   onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';"
+                                   onmouseout="this.style.borderColor='#d1d5db'; this.style.background='white';">
+                                <input type="checkbox" 
+                                       name="permissoes" 
+                                       value="{{ permissao.id }}"
+                                       {% if usuario and permissao in usuario.permissoes %}checked{% endif %}
+                                       style="width: 18px; height: 18px; margin-top: 2px; cursor: pointer; flex-shrink: 0;">
+                                <div>
+                                    <div style="font-weight: 600; color: #374151; font-size: 0.9375rem;">{{ permissao.nome }}</div>
+                                    {% if permissao.descricao %}
+                                    <div style="font-size: 0.8125rem; color: #6b7280; margin-top: 0.25rem;">{{ permissao.descricao }}</div>
+                                    {% endif %}
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: #6b7280; padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+                        Nenhuma permissão cadastrada no sistema. Execute a inicialização do banco de dados.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if usuario %}Salvar Alterações{% else %}Cadastrar Usuário{% endif %}
+            </button>
+            <a href="{{ url_for('admin_usuarios') }}" class="btn-admin btn-admin-secondary">
+                <span>❌</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const passwordConfirm = document.getElementById('password_confirm');
+    
+    form.addEventListener('submit', function(e) {
+        // Se estiver editando e não preencheu senha, não validar
+        {% if usuario %}
+        if (!password.value && !passwordConfirm.value) {
+            return true; // Permitir submit sem senha
+        }
+        {% endif %}
+        
+        // Validar se as senhas coincidem
+        if (password.value !== passwordConfirm.value) {
+            e.preventDefault();
+            alert('As senhas não coincidem!');
+            password.focus();
+            return false;
+        }
+        
+        // Validar tamanho mínimo
+        if (password.value && password.value.length < 6) {
+            e.preventDefault();
+            alert('A senha deve ter no mínimo 6 caracteres!');
+            password.focus();
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Função para mostrar/ocultar permissões baseado no checkbox de super admin
+    function togglePermissoes(isSuperAdmin) {
+        const container = document.getElementById('permissoes-container');
+        const checkboxes = container.querySelectorAll('input[type="checkbox"][name="permissoes"]');
+        
+        if (isSuperAdmin) {
+            container.style.display = 'none';
+            checkboxes.forEach(cb => cb.checked = false);
+        } else {
+            container.style.display = 'block';
+        }
+    }
+});
+</script>
+{% endblock %}
+

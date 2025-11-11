@@ -1,0 +1,99 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gerenciar Rodapé{% endblock %}
+
+{% block page_title %}Gerenciar Rodapé{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <h3 style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);">Informações de Contato</h3>
+        
+        <div class="form-group">
+            <label for="footer_email">E-mail</label>
+            <input type="email" id="footer_email" name="footer_email" 
+                   value="{{ configs.get('footer_email', '') }}">
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="footer_telefone">Telefone</label>
+                <input type="text" id="footer_telefone" name="footer_telefone" 
+                       value="{{ configs.get('footer_telefone', '') }}" 
+                       placeholder="(00) 0000-0000">
+            </div>
+            
+            <div class="form-group">
+                <label for="footer_whatsapp">WhatsApp</label>
+                <input type="text" id="footer_whatsapp" name="footer_whatsapp" 
+                       value="{{ configs.get('footer_whatsapp', '') }}" 
+                       placeholder="(00) 00000-0000">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="footer_whatsapp_link">Link do WhatsApp</label>
+            <input type="url" id="footer_whatsapp_link" name="footer_whatsapp_link" 
+                   value="{{ configs.get('footer_whatsapp_link', '') }}" 
+                   placeholder="https://wa.me/5500000000000">
+        </div>
+        
+        <h3 style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);">Redes Sociais</h3>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="footer_instagram">Instagram</label>
+                <input type="url" id="footer_instagram" name="footer_instagram" 
+                       value="{{ configs.get('footer_instagram', '') }}" 
+                       placeholder="https://www.instagram.com/...">
+            </div>
+            
+            <div class="form-group">
+                <label for="footer_facebook">Facebook</label>
+                <input type="url" id="footer_facebook" name="footer_facebook" 
+                       value="{{ configs.get('footer_facebook', '') }}" 
+                       placeholder="https://www.facebook.com/...">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="footer_youtube">YouTube</label>
+            <input type="url" id="footer_youtube" name="footer_youtube" 
+                   value="{{ configs.get('footer_youtube', '') }}" 
+                   placeholder="https://www.youtube.com/@... ou https://www.youtube.com/channel/...">
+        </div>
+        
+        <h3 style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);">QR Code de Doações</h3>
+        
+        <div class="form-group">
+            <label for="qrcode_file">Imagem do QR Code</label>
+            <input type="file" id="qrcode_file" name="qrcode_file" accept="image/*">
+            {% if configs.get('footer_qrcode') %}
+                <div style="margin-top: 1rem;">
+                    <label>QR Code Atual:</label>
+                    <img src="{{ url_for('static', filename=configs.get('footer_qrcode')) }}" 
+                         alt="QR Code" 
+                         style="max-width: 200px; max-height: 200px; display: block; margin-top: 0.5rem; border-radius: 0.5rem;">
+                </div>
+            {% endif %}
+            <small style="color: var(--text-light);">Selecione uma nova imagem para substituir o QR Code atual</small>
+        </div>
+        
+        <h3 style="margin: 2rem 0 1.5rem 0; padding-bottom: 1rem; border-bottom: 2px solid var(--border-color);">Copyright</h3>
+        
+        <div class="form-group">
+            <label for="footer_copyright_year">Ano do Copyright</label>
+            <input type="text" id="footer_copyright_year" name="footer_copyright_year" 
+                   value="{{ configs.get('footer_copyright_year', '2025') }}" 
+                   placeholder="2025">
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar Configurações
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,336 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Editar Banner - {{ banner.tipo }}{% endblock %}
+
+{% block page_title %}Editar Banner - {{ banner.tipo }}{% endblock %}
+
+{% block content %}
+<!-- Seção de Conteúdos (FORA do formulário principal) -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Conteúdos da Página</h2>
+        <a href="{{ url_for('admin_banner_conteudo_novo', banner_id=banner.id) }}" 
+           class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Conteúdo
+        </a>
+    </div>
+    
+    {% if conteudos %}
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Ordem</th>
+                    <th>Título</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conteudo in conteudos %}
+                <tr>
+                    <td>{{ conteudo.ordem }}</td>
+                    <td>{{ conteudo.titulo }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if conteudo.ativo else 'secondary' }}">
+                            {{ 'Ativo' if conteudo.ativo else 'Inativo' }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="{{ url_for('admin_banner_conteudo_editar', id=conteudo.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_banner_conteudo_excluir', id=conteudo.id) }}" 
+                                  style="display: inline; margin: 0;"
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este conteúdo?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 2rem; color: var(--text-light);">
+        <p style="margin: 0;">Nenhum conteúdo cadastrado. Clique em "Novo Conteúdo" para adicionar.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Formulário de Edição do Banner -->
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Tipo de Banner
+            </label>
+            <input type="text" value="{{ banner.tipo }}" disabled
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; background: #f3f4f6; color: #6b7280;">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                O tipo do banner não pode ser alterado.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="titulo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Título *
+            </label>
+            <input type="text" id="titulo" name="titulo" value="{{ banner.titulo }}" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Descrição
+            </label>
+            <textarea id="descricao" name="descricao" rows="3"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if banner.descricao %}{{ banner.descricao }}{% endif %}</textarea>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Texto descritivo exibido no banner.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="url" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                URL de Destino
+            </label>
+            <input type="url" id="url" name="url" value="{% if banner.url %}{{ banner.url }}{% endif %}"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Deixe vazio para usar a rota padrão (ex: /campanhas)">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                URL para onde o banner levará ao ser clicado. Deixe vazio para usar a rota padrão e exibir o conteúdo acima.
+            </small>
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label for="cor_gradiente_inicio" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Cor Inicial do Gradiente *
+                </label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="color" id="cor_gradiente_inicio" name="cor_gradiente_inicio" 
+                           value="{{ banner.cor_gradiente_inicio }}" required
+                           style="width: 80px; height: 45px; border: 2px solid #d1d5db; border-radius: 0.5rem; cursor: pointer;">
+                    <input type="text" id="cor_gradiente_inicio_text" value="{{ banner.cor_gradiente_inicio }}" 
+                           pattern="^#[0-9A-Fa-f]{6}$"
+                           style="flex: 1; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: monospace;">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="cor_gradiente_fim" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Cor Final do Gradiente *
+                </label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="color" id="cor_gradiente_fim" name="cor_gradiente_fim" 
+                           value="{{ banner.cor_gradiente_fim }}" required
+                           style="width: 80px; height: 45px; border: 2px solid #d1d5db; border-radius: 0.5rem; cursor: pointer;">
+                    <input type="text" id="cor_gradiente_fim_text" value="{{ banner.cor_gradiente_fim }}" 
+                           pattern="^#[0-9A-Fa-f]{6}$"
+                           style="flex: 1; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: monospace;">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Imagem de Fundo (Opcional)
+            </label>
+            {% if banner.imagem %}
+            <div style="margin-bottom: 1rem;">
+                <img src="{{ url_for('static', filename=banner.imagem) }}" 
+                     alt="Imagem atual" 
+                     style="max-width: 300px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db; display: block; margin-bottom: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="remover_imagem" value="1">
+                    <span>Remover imagem atual</span>
+                </label>
+            </div>
+            {% endif %}
+            <input type="file" id="imagem" name="imagem" accept="image/*"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP. Máximo: 16MB. A imagem aparecerá como fundo com opacidade.
+            </small>
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label for="ordem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Ordem de Exibição
+                </label>
+                <input type="number" id="ordem" name="ordem" 
+                       value="{{ banner.ordem }}"
+                       min="0"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                    Menor número aparece primeiro.
+                </small>
+            </div>
+            
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0;">
+                    <input type="checkbox" id="ativo" name="ativo" {% if banner.ativo %}checked{% endif %}
+                           style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                    <span style="font-weight: 600; color: #374151;">Banner Ativo</span>
+                </label>
+                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                    Banners inativos não aparecem na página inicial.
+                </small>
+            </div>
+        </div>
+        
+        <!-- Preview do Banner -->
+        <div class="form-group" style="margin-bottom: 1.5rem; padding: 1.5rem; background: #f9fafb; border-radius: 0.5rem; border: 2px solid #e5e7eb;">
+            <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: #374151;">
+                Preview do Banner
+            </label>
+            <div id="banner-preview" style="border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; min-height: 200px; max-width: 400px;">
+                <div id="preview-imagem-background" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.2; background-size: cover; background-position: center; display: none;"></div>
+                <div style="position: relative; z-index: 1;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+                        <div id="preview-icon">
+                            {% if banner.tipo == 'Campanhas' %}
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            {% elif banner.tipo == 'Apoie-nos' %}
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                            {% elif banner.tipo == 'Editais' %}
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                            </svg>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <h3 id="preview-titulo" style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
+                        {{ banner.titulo }}
+                    </h3>
+                    <p id="preview-descricao" style="font-size: 1rem; opacity: 0.95; line-height: 1.6;">
+                        {% if banner.descricao %}{{ banner.descricao }}{% else %}Descrição do banner{% endif %}
+                    </p>
+                </div>
+                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; opacity: 0.5;"></div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar Alterações
+            </button>
+            <a href="{{ url_for('admin_banners') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Atualizar preview em tempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const tituloInput = document.getElementById('titulo');
+    const descricaoInput = document.getElementById('descricao');
+    const corInicioInput = document.getElementById('cor_gradiente_inicio');
+    const corFimInput = document.getElementById('cor_gradiente_fim');
+    const preview = document.getElementById('banner-preview');
+    const previewTitulo = document.getElementById('preview-titulo');
+    const previewDescricao = document.getElementById('preview-descricao');
+    
+    function updatePreview() {
+        const corInicio = corInicioInput.value;
+        const corFim = corFimInput.value;
+        preview.style.background = `linear-gradient(135deg, ${corInicio} 0%, ${corFim} 100%)`;
+        previewTitulo.textContent = tituloInput.value || 'Título do Banner';
+        previewDescricao.textContent = descricaoInput.value || 'Descrição do banner';
+    }
+    
+    tituloInput.addEventListener('input', updatePreview);
+    descricaoInput.addEventListener('input', updatePreview);
+    corInicioInput.addEventListener('input', updatePreview);
+    corFimInput.addEventListener('change', updatePreview);
+    corFimInput.addEventListener('input', updatePreview);
+    
+    // Sincronizar input de texto com color picker
+    const corInicioText = document.getElementById('cor_gradiente_inicio_text');
+    const corFimText = document.getElementById('cor_gradiente_fim_text');
+    
+    if (corInicioText) {
+        corInicioText.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                corInicioInput.value = this.value;
+                updatePreview();
+            }
+        });
+    }
+    
+    if (corFimText) {
+        corFimText.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                corFimInput.value = this.value;
+                updatePreview();
+            }
+        });
+    }
+    
+    if (corInicioInput && corInicioText) {
+        corInicioInput.addEventListener('change', function() {
+            corInicioText.value = this.value;
+            updatePreview();
+        });
+        corInicioInput.addEventListener('input', function() {
+            corInicioText.value = this.value;
+        });
+    }
+    
+    if (corFimInput && corFimText) {
+        corFimInput.addEventListener('change', function() {
+            corFimText.value = this.value;
+            updatePreview();
+        });
+        corFimInput.addEventListener('input', function() {
+            corFimText.value = this.value;
+        });
+    }
+    
+    // Atualizar preview da imagem quando selecionada
+    const imagemInput = document.getElementById('imagem');
+    if (imagemInput) {
+        imagemInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewImagem = document.getElementById('preview-imagem-background');
+                    if (previewImagem) {
+                        previewImagem.style.backgroundImage = `url(${e.target.result})`;
+                        previewImagem.style.display = 'block';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Mostrar imagem atual no preview se existir
+    {% if banner.imagem %}
+    const previewImagem = document.getElementById('preview-imagem-background');
+    if (previewImagem) {
+        previewImagem.style.backgroundImage = 'url({{ url_for("static", filename=banner.imagem) }})';
+        previewImagem.style.display = 'block';
+    }
+    {% endif %}
+    
+    // Atualizar preview inicial
+    updatePreview();
+});
+</script>
+{% endblock %}
+

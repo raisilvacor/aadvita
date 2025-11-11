@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Sobre') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Sobre a AADVITA') }}</h1>
+        <p class="page-description">{{ _('Conheça nossa história, missão e valores') }}</p>
+    </div>
+</section>
+
+<section class="sobre-section" aria-labelledby="sobre-title">
+    <div class="container">
+        <div class="sobre-content">
+            <div class="sobre-text">
+                <h2 id="sobre-title">{{ _('Quem Somos') }}</h2>
+                {% if quem_somos_texto %}
+                    <p>{{ quem_somos_texto|nl2br }}</p>
+                {% else %}
+                    <p>{{ _('A AADVITA - Associação dos Deficientes Visuais Tapuienses é uma organização sem fins lucrativos dedicada a promover a inclusão, acessibilidade e qualidade de vida para pessoas com deficiência visual em nossa comunidade.') }}</p>
+                {% endif %}
+                
+                <h2>{{ _('Nossa Missão') }}</h2>
+                {% if missao_texto %}
+                    <p>{{ missao_texto|nl2br }}</p>
+                {% else %}
+                    <p>{{ _('Promover a inclusão social, educacional e profissional de pessoas com deficiência visual, oferecendo apoio, capacitação e recursos necessários para que possam desenvolver todo o seu potencial e participar plenamente da sociedade.') }}</p>
+                {% endif %}
+                
+                <h2>{{ _('Nossos Valores') }}</h2>
+                {% if valores_texto %}
+                    <div class="valores-content">{{ valores_texto|nl2br }}</div>
+                {% else %}
+                    <ul class="valores-list">
+                        <li><strong>{{ _('Inclusão:') }}</strong> {{ _('Acreditamos que todos têm o direito de participar plenamente da sociedade') }}</li>
+                        <li><strong>{{ _('Respeito:') }}</strong> {{ _('Valorizamos a diversidade e a dignidade de cada pessoa') }}</li>
+                        <li><strong>{{ _('Compromisso:') }}</strong> {{ _('Trabalhamos com dedicação para alcançar nossos objetivos') }}</li>
+                        <li><strong>{{ _('Solidariedade:') }}</strong> {{ _('Apoiamos uns aos outros em nossa jornada coletiva') }}</li>
+                        <li><strong>{{ _('Transparência:') }}</strong> {{ _('Mantemos práticas éticas e transparentes em todas as nossas ações') }}</li>
+                    </ul>
+                {% endif %}
+                
+                <h2>{{ _('Diretoria') }}</h2>
+                {% if membros_diretoria %}
+                    <div class="diretoria-grid">
+                        {% for membro in membros_diretoria %}
+                        <div class="diretoria-card">
+                            <div class="diretoria-photo">
+                                {% if membro.foto %}
+                                    <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ membro.cargo }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ membro.cargo }}">
+                                {% endif %}
+                            </div>
+                            <h3 class="diretoria-cargo">{{ membro.cargo }}</h3>
+                            <p class="diretoria-nome">{{ get_nome(membro) }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-data">{{ _('Nenhum membro da diretoria cadastrado.') }}</p>
+                {% endif %}
+                
+                <h2 style="margin-top: 3rem;">{{ _('Conselho Fiscal') }}</h2>
+                {% if membros_conselho %}
+                    <div class="diretoria-grid conselho-fiscal-grid">
+                        {% for membro in membros_conselho %}
+                        <div class="diretoria-card">
+                            <div class="diretoria-photo">
+                                {% if membro.foto %}
+                                    <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ _('Conselheiro(a)') }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ _('Conselheiro(a)') }}">
+                                {% endif %}
+                            </div>
+                            <h3 class="diretoria-cargo">{{ _('Conselheiro(a)') }}</h3>
+                            <p class="diretoria-nome">{{ get_nome(membro) }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-data">{{ _('Nenhum membro do conselho fiscal cadastrado.') }}</p>
+                {% endif %}
+                
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,192 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gerenciar Página Sobre{% endblock %}
+
+{% block page_title %}Gerenciar Página Sobre{% endblock %}
+
+{% block content %}
+<!-- Conteúdos -->
+<div class="admin-card">
+    <h2 class="admin-card-title" style="margin-bottom: 1.5rem;">Conteúdos</h2>
+    
+    <!-- Quem Somos -->
+    <form method="POST" action="{{ url_for('admin_sobre_conteudo') }}" class="admin-form" style="margin-bottom: 2rem;">
+        <input type="hidden" name="chave" value="quem_somos">
+        <div class="form-group">
+            <label for="quem_somos_pt"><strong>Quem Somos (Português)</strong></label>
+            <textarea id="quem_somos_pt" name="conteudo_pt" rows="5" class="form-input">{% if quem_somos %}{{ quem_somos.conteudo_pt }}{% else %}A AADVITA - Associação dos Deficientes Visuais Tapuienses é uma organização sem fins lucrativos dedicada a promover a inclusão, acessibilidade e qualidade de vida para pessoas com deficiência visual em nossa comunidade.{% endif %}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="quem_somos_es">Quem Somos (Espanhol)</label>
+            <textarea id="quem_somos_es" name="conteudo_es" rows="5" class="form-input">{% if quem_somos %}{{ quem_somos.conteudo_es }}{% endif %}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="quem_somos_en">Quem Somos (Inglês)</label>
+            <textarea id="quem_somos_en" name="conteudo_en" rows="5" class="form-input">{% if quem_somos %}{{ quem_somos.conteudo_en }}{% endif %}</textarea>
+        </div>
+        <button type="submit" class="btn-admin btn-admin-primary">
+            <span>💾</span> Salvar Quem Somos
+        </button>
+    </form>
+    
+    <!-- Missão -->
+    <form method="POST" action="{{ url_for('admin_sobre_conteudo') }}" class="admin-form" style="margin-bottom: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+        <input type="hidden" name="chave" value="missao">
+        <div class="form-group">
+            <label for="missao_pt"><strong>Nossa Missão (Português)</strong></label>
+            <textarea id="missao_pt" name="conteudo_pt" rows="5" class="form-input">{% if missao %}{{ missao.conteudo_pt }}{% else %}Promover a inclusão social, educacional e profissional de pessoas com deficiência visual, oferecendo apoio, capacitação e recursos necessários para que possam desenvolver todo o seu potencial e participar plenamente da sociedade.{% endif %}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="missao_es">Nossa Missão (Espanhol)</label>
+            <textarea id="missao_es" name="conteudo_es" rows="5" class="form-input">{% if missao %}{{ missao.conteudo_es }}{% endif %}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="missao_en">Nossa Missão (Inglês)</label>
+            <textarea id="missao_en" name="conteudo_en" rows="5" class="form-input">{% if missao %}{{ missao.conteudo_en }}{% endif %}</textarea>
+        </div>
+        <button type="submit" class="btn-admin btn-admin-primary">
+            <span>💾</span> Salvar Missão
+        </button>
+    </form>
+    
+    <!-- Valores -->
+    <form method="POST" action="{{ url_for('admin_sobre_conteudo') }}" class="admin-form" style="padding-top: 2rem; border-top: 2px solid var(--border-color);">
+        <input type="hidden" name="chave" value="valores">
+        <div class="form-group">
+            <label for="valores_pt"><strong>Nossos Valores (Português)</strong></label>
+            <textarea id="valores_pt" name="conteudo_pt" rows="8" class="form-input">{% if valores %}{{ valores.conteudo_pt }}{% else %}Inclusão: Acreditamos que todos têm o direito de participar plenamente da sociedade
+Respeito: Valorizamos a diversidade e a dignidade de cada pessoa
+Compromisso: Trabalhamos com dedicação para alcançar nossos objetivos
+Solidariedade: Apoiamos uns aos outros em nossa jornada coletiva
+Transparência: Mantemos práticas éticas e transparentes em todas as nossas ações{% endif %}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="valores_es">Nossos Valores (Espanhol)</label>
+            <textarea id="valores_es" name="conteudo_es" rows="8" class="form-input">{% if valores %}{{ valores.conteudo_es }}{% endif %}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="valores_en">Nossos Valores (Inglês)</label>
+            <textarea id="valores_en" name="conteudo_en" rows="8" class="form-input">{% if valores %}{{ valores.conteudo_en }}{% endif %}</textarea>
+        </div>
+        <button type="submit" class="btn-admin btn-admin-primary">
+            <span>💾</span> Salvar Valores
+        </button>
+    </form>
+</div>
+
+<!-- Diretoria -->
+<div class="admin-card" style="margin-top: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Diretoria</h2>
+        <a href="{{ url_for('admin_sobre_diretoria_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Membro
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Cargo</th>
+                    <th>Nome (PT)</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if membros_diretoria %}
+                    {% for membro in membros_diretoria %}
+                    <tr>
+                        <td>
+                            {% if membro.foto %}
+                                <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ membro.cargo }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb;">
+                            {% else %}
+                                <span style="color: var(--text-light);">Sem foto</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ membro.cargo }}</td>
+                        <td>{{ membro.nome_pt }}</td>
+                        <td>{{ membro.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_sobre_diretoria_editar', id=membro.id) }}" class="btn-admin btn-admin-edit" style="margin-right: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_sobre_diretoria_excluir', id=membro.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este membro?');">
+                                <button type="submit" class="btn-admin btn-admin-danger">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            Nenhum membro da diretoria cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Conselho Fiscal -->
+<div class="admin-card" style="margin-top: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Conselho Fiscal</h2>
+        <a href="{{ url_for('admin_sobre_conselho_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Membro
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nome (PT)</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if membros_conselho %}
+                    {% for membro in membros_conselho %}
+                    <tr>
+                        <td>
+                            {% if membro.foto %}
+                                <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ membro.nome_pt }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb;">
+                            {% else %}
+                                <span style="color: var(--text-light);">Sem foto</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ membro.nome_pt }}</td>
+                        <td>{{ membro.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_sobre_conselho_editar', id=membro.id) }}" class="btn-admin btn-admin-edit" style="margin-right: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_sobre_conselho_excluir', id=membro.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este membro?');">
+                                <button type="submit" class="btn-admin btn-admin-danger">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            Nenhum membro do conselho fiscal cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+

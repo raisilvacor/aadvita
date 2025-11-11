@@ -1,0 +1,153 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Carteiras de Associados{% endblock %}
+
+{% block page_title %}Carteira de Associado{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Gerenciar Carteiras de Associados</h2>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('admin_associados') }}" class="btn-admin btn-admin-secondary">
+                <span>←</span> Voltar para Associados
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filtros -->
+    <div style="padding: 1.5rem; border-bottom: 2px solid #e5e7eb;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <a href="{{ url_for('admin_carteiras', status='todos') }}" 
+               class="btn-admin {% if status_filter == 'todos' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Todos ({{ pendentes_count + aprovados_count + negados_count }})
+            </a>
+            <a href="{{ url_for('admin_carteiras', status='aprovados') }}" 
+               class="btn-admin {% if status_filter == 'aprovados' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Aprovados ({{ aprovados_count }})
+            </a>
+            <a href="{{ url_for('admin_carteiras', status='pendentes') }}" 
+               class="btn-admin {% if status_filter == 'pendentes' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Pendentes ({{ pendentes_count }})
+            </a>
+            <a href="{{ url_for('admin_carteiras', status='negados') }}" 
+               class="btn-admin {% if status_filter == 'negados' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Negados ({{ negados_count }})
+            </a>
+        </div>
+    </div>
+    
+    <!-- Tabela de Associados -->
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nome Completo</th>
+                    <th>CPF</th>
+                    <th>Status</th>
+                    <th>Carteira</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if associados %}
+                    {% for associado in associados %}
+                    <tr>
+                        <td>
+                            {% if associado.foto %}
+                                <img src="{{ url_for('static', filename=associado.foto) }}" 
+                                     alt="{{ associado.nome_completo }}" 
+                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #d1d5db;">
+                            {% else %}
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 1.5rem;">
+                                    👤
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>{{ associado.nome_completo }}</td>
+                        <td>{{ associado.cpf }}</td>
+                        <td>
+                            {% if associado.status == 'aprovado' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Aprovado
+                                </span>
+                            {% elif associado.status == 'pendente' %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⏳ Pendente
+                                </span>
+                            {% elif associado.status == 'negado' %}
+                                <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ❌ Negado
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if associado.carteira_pdf %}
+                                <span style="color: #10b981; font-weight: 600;">✓ Disponível</span>
+                            {% else %}
+                                <span style="color: #6b7280;">Não gerada</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                {% if associado.status == 'aprovado' %}
+                                    {% if associado.carteira_pdf %}
+                                        <a href="{{ url_for('static', filename=associado.carteira_pdf) }}" target="_blank" 
+                                           class="btn-admin btn-admin-edit btn-admin-small" style="text-decoration: none;">
+                                            <span>👁️</span> Ver
+                                        </a>
+                                        <form method="POST" action="{{ url_for('admin_carteira_excluir', id=associado.id) }}" 
+                                              style="display: inline;" 
+                                              onsubmit="return confirm('Tem certeza que deseja excluir a carteira deste associado?');">
+                                            <button type="submit" class="btn-admin btn-admin-delete btn-admin-small">
+                                                <span>🗑️</span> Excluir
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('admin_carteira_gerar', id=associado.id) }}" 
+                                          style="display: inline;">
+                                        <button type="submit" class="btn-admin btn-admin-primary btn-admin-small">
+                                            <span>🪪</span> {% if associado.carteira_pdf %}Regenerar{% else %}Gerar{% endif %}
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span style="color: #6b7280; font-size: 0.875rem;">
+                                        Apenas associados aprovados podem ter carteiras
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">
+                            Nenhum associado encontrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="admin-card" style="margin-top: 2rem; background: #eff6ff; border: 2px solid #3b82f6;">
+    <div class="admin-card-header">
+        <h3 style="color: #1e40af; margin: 0;">ℹ️ Informações</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <ul style="margin: 0; padding-left: 1.5rem; color: #1e40af;">
+            <li>Apenas associados com status "Aprovado" podem ter carteiras geradas.</li>
+            <li>As carteiras são geradas automaticamente em PDF com as informações do associado.</li>
+            <li>As carteiras ficam disponíveis automaticamente para o associado baixar na área do associado.</li>
+            <li>Você pode regenerar a carteira a qualquer momento, substituindo a anterior.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+

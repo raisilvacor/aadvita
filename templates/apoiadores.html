@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Apoiadores') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem;">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Nossos Apoiadores') }}</h1>
+        <p class="page-description">{{ _('Agradecemos a todos que apoiam nossa causa e tornam nossos projetos possíveis') }}</p>
+    </div>
+</section>
+
+<section class="apoiadores-section" aria-labelledby="apoiadores-title" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <div class="container">
+        {% if apoiadores %}
+            <div class="card-grid" role="list" style="margin-top: 2rem;">
+                {% for apoiador in apoiadores %}
+                <article class="card apoiador-card" role="listitem">
+                    {% if apoiador.logo %}
+                    <div class="card-image" style="text-align: center; padding: 1.5rem 1.5rem 0;">
+                        <img src="{{ url_for('static', filename=apoiador.logo) }}" 
+                             alt="{{ apoiador.nome }}" 
+                             style="max-width: 200px; max-height: 150px; object-fit: contain; border-radius: 0.5rem;">
+                    </div>
+                    {% endif %}
+                    <div class="card-header">
+                        <h2 class="card-title">{{ apoiador.nome }}</h2>
+                        {% if apoiador.tipo %}
+                        <span class="badge">{{ apoiador.tipo }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if apoiador.descricao %}
+                        <p>{{ apoiador.descricao }}</p>
+                        {% endif %}
+                        {% if apoiador.website %}
+                        <a href="{{ apoiador.website }}" target="_blank" rel="noopener noreferrer" class="btn btn-link">
+                            {{ _('Visitar site') }}
+                            <span class="sr-only">{{ _('(abre em nova aba)') }}</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">{{ _('Não há apoiadores cadastrados no momento.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

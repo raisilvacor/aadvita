@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Relatórios Financeiros') }} - {{ _('Transparência') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Relatórios Financeiros') }}</h1>
+        <p class="page-description">{{ _('Acompanhe nossos relatórios financeiros, demonstrativos e balanços de forma transparente') }}</p>
+    </div>
+</section>
+
+<section class="relatorios-section" aria-labelledby="relatorios-content">
+    <div class="container">
+        {% if relatorios %}
+            <div class="relatorios-list">
+                {% for relatorio in relatorios %}
+                <div class="relatorio-item">
+                    <div class="relatorio-header">
+                        <h3>{{ get_text(relatorio, 'titulo') or relatorio.titulo_pt }}</h3>
+                        <div class="relatorio-meta">
+                            {% if relatorio.tipo == 'relatorio' %}
+                                <span class="badge badge-relatorio">{{ _('Relatório') }}</span>
+                            {% elif relatorio.tipo == 'demonstrativo' %}
+                                <span class="badge badge-demonstrativo">{{ _('Demonstrativo') }}</span>
+                            {% elif relatorio.tipo == 'balanco' %}
+                                <span class="badge badge-balanco">{{ _('Balanço') }}</span>
+                            {% endif %}
+                            {% if relatorio.data_relatorio %}
+                                <span class="relatorio-date">{{ _('Data:') }} {{ relatorio.data_relatorio.strftime('%d/%m/%Y') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if get_text(relatorio, 'descricao') %}
+                        <div class="relatorio-descricao">
+                            <p>{{ get_text(relatorio, 'descricao')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if relatorio.arquivo %}
+                        <div class="relatorio-actions">
+                            <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn btn-primary">
+                                <span>📄</span> {{ _('Baixar Documento') }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <p>{{ _('Nenhum relatório financeiro cadastrado no momento.') }}</p>
+            </div>
+        {% endif %}
+
+        <div class="relatorios-back">
+            <a href="{{ url_for('transparencia') }}" class="btn btn-secondary">
+                <span>←</span> {{ _('Voltar para Transparência') }}
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

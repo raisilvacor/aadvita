@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ projeto.titulo }} - {{ _('Projetos') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <nav aria-label="breadcrumb" style="margin-bottom: 1rem;">
+            <ol style="list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <li><a href="{{ url_for('index') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Início') }}</a></li>
+                <li aria-hidden="true" style="color: var(--text-light);">/</li>
+                <li><a href="{{ url_for('projetos') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Projetos') }}</a></li>
+                <li aria-hidden="true" style="color: var(--text-light);">/</li>
+                <li style="color: var(--text-color);">{{ projeto.titulo }}</li>
+            </ol>
+        </nav>
+        <h1 id="page-title" class="page-title">{{ projeto.titulo }}</h1>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+            <span class="badge badge-{{ 'success' if projeto.estado == 'Ativo' else 'secondary' }}" style="font-size: 1rem;">
+                {{ projeto.estado }}
+            </span>
+            {% if projeto.data_inicio %}
+            <time datetime="{{ projeto.data_inicio.strftime('%Y-%m-%d') }}" style="color: var(--text-light);">
+                <strong>{{ _('Início:') }}</strong> {{ projeto.data_inicio.strftime('%d/%m/%Y') }}
+            </time>
+            {% endif %}
+            {% if projeto.data_fim %}
+            <time datetime="{{ projeto.data_fim.strftime('%Y-%m-%d') }}" style="color: var(--text-light);">
+                <strong>{{ _('Término:') }}</strong> {{ projeto.data_fim.strftime('%d/%m/%Y') }}
+            </time>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="projeto-detail-section" style="padding: 3rem 0;">
+    <div class="container">
+        <div style="max-width: 900px; margin: 0 auto;">
+            {% if projeto.imagen %}
+            <div style="margin-bottom: 2rem; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 600px; margin-left: auto; margin-right: auto;">
+                <img src="{{ url_for('static', filename=projeto.imagen) }}" 
+                     alt="{{ projeto.titulo }}" 
+                     style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: cover;">
+            </div>
+            {% endif %}
+            
+            <article style="background: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color); font-size: 1.1rem; margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">{{ _('Descrição') }}</h2>
+                    {{ projeto.descripcion }}
+                </div>
+                
+                {% if projeto.identificacao %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">1. {{ _('Identificação do Projeto') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.identificacao }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.contexto_justificativa %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">2. {{ _('Contexto e Justificativa') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.contexto_justificativa }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.objetivos %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">3. {{ _('Objetivos') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.objetivos }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.publico_alvo %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">4. {{ _('Público-Alvo') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.publico_alvo }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.metodologia %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">5. {{ _('Metodologia') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.metodologia }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.recursos_necessarios %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">6. {{ _('Recursos Necessários') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.recursos_necessarios }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.parcerias %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">7. {{ _('Parcerias') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.parcerias }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.resultados_esperados %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">8. {{ _('Resultados Esperados') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.resultados_esperados }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.monitoramento_avaliacao %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">9. {{ _('Monitoramento e Avaliação') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.monitoramento_avaliacao }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.cronograma_execucao %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">10. {{ _('Cronograma de Execução') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.cronograma_execucao }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.orcamento %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">11. {{ _('Orçamento') }} ({{ _('Exemplo Resumido') }})</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.orcamento }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if projeto.consideracoes_finais %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color); margin-bottom: 1rem;">12. {{ _('Considerações Finais') }}</h2>
+                    <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color);">
+                        {{ projeto.consideracoes_finais }}
+                    </div>
+                </div>
+                {% endif %}
+            </article>
+            
+            <div style="margin-top: 2rem; text-align: center;">
+                <a href="{{ url_for('projetos') }}" class="btn btn-secondary">
+                    {{ _('Voltar para Projetos') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

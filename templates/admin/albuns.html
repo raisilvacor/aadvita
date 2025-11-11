@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Álbuns{% endblock %}
+
+{% block page_title %}Gerenciar Álbuns{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Álbuns</h2>
+        <a href="{{ url_for('admin_albuns_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Álbum
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Capa</th>
+                    <th>Título</th>
+                    <th>Descrição</th>
+                    <th>Fotos</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if albuns %}
+                    {% for album in albuns %}
+                    <tr>
+                        <td>
+                            {% if album.capa %}
+                            <img src="{{ url_for('static', filename=album.capa) }}" 
+                                 alt="Capa do álbum" 
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 0.5rem;">
+                            {% else %}
+                            <div style="width: 60px; height: 60px; background: #e5e7eb; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: #9ca3af;">
+                                📁
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>{{ album.titulo_pt }}</td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ album.descricao_pt[:100] if album.descricao_pt else '-' }}{% if album.descricao_pt and album.descricao_pt|length > 100 %}...{% endif %}
+                        </td>
+                        <td>
+                            <span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">
+                                {{ album.fotos|length }} foto(s)
+                            </span>
+                        </td>
+                        <td>{{ album.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_albuns_fotos', id=album.id) }}" 
+                               class="btn-admin btn-admin-secondary btn-admin-small">
+                                <span>📷</span> Fotos
+                            </a>
+                            <a href="{{ url_for('admin_albuns_editar', id=album.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_albuns_excluir', id=album.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este álbum? Todas as fotos serão excluídas também.');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhum álbum cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

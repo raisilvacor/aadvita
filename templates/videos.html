@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Vídeos') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Nossos Vídeos') }}</h1>
+        <p class="page-description">{{ _('Confira nossos vídeos e conteúdos em vídeo') }}</p>
+    </div>
+</section>
+
+<section class="videos-section" aria-labelledby="videos-title">
+    <div class="container">
+        {% if videos %}
+            <div class="video-grid-full" role="list">
+                {% for video in videos %}
+                <article class="video-card-full" role="listitem">
+                    <div class="video-thumbnail-wrapper">
+                        <a href="{{ video.url_youtube }}" target="_blank" rel="noopener noreferrer" class="video-link" aria-label="{{ _('Assistir vídeo') }}: {{ video.titulo }}">
+                            <img src="{{ video.get_thumbnail_url() }}" 
+                                 alt="{{ video.titulo }}" 
+                                 class="video-thumbnail"
+                                 loading="lazy">
+                            <div class="video-play-button" aria-hidden="true">
+                                <svg width="68" height="48" viewBox="0 0 68 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="red"/>
+                                    <path d="M45 24L27 14v20l18-10z" fill="white"/>
+                                </svg>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="video-info-full">
+                        <h2 class="video-title-full">{{ video.titulo }}</h2>
+                        {% if video.descricao %}
+                        <p class="video-description-full">{{ video.descricao }}</p>
+                        {% endif %}
+                        {% if video.categoria %}
+                        <span class="badge badge-secondary">{{ video.categoria }}</span>
+                        {% endif %}
+                        <a href="{{ video.url_youtube }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary video-watch-btn">
+                            {{ _('Assistir vídeo') }}
+                            <span class="sr-only">{{ _('(abre em nova aba)') }}</span>
+                        </a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">{{ _('Nenhum vídeo cadastrado no momento.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

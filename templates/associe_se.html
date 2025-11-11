@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="section" id="associe-se">
+    <div class="container">
+        <div class="section-header">
+            <h1 class="section-title">{{ _('Associe-se à AADVITA') }}</h1>
+            <p class="section-subtitle">{{ _('Faça parte da nossa comunidade e ajude a promover a inclusão e acessibilidade') }}</p>
+        </div>
+        
+        <div class="form-container">
+            <form method="POST" class="associate-form" id="associateForm">
+                <div class="form-group">
+                    <label for="nome_completo">{{ _('Nome Completo') }} *</label>
+                    <input type="text" id="nome_completo" name="nome_completo" 
+                           placeholder="{{ _('Digite seu nome completo') }}" required
+                           aria-required="true">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cpf">CPF *</label>
+                        <input type="text" id="cpf" name="cpf" 
+                               placeholder="000.000.000-00" required
+                               maxlength="14"
+                               aria-required="true"
+                               aria-describedby="cpf-help">
+                        <small id="cpf-help" class="form-help">{{ _('Formato: 000.000.000-00') }}</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="data_nascimento">{{ _('Data de Nascimento') }} *</label>
+                        <input type="date" id="data_nascimento" name="data_nascimento" required
+                               aria-required="true">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="endereco">{{ _('Endereço') }} *</label>
+                    <textarea id="endereco" name="endereco" rows="3" 
+                              placeholder="{{ _('Rua, número, bairro, cidade - CEP') }}" required
+                              aria-required="true"
+                              aria-describedby="endereco-help"></textarea>
+                    <small id="endereco-help" class="form-help">{{ _('Rua, número, bairro, cidade - CEP') }}</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="telefone">{{ _('Telefone') }} *</label>
+                    <input type="text" id="telefone" name="telefone" 
+                           placeholder="(00) 00000-0000" required
+                           maxlength="20"
+                           aria-required="true"
+                           aria-describedby="telefone-help">
+                    <small id="telefone-help" class="form-help">{{ _('Formato: (00) 00000-0000') }}</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="senha">{{ _('Senha') }} *</label>
+                    <input type="password" id="senha" name="senha" 
+                           placeholder="{{ _('Mínimo 6 caracteres') }}" required
+                           minlength="6"
+                           aria-required="true"
+                           aria-describedby="senha-help">
+                    <small id="senha-help" class="form-help">{{ _('A senha deve ter no mínimo 6 caracteres') }}</small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        {{ _('Enviar Cadastro') }}
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        {{ _('Cancelar') }}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script>
+// Máscara para CPF
+document.addEventListener('DOMContentLoaded', function() {
+    const cpfInput = document.getElementById('cpf');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = value;
+            }
+        });
+    }
+    
+    // Máscara para telefone
+    const telefoneInput = document.getElementById('telefone');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                if (value.length <= 10) {
+                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+                } else {
+                    value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                }
+                e.target.value = value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

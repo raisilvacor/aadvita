@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Imagens{% endblock %}
+
+{% block page_title %}Gerenciar Imagens{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Galeria de Imagens</h2>
+        <a href="{{ url_for('admin_imagens_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Imagem
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Imagem</th>
+                    <th>Título</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if imagens %}
+                    {% for imagem in imagens %}
+                    <tr>
+                        <td>
+                            <img src="{{ url_for('static', filename=imagem.caminho) }}" 
+                                 alt="{{ imagem.titulo }}" 
+                                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem;">
+                        </td>
+                        <td>{{ imagem.titulo or 'Sem título' }}</td>
+                        <td>{{ imagem.created_at.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_imagens_editar', id=imagem.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_imagens_excluir', id=imagem.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir esta imagem?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem;">
+                            Nenhuma imagem cadastrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

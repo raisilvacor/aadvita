@@ -1,0 +1,85 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Apoiadores{% endblock %}
+
+{% block page_title %}Gerenciar Apoiadores{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Apoiadores</h2>
+        <a href="{{ url_for('admin_apoiadores_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Apoiador
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nome</th>
+                    <th>Descrição</th>
+                    <th>Website</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if apoiadores %}
+                    {% for apoiador in apoiadores %}
+                    <tr>
+                        <td>
+                            {% if apoiador.logo %}
+                                <img src="{{ url_for('static', filename=apoiador.logo) }}" 
+                                     alt="{{ apoiador.nome }}" 
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem;">
+                            {% else %}
+                                <span style="color: #9ca3af;">Sem foto</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ apoiador.nome }}</td>
+                        <td>
+                            {% if apoiador.descricao %}
+                                {{ apoiador.descricao[:100] }}{% if apoiador.descricao|length > 100 %}...{% endif %}
+                            {% else %}
+                                <span style="color: #9ca3af;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if apoiador.website %}
+                                <a href="{{ apoiador.website }}" target="_blank" rel="noopener noreferrer" 
+                                   style="color: #3b82f6; text-decoration: underline;">
+                                    {{ apoiador.website[:50] }}{% if apoiador.website|length > 50 %}...{% endif %}
+                                </a>
+                            {% else %}
+                                <span style="color: #9ca3af;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_apoiadores_editar', id=apoiador.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_apoiadores_excluir', id=apoiador.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este apoiador?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            Nenhum apoiador cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

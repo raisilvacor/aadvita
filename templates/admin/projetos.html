@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Projetos{% endblock %}
+
+{% block page_title %}Gerenciar Projetos{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Projetos</h2>
+        <a href="{{ url_for('admin_projetos_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Projeto
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Estado</th>
+                    <th>Data Início</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if projetos %}
+                    {% for projeto in projetos %}
+                    <tr>
+                        <td>{{ projeto.titulo }}</td>
+                        <td>{{ projeto.estado }}</td>
+                        <td>{% if projeto.data_inicio %}{{ projeto.data_inicio.strftime('%d/%m/%Y') }}{% else %}-{% endif %}</td>
+                        <td>
+                            <a href="{{ url_for('admin_projetos_editar', id=projeto.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_projetos_excluir', id=projeto.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este projeto?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem;">
+                            Nenhum projeto cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,128 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if slider_image %}Editar Imagem do Slider{% else %}Nova Imagem do Slider{% endif %}{% endblock %}
+
+{% block page_title %}{% if slider_image %}Editar Imagem do Slider{% else %}Nova Imagem do Slider{% endif %}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">{% if slider_image %}Editar Imagem do Slider{% else %}Nova Imagem do Slider{% endif %}</h2>
+        <a href="{{ url_for('admin_slider') }}" class="btn-admin btn-admin-secondary">
+            <span>←</span> Voltar
+        </a>
+    </div>
+    
+    <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: #1f2937;">
+            📐 Informações sobre Tamanhos Recomendados
+        </h3>
+        <ul style="margin: 0; padding-left: 1.5rem; color: #4b5563; line-height: 1.8;">
+            <li><strong>Largura recomendada:</strong> 1920px (Full HD) ou superior</li>
+            <li><strong>Altura recomendada:</strong> 600px a 800px</li>
+            <li><strong>Proporção:</strong> 16:9 ou 21:9 (formato panorâmico)</li>
+            <li><strong>Formato:</strong> JPG, PNG ou WEBP</li>
+            <li><strong>Tamanho do arquivo:</strong> Máximo 2MB recomendado para melhor performance</li>
+            <li><strong>Resolução:</strong> 72 DPI (para web)</li>
+        </ul>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" style="max-width: 800px; margin-top: 1.5rem;">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="titulo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Título da Imagem *
+            </label>
+            <input type="text" 
+                   id="titulo" 
+                   name="titulo" 
+                   value="{{ slider_image.titulo if slider_image else '' }}" 
+                   required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Digite o título da imagem">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Título descritivo da imagem (usado para acessibilidade e SEO)
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Imagem {% if slider_image %}(deixe em branco para manter a atual){% else %}*{% endif %}
+            </label>
+            {% if slider_image and slider_image.imagem %}
+                <div style="margin-bottom: 1rem;">
+                    <img src="{{ url_for('static', filename=slider_image.imagem) }}" 
+                         alt="{{ slider_image.titulo }}" 
+                         style="max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 0.5rem; border: 2px solid #d1d5db; padding: 0.5rem;">
+                    <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+                        Imagem atual
+                    </p>
+                </div>
+            {% endif %}
+            <input type="file" 
+                   id="imagem" 
+                   name="imagem" 
+                   accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                   {% if not slider_image %}required{% endif %}
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="link" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Link (Opcional)
+            </label>
+            <input type="url" 
+                   id="link" 
+                   name="link" 
+                   value="{{ slider_image.link if slider_image and slider_image.link else '' }}" 
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="https://exemplo.com.br">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                URL para onde a imagem será direcionada quando clicada (deixe em branco se não desejar que a imagem seja clicável)
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="ordem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Ordem de Exibição
+            </label>
+            <input type="number" 
+                   id="ordem" 
+                   name="ordem" 
+                   value="{{ slider_image.ordem if slider_image else '0' }}" 
+                   min="0"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="0">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Número que define a ordem de exibição no slider (menor número aparece primeiro)
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" 
+                       id="ativo" 
+                       name="ativo" 
+                       {% if slider_image and slider_image.ativo or not slider_image %}checked{% endif %}
+                       style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                <span style="font-weight: 600; color: #374151;">Imagem ativa</span>
+            </label>
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Imagens inativas não serão exibidas no slider
+            </small>
+        </div>
+        
+        <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if slider_image %}Salvar Alterações{% else %}Cadastrar Imagem{% endif %}
+            </button>
+            <a href="{{ url_for('admin_slider') }}" class="btn-admin btn-admin-secondary">
+                <span>❌</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

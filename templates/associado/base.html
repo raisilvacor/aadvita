@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Área do Associado{% endblock %} - AADVITA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="admin-body">
+    <!-- Header -->
+    <header class="associado-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="{{ url_for('index') }}" class="logo-link">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AADVITA" class="logo-image">
+                </a>
+                <div class="header-actions">
+                    <span class="user-greeting">Olá, {{ session.get('associado_nome', 'Associado') }}</span>
+                    <a href="{{ url_for('index') }}" class="btn-link">Ver Site</a>
+                    <a href="{{ url_for('associado_logout') }}" class="btn-link">Sair</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="admin-main associado-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="admin-flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                            <button class="flash-close" type="button" aria-label="Fechar mensagem" onclick="this.closest('.flash-message').remove(); return false;">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="admin-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

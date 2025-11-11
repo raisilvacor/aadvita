@@ -1,0 +1,93 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Fotos do Evento: {{ evento.titulo }}{% endblock %}
+
+{% block page_title %}Fotos do Evento: {{ evento.titulo }}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Gerenciar Fotos - {{ evento.titulo }}</h2>
+        <a href="{{ url_for('admin_eventos') }}" class="btn-admin btn-admin-secondary">
+            <span>↩️</span> Voltar para Eventos
+        </a>
+    </div>
+    
+    <!-- Formulário para adicionar nova foto -->
+    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.25rem; color: #374151;">Adicionar Nova Foto</h3>
+        <form method="POST" action="{{ url_for('admin_eventos_fotos_adicionar', id=evento.id) }}" enctype="multipart/form-data">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label for="foto" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                        Foto *
+                    </label>
+                    <input type="file" id="foto" name="foto" accept="image/*" required
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                </div>
+                <div>
+                    <label for="ordem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                        Ordem de Exibição
+                    </label>
+                    <input type="number" id="ordem" name="ordem" value="0" min="0"
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                    <small style="color: #6b7280; font-size: 0.875rem;">Menor número aparece primeiro</small>
+                </div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="titulo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Título (opcional)
+                </label>
+                <input type="text" id="titulo" name="titulo"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Descrição (opcional)
+                </label>
+                <textarea id="descricao" name="descricao" rows="2"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;"></textarea>
+            </div>
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>➕</span> Adicionar Foto
+            </button>
+        </form>
+    </div>
+    
+    <!-- Lista de fotos -->
+    <div>
+        <h3 style="margin-bottom: 1rem; font-size: 1.25rem; color: #374151;">Fotos Cadastradas ({{ fotos|length }})</h3>
+        {% if fotos %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+                {% for foto in fotos %}
+                <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; position: relative;">
+                    <img src="{{ url_for('static', filename=foto.caminho) }}" 
+                         alt="{{ foto.titulo or 'Foto' }}"
+                         style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem; margin-bottom: 0.75rem;">
+                    {% if foto.titulo %}
+                    <h4 style="margin-bottom: 0.5rem; font-size: 1rem; font-weight: 600; color: #374151;">{{ foto.titulo }}</h4>
+                    {% endif %}
+                    {% if foto.descricao %}
+                    <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #6b7280; line-height: 1.5;">{{ foto.descricao }}</p>
+                    {% endif %}
+                    <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 1rem;">Ordem: {{ foto.ordem }}</p>
+                    <form method="POST" action="{{ url_for('admin_eventos_fotos_excluir', foto_id=foto.id) }}" 
+                          onsubmit="return confirm('Tem certeza que deseja excluir esta foto?');"
+                          style="margin-top: 0.5rem;">
+                        <button type="submit" class="btn-admin btn-admin-danger btn-admin-small" style="width: 100%;">
+                            <span>🗑️</span> Excluir
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem; background: #f9fafb; border-radius: 0.5rem; border: 2px dashed #d1d5db;">
+                <p style="color: #6b7280; font-size: 1.125rem;">Nenhuma foto cadastrada para este evento.</p>
+                <p style="color: #9ca3af; margin-top: 0.5rem;">Adicione fotos usando o formulário acima.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

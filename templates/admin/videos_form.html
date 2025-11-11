@@ -1,0 +1,55 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if video %}Editar{% else %}Novo{% endif %} Vídeo{% endblock %}
+
+{% block page_title %}{% if video %}Editar{% else %}Novo{% endif %} Vídeo{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="titulo">Título *</label>
+            <input type="text" id="titulo" name="titulo" value="{% if video %}{{ video.titulo }}{% endif %}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao">Descrição</label>
+            <textarea id="descricao" name="descricao" rows="4">{% if video %}{{ video.descricao }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="url_youtube">URL do YouTube *</label>
+            <input type="url" id="url_youtube" name="url_youtube" 
+                   value="{% if video %}{{ video.url_youtube }}{% endif %}" 
+                   placeholder="https://www.youtube.com/watch?v=..." required>
+            <small style="color: var(--text-light);">Cole a URL completa do vídeo do YouTube</small>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="categoria">Categoria</label>
+                <input type="text" id="categoria" name="categoria" 
+                       value="{% if video %}{{ video.categoria }}{% endif %}" 
+                       placeholder="Ex: Institucional, Educacional, etc.">
+            </div>
+            
+            <div class="form-group">
+                <label for="ordem">Ordem de Exibição</label>
+                <input type="number" id="ordem" name="ordem" 
+                       value="{% if video %}{{ video.ordem }}{% else %}0{% endif %}" min="0">
+                <small style="color: var(--text-light);">Vídeos com maior ordem aparecem primeiro</small>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_videos') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

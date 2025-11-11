@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Prestação de Contas') }} - {{ _('Transparência') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Prestação de Contas') }}</h1>
+        <p class="page-description">{{ _('Confira como utilizamos os recursos recebidos e os resultados alcançados') }}</p>
+    </div>
+</section>
+
+<section class="relatorios-section" aria-labelledby="prestacoes-content">
+    <div class="container">
+        {% if prestacoes %}
+            <div class="relatorios-list">
+                {% for prestacao in prestacoes %}
+                <div class="relatorio-item">
+                    <div class="relatorio-header">
+                        <h3>{{ get_text(prestacao, 'titulo') or prestacao.titulo_pt }}</h3>
+                        <div class="relatorio-meta">
+                            {% if prestacao.periodo_inicio and prestacao.periodo_fim %}
+                                <span class="relatorio-date">{{ _('Período:') }} {{ prestacao.periodo_inicio.strftime('%d/%m/%Y') }} - {{ prestacao.periodo_fim.strftime('%d/%m/%Y') }}</span>
+                            {% elif prestacao.periodo_inicio %}
+                                <span class="relatorio-date">{{ _('A partir de') }} {{ prestacao.periodo_inicio.strftime('%d/%m/%Y') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if get_text(prestacao, 'descricao') %}
+                        <div class="relatorio-descricao">
+                            <p>{{ get_text(prestacao, 'descricao')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if get_text(prestacao, 'recursos_recebidos') %}
+                        <div class="prestacao-section">
+                            <h4>{{ _('Recursos Recebidos:') }}</h4>
+                            <p>{{ get_text(prestacao, 'recursos_recebidos')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if get_text(prestacao, 'resultados') %}
+                        <div class="prestacao-section">
+                            <h4>{{ _('Resultados Alcançados:') }}</h4>
+                            <p>{{ get_text(prestacao, 'resultados')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if prestacao.arquivo %}
+                        <div class="relatorio-actions">
+                            <a href="{{ url_for('static', filename=prestacao.arquivo) }}" target="_blank" class="btn btn-primary">
+                                <span>📄</span> {{ _('Baixar Documento') }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <p>{{ _('Nenhuma prestação de contas cadastrada no momento.') }}</p>
+            </div>
+        {% endif %}
+
+        <div class="relatorios-back">
+            <a href="{{ url_for('transparencia') }}" class="btn btn-secondary">
+                <span>←</span> {{ _('Voltar para Transparência') }}
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

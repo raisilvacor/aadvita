@@ -1,0 +1,216 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Associados{% endblock %}
+
+{% block page_title %}Gerenciar Associados{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Associados</h2>
+        <a href="{{ url_for('admin_associados_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Associado
+        </a>
+    </div>
+    
+    <!-- Filtros por Status -->
+    <div class="status-filters" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-light); border-radius: 0.5rem;">
+        <a href="{{ url_for('admin_associados', status='todos') }}" 
+           class="status-filter-btn {% if status_filter == 'todos' %}active{% endif %}">
+            Todos ({{ pendentes_count + aprovados_count + negados_count }})
+        </a>
+        <a href="{{ url_for('admin_associados', status='pendentes') }}" 
+           class="status-filter-btn {% if status_filter == 'pendentes' %}active{% endif %}" 
+           style="background: #f59e0b; color: white;">
+            ⏳ Pendentes ({{ pendentes_count }})
+        </a>
+        <a href="{{ url_for('admin_associados', status='aprovados') }}" 
+           class="status-filter-btn {% if status_filter == 'aprovados' %}active{% endif %}" 
+           style="background: #10b981; color: white;">
+            ✅ Aprovados ({{ aprovados_count }})
+        </a>
+        <a href="{{ url_for('admin_associados', status='negados') }}" 
+           class="status-filter-btn {% if status_filter == 'negados' %}active{% endif %}" 
+           style="background: #ef4444; color: white;">
+            ❌ Negados ({{ negados_count }})
+        </a>
+    </div>
+    
+    <!-- Barra de Pesquisa -->
+    <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+        <label for="pesquisa_cpf" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+            🔍 Buscar Associado por CPF
+        </label>
+        <input type="text" 
+               id="pesquisa_cpf" 
+               placeholder="Digite apenas os 11 dígitos do CPF (ex: 00000000000)" 
+               maxlength="11"
+               pattern="[0-9]*"
+               inputmode="numeric"
+               style="width: 100%; max-width: 400px; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+               autocomplete="off">
+        <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+            A lista será filtrada automaticamente conforme você digita (apenas números, máximo 11 dígitos)
+        </small>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table" id="tabela-associados">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nome Completo</th>
+                    <th>CPF</th>
+                    <th>Data de Nascimento</th>
+                    <th>Telefone</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if associados %}
+                    {% for associado in associados %}
+                    <tr class="linha-associado" data-cpf="{{ associado.cpf.replace('.', '').replace('-', '') }}">
+                        <td>
+                            {% if associado.foto %}
+                                <img src="{{ url_for('static', filename=associado.foto) }}" 
+                                     alt="{{ associado.nome_completo }}" 
+                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #d1d5db;">
+                            {% else %}
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 1.5rem;">
+                                    👤
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>{{ associado.nome_completo }}</td>
+                        <td class="cpf-cell">{{ associado.cpf }}</td>
+                        <td>{{ associado.data_nascimento.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ associado.telefone }}</td>
+                        <td>
+                            {% if associado.status == 'pendente' %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⏳ Pendente
+                                </span>
+                            {% elif associado.status == 'aprovado' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Aprovado
+                                </span>
+                            {% elif associado.status == 'negado' %}
+                                <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ❌ Negado
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if associado.status == 'pendente' %}
+                                <form method="POST" action="{{ url_for('admin_associados_aprovar', id=associado.id) }}" 
+                                      style="display: inline; margin-right: 0.5rem;">
+                                    <button type="submit" class="btn-admin btn-admin-secondary btn-admin-small" 
+                                            style="background: #10b981;">
+                                        <span>✅</span> Aprovar
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin_associados_negar', id=associado.id) }}" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Tem certeza que deseja negar este cadastro?');">
+                                    <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                        <span>❌</span> Negar
+                                    </button>
+                                </form>
+                            {% endif %}
+                            <a href="{{ url_for('admin_associados_editar', id=associado.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small" 
+                               style="margin-left: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            {% if associado.status == 'aprovado' %}
+                            <a href="{{ url_for('admin_financeiro_configurar_associado', id=associado.id) }}" 
+                               class="btn-admin btn-admin-secondary btn-admin-small" 
+                               style="margin-left: 0.5rem; background: #3b82f6;">
+                                <span>💰</span> Mensalidade
+                            </a>
+                            {% endif %}
+                            <form method="POST" action="{{ url_for('admin_associados_excluir', id=associado.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este associado?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            Nenhum associado encontrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Barra de pesquisa por CPF
+    const pesquisaCpf = document.getElementById('pesquisa_cpf');
+    if (pesquisaCpf) {
+        // Permitir apenas números e limitar a 11 dígitos
+        pesquisaCpf.addEventListener('input', function(e) {
+            // Remove tudo que não é número
+            let value = e.target.value.replace(/\D/g, '');
+            // Limita a 11 dígitos
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
+            e.target.value = value;
+            
+            // Filtrar a lista
+            const termoBusca = value;
+            const linhas = document.querySelectorAll('.linha-associado');
+            
+            linhas.forEach(linha => {
+                const cpfAssociado = linha.getAttribute('data-cpf');
+                
+                if (cpfAssociado.includes(termoBusca)) {
+                    linha.style.display = '';
+                } else {
+                    linha.style.display = 'none';
+                }
+            });
+        });
+        
+        // Prevenir entrada de caracteres não numéricos
+        pesquisaCpf.addEventListener('keydown', function(e) {
+            // Permitir: backspace, delete, tab, escape, enter, setas
+            if ([8, 9, 27, 13, 46, 37, 38, 39, 40].indexOf(e.keyCode) !== -1 ||
+                // Permitir Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true)) {
+                return;
+            }
+            // Garantir que é um número
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+        
+        // Prevenir colar conteúdo não numérico
+        pesquisaCpf.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numbers = paste.replace(/\D/g, '').substring(0, 11);
+            this.value = numbers;
+            
+            // Disparar evento input para filtrar
+            this.dispatchEvent(new Event('input'));
+        });
+    }
+});
+</script>
+{% endblock %}
+

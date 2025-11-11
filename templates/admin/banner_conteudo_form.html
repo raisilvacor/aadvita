@@ -1,0 +1,140 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if conteudo %}Editar{% else %}Novo{% endif %} Conteúdo - {{ banner.tipo }}{% endblock %}
+
+{% block page_title %}{% if conteudo %}Editar{% else %}Novo{% endif %} Conteúdo - {{ banner.tipo }}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div style="margin-bottom: 1.5rem;">
+        <a href="{{ url_for('admin_banners_editar', id=banner.id) }}" class="btn-admin btn-admin-secondary btn-admin-small">
+            <span>↩️</span> Voltar para Banner
+        </a>
+    </div>
+    
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Banner
+            </label>
+            <input type="text" value="{{ banner.tipo }}" disabled
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; background: #f3f4f6; color: #6b7280;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="titulo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Título *
+            </label>
+            <input type="text" id="titulo" name="titulo" 
+                   value="{% if conteudo %}{{ conteudo.titulo }}{% endif %}" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="conteudo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Conteúdo
+            </label>
+            <textarea id="conteudo" name="conteudo" rows="15"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit; line-height: 1.6; resize: vertical;">{% if conteudo and conteudo.conteudo %}{{ conteudo.conteudo }}{% endif %}</textarea>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Conteúdo que será exibido na página. Você pode usar HTML básico para formatação.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Imagem (Opcional)
+            </label>
+            {% if conteudo and conteudo.imagem %}
+            <div style="margin-bottom: 1rem;">
+                <img src="{{ url_for('static', filename=conteudo.imagem) }}" 
+                     alt="Imagem atual" 
+                     style="max-width: 300px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db; display: block; margin-bottom: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="remover_imagem" value="1">
+                    <span>Remover imagem atual</span>
+                </label>
+            </div>
+            {% endif %}
+            <input type="file" id="imagem" name="imagem" accept="image/*"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP. Máximo: 16MB.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="arquivo_pdf" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Arquivo PDF (Opcional)
+            </label>
+            {% if conteudo and conteudo.arquivo_pdf %}
+            <div style="margin-bottom: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; border: 2px solid #d1d5db;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 2V8H20" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 13H8" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 17H8" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 9H8" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div style="flex: 1;">
+                        <p style="margin: 0; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">
+                            PDF atual: {{ conteudo.arquivo_pdf.split('/')[-1] }}
+                        </p>
+                        <a href="{{ url_for('static', filename=conteudo.arquivo_pdf) }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           class="btn-admin btn-admin-primary btn-admin-small"
+                           style="display: inline-block; margin-top: 0.5rem;">
+                            <span>📄</span> Visualizar PDF
+                        </a>
+                    </div>
+                </div>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 1rem;">
+                    <input type="checkbox" name="remover_pdf" value="1">
+                    <span>Remover PDF atual</span>
+                </label>
+            </div>
+            {% endif %}
+            <input type="file" id="arquivo_pdf" name="arquivo_pdf" accept=".pdf,application/pdf"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Formatos aceitos: PDF. Máximo: 50MB. Ideal para editais e documentos oficiais.
+            </small>
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label for="ordem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Ordem de Exibição
+                </label>
+                <input type="number" id="ordem" name="ordem" 
+                       value="{% if conteudo %}{{ conteudo.ordem }}{% else %}0{% endif %}"
+                       min="0"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                    Menor número aparece primeiro.
+                </small>
+            </div>
+            
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0;">
+                    <input type="checkbox" id="ativo" name="ativo" {% if not conteudo or conteudo.ativo %}checked{% endif %}
+                           style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                    <span style="font-weight: 600; color: #374151;">Conteúdo Ativo</span>
+                </label>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if conteudo %}Salvar Alterações{% else %}Cadastrar Conteúdo{% endif %}
+            </button>
+            <a href="{{ url_for('admin_banners_editar', id=banner.id) }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

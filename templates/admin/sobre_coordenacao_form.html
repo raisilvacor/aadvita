@@ -1,0 +1,62 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if membro %}Editar{% else %}Novo{% endif %} Coordenador(a){% endblock %}
+
+{% block page_title %}{% if membro %}Editar{% else %}Novo{% endif %} Coordenador(a){% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="cargo">Cargo *</label>
+            <input type="text" id="cargo" name="cargo" value="{% if membro %}{{ membro.cargo }}{% else %}Membro da Coordenação Social{% endif %}" required>
+            <small style="color: var(--text-light);">Ex: Membro da Coordenação Social, Coordenador(a) de Projetos, etc.</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="nome_pt">Nome (Português) *</label>
+            <input type="text" id="nome_pt" name="nome_pt" value="{% if membro %}{{ membro.nome_pt }}{% endif %}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="nome_es">Nome (Espanhol)</label>
+            <input type="text" id="nome_es" name="nome_es" value="{% if membro %}{{ membro.nome_es }}{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="nome_en">Nome (Inglês)</label>
+            <input type="text" id="nome_en" name="nome_en" value="{% if membro %}{{ membro.nome_en }}{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="ordem">Ordem de Exibição</label>
+            <input type="number" id="ordem" name="ordem" value="{% if membro %}{{ membro.ordem }}{% else %}0{% endif %}" min="0">
+            <small style="color: var(--text-light);">Use para ordenar os membros (menor número aparece primeiro)</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="foto">Foto</label>
+            <input type="file" id="foto" name="foto" accept="image/*">
+            {% if membro and membro.foto %}
+                <div style="margin-top: 1rem;">
+                    <label>Foto Atual:</label>
+                    <img src="{{ url_for('static', filename=membro.foto) }}" 
+                         alt="{{ membro.nome_pt }}" 
+                         style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; display: block; margin-top: 0.5rem;">
+                </div>
+            {% endif %}
+            <small style="color: var(--text-light);">Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP (máx. 16MB)</small>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_sobre') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

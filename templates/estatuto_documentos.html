@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Estatuto e Documentos') }} - {{ _('Transparência') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Estatuto e Documentos') }}</h1>
+        <p class="page-description">{{ _('Acesse nosso estatuto social, atas de reuniões e documentos oficiais') }}</p>
+    </div>
+</section>
+
+<section class="relatorios-section" aria-labelledby="documentos-content">
+    <div class="container">
+        {% if documentos %}
+            <div class="relatorios-list">
+                {% for documento in documentos %}
+                <div class="relatorio-item">
+                    <div class="relatorio-header">
+                        <h3>{{ get_text(documento, 'titulo') or documento.titulo_pt }}</h3>
+                        <div class="relatorio-meta">
+                            {% if documento.tipo == 'estatuto' %}
+                                <span class="badge badge-estatuto">{{ _('Estatuto') }}</span>
+                            {% elif documento.tipo == 'ata' %}
+                                <span class="badge badge-ata">{{ _('Ata') }}</span>
+                            {% elif documento.tipo == 'documento' %}
+                                <span class="badge badge-documento">{{ _('Documento') }}</span>
+                            {% endif %}
+                            {% if documento.data_documento %}
+                                <span class="relatorio-date">{{ _('Data:') }} {{ documento.data_documento.strftime('%d/%m/%Y') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if get_text(documento, 'descricao') %}
+                        <div class="relatorio-descricao">
+                            <p>{{ get_text(documento, 'descricao')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if documento.arquivo %}
+                        <div class="relatorio-actions">
+                            <a href="{{ url_for('static', filename=documento.arquivo) }}" target="_blank" class="btn btn-primary">
+                                <span>📄</span> {{ _('Baixar Documento') }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <p>{{ _('Nenhum documento cadastrado no momento.') }}</p>
+            </div>
+        {% endif %}
+
+        <div class="relatorios-back">
+            <a href="{{ url_for('transparencia') }}" class="btn btn-secondary">
+                <span>←</span> {{ _('Voltar para Transparência') }}
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

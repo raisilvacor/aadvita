@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Projetos') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem;">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Nossos Projetos') }}</h1>
+        <p class="page-description">{{ _('Conheça os projetos que desenvolvemos para promover inclusão e acessibilidade') }}</p>
+    </div>
+</section>
+
+<section class="projetos-section" aria-labelledby="projetos-title" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <div class="container">
+        {% if projetos %}
+            <div class="card-grid" role="list" style="margin-top: 2rem;">
+                {% for projeto in projetos %}
+                <article class="card projeto-card" role="listitem">
+                    {% if projeto.imagen %}
+                    <div class="card-image">
+                        <img src="{{ url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.titulo }}">
+                    </div>
+                    {% endif %}
+                    <div class="card-header">
+                        <h2 class="card-title">{{ projeto.titulo }}</h2>
+                        <span class="badge badge-{{ 'success' if projeto.estado == 'Ativo' else 'secondary' }}">
+                            {{ projeto.estado }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ projeto.descripcion }}</p>
+                        {% if projeto.data_inicio %}
+                        <div class="projeto-meta">
+                            <time datetime="{{ projeto.data_inicio.strftime('%Y-%m-%d') }}">
+                                <strong>Início:</strong> {{ projeto.data_inicio.strftime('%d/%m/%Y') }}
+                            </time>
+                        </div>
+                        {% endif %}
+                        <div style="margin-top: 1rem;">
+                            <a href="{{ url_for('projeto', id=projeto.id) }}" class="btn btn-primary" style="display: inline-block;">
+                                {{ _('Ver Detalhes') }}
+                            </a>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">{{ _('Não há projetos cadastrados no momento.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

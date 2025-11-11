@@ -1,0 +1,805 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if doacao %}Editar{% else %}Nova{% endif %} Doação{% endblock %}
+
+{% block page_title %}{% if doacao %}Editar{% else %}Nova{% endif %} Doação{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">{% if doacao %}Editar{% else %}Nova{% endif %} Doação</h2>
+        <a href="{{ url_for('admin_contas') }}" class="btn-admin btn-admin-secondary">
+            <span>←</span> Voltar
+        </a>
+    </div>
+    
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="tipo">Tipo de Doação *</label>
+            <select id="tipo" name="tipo" class="form-input" required onchange="atualizarCampos()">
+                <option value="">Selecione o tipo</option>
+                <option value="financeira" {% if doacao and doacao.tipo == 'financeira' %}selected{% endif %}>💰 Financeira (Dinheiro)</option>
+                <option value="material" {% if doacao and doacao.tipo == 'material' %}selected{% endif %}>📦 Material</option>
+                <option value="servico" {% if doacao and doacao.tipo == 'servico' %}selected{% endif %}>🛠️ Prestação de Serviço</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao">Descrição *</label>
+            <textarea id="descricao" name="descricao" rows="3" required>{% if doacao %}{{ doacao.descricao }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="doador">Doador</label>
+            <input type="text" id="doador" name="doador" 
+                   value="{% if doacao %}{{ doacao.doador }}{% endif %}" 
+                   class="form-input"
+                   placeholder="Nome do doador">
+        </div>
+        
+        <div class="form-group">
+            <label for="pais">País do Doador *</label>
+            <select id="pais" name="pais" class="form-input" required onchange="atualizarCamposPorPais()">
+                <option value="">Selecione o país</option>
+{% include 'admin/paises_options.html' %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="telefone">Telefone do Doador</label>
+            <input type="text" id="telefone" name="telefone" 
+                   value="{% if doacao %}{{ doacao.telefone }}{% endif %}" 
+                   class="form-input"
+                   placeholder="Digite o telefone"
+                   maxlength="50">
+            <small style="color: var(--text-light);" id="telefone_help">Formato será definido pelo país selecionado</small>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo_documento">Tipo de Documento</label>
+                <select id="tipo_documento" name="tipo_documento" class="form-input" onchange="atualizarMascaraDocumento(true)">
+                    <option value="">Selecione</option>
+                </select>
+                <small style="color: var(--text-light);" id="documento_help">Tipos disponíveis conforme o país</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="documento">Documento</label>
+                <input type="text" id="documento" name="documento" 
+                       value="{% if doacao and doacao.documento %}{{ doacao.documento }}{% endif %}" 
+                       class="form-input"
+                       maxlength="30"
+                       placeholder="Digite o documento">
+            </div>
+        </div>
+        
+        <div class="form-group" id="campo_valor" style="display: none;">
+            <label for="valor">Valor (R$) *</label>
+            <input type="number" id="valor" name="valor" 
+                   step="0.01" min="0" 
+                   value="{% if doacao and doacao.valor %}{{ doacao.valor }}{% endif %}" 
+                   class="form-input"
+                   placeholder="0.00">
+        </div>
+        
+        <div class="form-group" id="campo_quantidade" style="display: none;">
+            <label for="quantidade">Quantidade *</label>
+            <input type="number" id="quantidade" name="quantidade" 
+                   min="0" 
+                   value="{% if doacao and doacao.quantidade %}{{ doacao.quantidade }}{% endif %}" 
+                   class="form-input"
+                   placeholder="0">
+        </div>
+        
+        <div class="form-group" id="campo_unidade" style="display: none;">
+            <label for="unidade">Unidade</label>
+            <input type="text" id="unidade" name="unidade" 
+                   value="{% if doacao %}{{ doacao.unidade }}{% endif %}" 
+                   class="form-input"
+                   placeholder="{% if doacao and doacao.tipo == 'servico' %}Ex: horas, dias{% else %}Ex: kg, litros, unidades{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="data_doacao">Data da Doação *</label>
+            <input type="date" id="data_doacao" name="data_doacao" 
+                   value="{% if doacao %}{{ doacao.data_doacao.strftime('%Y-%m-%d') }}{% else %}{{ date.today().strftime('%Y-%m-%d') }}{% endif %}" 
+                   required>
+        </div>
+        
+        <div class="form-group">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" name="observacoes" rows="3">{% if doacao %}{{ doacao.observacoes }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_contas') }}" class="btn-admin btn-admin-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function atualizarCampos() {
+    const tipo = document.getElementById('tipo').value;
+    const campoValor = document.getElementById('campo_valor');
+    const campoQuantidade = document.getElementById('campo_quantidade');
+    const campoUnidade = document.getElementById('campo_unidade');
+    const inputValor = document.getElementById('valor');
+    const inputQuantidade = document.getElementById('quantidade');
+    
+    // Esconder todos os campos
+    campoValor.style.display = 'none';
+    campoQuantidade.style.display = 'none';
+    campoUnidade.style.display = 'none';
+    
+    // Remover required
+    inputValor.removeAttribute('required');
+    inputQuantidade.removeAttribute('required');
+    
+    if (tipo === 'financeira') {
+        campoValor.style.display = 'block';
+        inputValor.setAttribute('required', 'required');
+    } else if (tipo === 'material' || tipo === 'servico') {
+        campoQuantidade.style.display = 'block';
+        campoUnidade.style.display = 'block';
+        inputQuantidade.setAttribute('required', 'required');
+        
+        // Atualizar placeholder da unidade
+        const inputUnidade = document.getElementById('unidade');
+        if (tipo === 'servico') {
+            inputUnidade.placeholder = 'Ex: horas, dias';
+        } else {
+            inputUnidade.placeholder = 'Ex: kg, litros, unidades';
+        }
+    }
+}
+
+// Configurações por país
+const configPaises = {
+    'BR': {
+        ddi: '+55',
+        telefone: { format: 'br', placeholder: '+55 (00) 00000-0000' },
+        documentos: [
+            { value: 'cpf', label: 'CPF (Pessoa Física)', maxLength: 14, placeholder: '000.000.000-00' },
+            { value: 'cnpj', label: 'CNPJ (Pessoa Jurídica)', maxLength: 18, placeholder: '00.000.000/0000-00' }
+        ]
+    },
+    'AR': {
+        ddi: '+54',
+        telefone: { format: 'ar', placeholder: '+54 (000) 000 0000' },
+        documentos: [
+            { value: 'cuil', label: 'CUIL (Pessoa Física - CPF)', maxLength: 13, placeholder: '00-00000000-0' },
+            { value: 'cuit', label: 'CUIT (Pessoa Jurídica - CNPJ)', maxLength: 13, placeholder: '00-00000000-0' }
+        ]
+    },
+    'UY': {
+        ddi: '+598',
+        telefone: { format: 'uy', placeholder: '+598 0000 0000' },
+        documentos: [
+            { value: 'ruc', label: 'RUC (Pessoa Jurídica)', maxLength: 12, placeholder: '000000000000' }
+        ]
+    },
+    'PY': {
+        ddi: '+595',
+        telefone: { format: 'py', placeholder: '+595 (000) 000-000' },
+        documentos: [
+            { value: 'ruc', label: 'RUC (Pessoa Jurídica)', maxLength: 10, placeholder: '0000000-0' }
+        ]
+    },
+    'CL': {
+        ddi: '+56',
+        telefone: { format: 'cl', placeholder: '+56 9 0000 0000' },
+        documentos: [
+            { value: 'rut_empresa', label: 'RUT (Pessoa Jurídica)', maxLength: 12, placeholder: '00.000.000-0' }
+        ]
+    },
+    'CO': {
+        ddi: '+57',
+        telefone: { format: 'co', placeholder: '+57 300 000 0000' },
+        documentos: [
+            { value: 'nit', label: 'NIT (Pessoa Jurídica)', maxLength: 12, placeholder: '000.000.000-0' }
+        ]
+    },
+    'PE': {
+        ddi: '+51',
+        telefone: { format: 'pe', placeholder: '+51 000 000 000' },
+        documentos: [
+            { value: 'ruc', label: 'RUC (Pessoa Jurídica)', maxLength: 11, placeholder: '00000000000' }
+        ]
+    },
+    'BO': {
+        ddi: '+591',
+        telefone: { format: 'bo', placeholder: '+591 000 00000' },
+        documentos: [
+            { value: 'nit', label: 'NIT (Pessoa Jurídica)', maxLength: 12, placeholder: '0000000000' }
+        ]
+    },
+    'VE': {
+        ddi: '+58',
+        telefone: { format: 've', placeholder: '+58 000 000-0000' },
+        documentos: [
+            { value: 'rif', label: 'RIF (Pessoa Jurídica)', maxLength: 12, placeholder: 'J-00000000-0' }
+        ]
+    },
+    'EC': {
+        ddi: '+593',
+        telefone: { format: 'ec', placeholder: '+593 00 000 0000' },
+        documentos: [
+            { value: 'ruc', label: 'RUC (Pessoa Jurídica)', maxLength: 13, placeholder: '0000000000000' }
+        ]
+    },
+    'US': {
+        ddi: '+1',
+        telefone: { format: 'us', placeholder: '+1 (000) 000-0000' },
+        documentos: [
+            { value: 'ssn', label: 'SSN (Pessoa Física)', maxLength: 11, placeholder: '000-00-0000' },
+            { value: 'ein', label: 'EIN (Pessoa Jurídica)', maxLength: 12, placeholder: '00-0000000' },
+            { value: 'passaporte', label: 'Passaporte', maxLength: 20, placeholder: 'Passaporte' }
+        ]
+    },
+    'ES': {
+        ddi: '+34',
+        telefone: { format: 'es', placeholder: '+34 000 000 000' },
+        documentos: [
+            { value: 'nie', label: 'NIE (Pessoa Física)', maxLength: 10, placeholder: 'X-0000000-A' },
+            { value: 'cif', label: 'CIF (Pessoa Jurídica)', maxLength: 10, placeholder: 'A00000000' },
+            { value: 'passaporte', label: 'Passaporte', maxLength: 20, placeholder: 'Passaporte' }
+        ]
+    },
+    'PT': {
+        ddi: '+351',
+        telefone: { format: 'pt', placeholder: '+351 000 000 000' },
+        documentos: [
+            { value: 'nif', label: 'NIF (Pessoa Física)', maxLength: 11, placeholder: '000000000' },
+            { value: 'nif_empresa', label: 'NIF (Pessoa Jurídica)', maxLength: 11, placeholder: '000000000' },
+            { value: 'passaporte', label: 'Passaporte', maxLength: 20, placeholder: 'Passaporte' }
+        ]
+    },
+    'OUTRO': {
+        ddi: '',
+        telefone: { format: 'outro', placeholder: 'Digite o telefone com DDI' },
+        documentos: [
+            { value: 'passaporte', label: 'Passaporte', maxLength: 30, placeholder: 'Passaporte' },
+            { value: 'outro', label: 'Outro', maxLength: 30, placeholder: 'Documento' }
+        ]
+    },
+{% include 'admin/paises_js_config.html' %}
+};
+
+function atualizarCamposPorPais() {
+    const pais = document.getElementById('pais').value;
+    const campoPaisOutro = document.getElementById('campo_pais_outro');
+    const inputTelefone = document.getElementById('telefone');
+    const selectTipoDocumento = document.getElementById('tipo_documento');
+    const inputDocumento = document.getElementById('documento');
+    const telefoneHelp = document.getElementById('telefone_help');
+    const documentoHelp = document.getElementById('documento_help');
+    
+    // Preservar valores existentes ao editar
+    const telefoneAtual = inputTelefone.value;
+    const tipoDocAtual = selectTipoDocumento.value;
+    const documentoAtual = inputDocumento.value;
+    
+    // Limpar campos apenas se não estiver editando
+    {% if not doacao %}
+    inputTelefone.value = '';
+    selectTipoDocumento.innerHTML = '<option value="">Selecione</option>';
+    inputDocumento.value = '';
+    {% else %}
+    // Ao editar, limpar apenas o select de documentos e reconstruir
+    selectTipoDocumento.innerHTML = '<option value="">Selecione</option>';
+    {% endif %}
+    
+    if (!pais) {
+        campoPaisOutro.style.display = 'none';
+        inputTelefone.placeholder = 'Digite o telefone';
+        telefoneHelp.textContent = 'Formato será definido pelo país selecionado';
+        documentoHelp.textContent = 'Tipos disponíveis conforme o país';
+        return;
+    }
+    
+    // Campo de país outro não é mais necessário (todos os países estão na lista)
+    if (campoPaisOutro) {
+        campoPaisOutro.style.display = 'none';
+        campoPaisOutro.removeAttribute('required');
+    }
+    
+    // Configurar telefone
+    if (pais && configPaises[pais]) {
+        const config = configPaises[pais];
+        inputTelefone.placeholder = config.telefone.placeholder;
+        telefoneHelp.textContent = `Formato: ${config.telefone.placeholder}`;
+        
+        // Se não estiver editando ou o telefone não começar com o DDI, adicionar DDI automaticamente
+        {% if not doacao %}
+        if (config.ddi && !inputTelefone.value.startsWith(config.ddi)) {
+            inputTelefone.value = config.ddi + ' ';
+        }
+        {% else %}
+        // Ao editar, preservar o valor existente se houver
+        if (!telefoneAtual && '{{ doacao.telefone }}') {
+            inputTelefone.value = '{{ doacao.telefone }}';
+        } else if (telefoneAtual) {
+            inputTelefone.value = telefoneAtual;
+        } else if (config.ddi && !inputTelefone.value.startsWith(config.ddi)) {
+            inputTelefone.value = config.ddi + ' ';
+        }
+        {% endif %}
+        
+        // Configurar documentos
+        config.documentos.forEach(doc => {
+            const option = document.createElement('option');
+            option.value = doc.value;
+            option.textContent = doc.label;
+            {% if doacao and doacao.tipo_documento %}
+            if ('{{ doacao.tipo_documento }}' === doc.value) {
+                option.selected = true;
+            }
+            {% endif %}
+            selectTipoDocumento.appendChild(option);
+        });
+        
+        // Restaurar documento se estava editando
+        {% if doacao and doacao.documento %}
+        if (!documentoAtual && '{{ doacao.documento }}') {
+            inputDocumento.value = '{{ doacao.documento }}';
+        } else if (documentoAtual) {
+            inputDocumento.value = documentoAtual;
+        }
+        {% endif %}
+        
+        documentoHelp.textContent = `Documentos disponíveis: ${config.documentos.map(d => d.label).join(', ')}`;
+    }
+    
+    atualizarMascaraDocumento(false);
+}
+
+function atualizarMascaraDocumento(limpar = false) {
+    const pais = document.getElementById('pais').value;
+    const tipoDocumento = document.getElementById('tipo_documento').value;
+    const inputDocumento = document.getElementById('documento');
+    
+    if (!pais || !configPaises[pais]) {
+        inputDocumento.maxLength = 30;
+        inputDocumento.placeholder = 'Digite o documento';
+        return;
+    }
+    
+    const config = configPaises[pais];
+    const documentoConfig = config.documentos.find(d => d.value === tipoDocumento);
+    
+    // Limpar campo apenas se foi chamado ao mudar o tipo (não ao carregar)
+    if (limpar) {
+        inputDocumento.value = '';
+    }
+    
+    if (documentoConfig) {
+        inputDocumento.maxLength = documentoConfig.maxLength;
+        inputDocumento.placeholder = documentoConfig.placeholder;
+    } else {
+        inputDocumento.maxLength = 30;
+        inputDocumento.placeholder = 'Digite o documento';
+    }
+}
+
+// Máscaras dinâmicas baseadas no país
+document.addEventListener('DOMContentLoaded', function() {
+    atualizarCampos();
+    
+    // Se estiver editando, restaurar campos do país primeiro
+    {% if doacao and doacao.pais %}
+    const paisSelectInit = document.getElementById('pais');
+    if (paisSelectInit && paisSelectInit.value) {
+        // Aguardar um pouco para garantir que o DOM está pronto
+        setTimeout(function() {
+            atualizarCamposPorPais();
+        }, 100);
+    }
+    {% else %}
+    atualizarCamposPorPais();
+    {% endif %}
+    
+    const inputDocumento = document.getElementById('documento');
+    const tipoDocumento = document.getElementById('tipo_documento');
+    const paisSelect = document.getElementById('pais');
+    
+    // Máscara de documento
+    inputDocumento.addEventListener('input', function(e) {
+        const pais = paisSelect.value;
+        const tipoDoc = tipoDocumento.value;
+        
+        if (!pais || !configPaises[pais]) return;
+        
+        let value = e.target.value.replace(/[^A-Za-z0-9]/g, '');
+        const config = configPaises[pais];
+        const docConfig = config.documentos.find(d => d.value === tipoDoc);
+        
+        if (!docConfig) return;
+        
+        // Aplicar máscaras específicas por tipo de documento
+        if (pais === 'BR') {
+            if (tipoDoc === 'rg' && value.length <= 10) {
+                value = value.replace(/(\d{2})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1})$/, '$1-$2');
+            } else if (tipoDoc === 'cpf' && value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            } else if (tipoDoc === 'cnpj' && value.length <= 14) {
+                value = value.replace(/(\d{2})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1/$2');
+                value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+            }
+        } else if (pais === 'AR') {
+            if ((tipoDoc === 'cuil' || tipoDoc === 'cuit') && value.length <= 11) {
+                value = value.replace(/(\d{2})(\d)/, '$1-$2');
+                value = value.replace(/(\d{8})(\d{1})$/, '$1-$2');
+            }
+        } else if (pais === 'CL') {
+            if (tipoDoc === 'rut_empresa' && value.length <= 9) {
+                value = value.replace(/(\d{2})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1})$/, '$1-$2');
+            }
+        } else if (pais === 'CO') {
+            if (tipoDoc === 'nit' && value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1})$/, '$1-$2');
+            }
+        } else if (pais === 'PE') {
+            if (tipoDoc === 'ruc' && value.length <= 11) {
+                // Sem formatação para RUC do Peru
+            }
+        } else if (pais === 'VE') {
+            if (tipoDoc === 'rif' && value.length <= 10) {
+                value = value.replace(/([A-Z])(\d)/, '$1-$2');
+                value = value.replace(/(\d{8})(\d{1})$/, '$1-$2');
+            }
+        } else if (pais === 'US') {
+            if (tipoDoc === 'ssn' && value.length <= 9) {
+                value = value.replace(/(\d{3})(\d)/, '$1-$2');
+                value = value.replace(/(\d{2})(\d)/, '$1-$2');
+            } else if (tipoDoc === 'ein' && value.length <= 9) {
+                value = value.replace(/(\d{2})(\d)/, '$1-$2');
+            }
+        } else if (pais === 'ES') {
+            if (tipoDoc === 'nie' && value.length <= 7) {
+                // NIE: X + 7 dígitos + letra
+            } else if (tipoDoc === 'cif' && value.length <= 8) {
+                // CIF: Letra + 7 dígitos
+            }
+        } else if (pais === 'PT') {
+            if ((tipoDoc === 'nif' || tipoDoc === 'nif_empresa') && value.length <= 9) {
+                // NIF: 9 dígitos
+            }
+        }
+        
+        e.target.value = value;
+    });
+    
+    // Máscara de telefone baseada no país
+    const telefoneInput = document.getElementById('telefone');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function(e) {
+            const pais = paisSelect.value;
+            if (!pais || !configPaises[pais]) return;
+            
+            const config = configPaises[pais];
+            let value = e.target.value;
+            
+            // Remover todos os caracteres não numéricos exceto espaços, parênteses, hífens e +
+            let numbers = value.replace(/[^\d]/g, '');
+            
+            // Aplicar máscaras específicas por país
+            if (pais === 'BR') {
+                // +55 (00) 00000-0000
+                if (numbers.startsWith('55')) {
+                    numbers = numbers.substring(2);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' (' + numbers.substring(0, 2);
+                        if (numbers.length > 2) {
+                            value += ') ' + numbers.substring(2, 7);
+                            if (numbers.length > 7) {
+                                value += '-' + numbers.substring(7, 11);
+                            }
+                        } else {
+                            value += ')';
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'AR') {
+                // +54 (000) 000 0000
+                if (numbers.startsWith('54')) {
+                    numbers = numbers.substring(2);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' (' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ') ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += ' ' + numbers.substring(6, 10);
+                            }
+                        } else {
+                            value += ')';
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'US') {
+                // +1 (000) 000-0000
+                if (numbers.startsWith('1')) {
+                    numbers = numbers.substring(1);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' (' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ') ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += '-' + numbers.substring(6, 10);
+                            }
+                        } else {
+                            value += ')';
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'CL') {
+                // +56 9 0000 0000
+                if (numbers.startsWith('56')) {
+                    numbers = numbers.substring(2);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 1);
+                        if (numbers.length > 1) {
+                            value += ' ' + numbers.substring(1, 5);
+                            if (numbers.length > 5) {
+                                value += ' ' + numbers.substring(5, 9);
+                            }
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'UY') {
+                // +598 0000 0000
+                if (numbers.startsWith('598')) {
+                    numbers = numbers.substring(3);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 4);
+                        if (numbers.length > 4) {
+                            value += ' ' + numbers.substring(4, 8);
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'PY') {
+                // +595 (000) 000-000
+                if (numbers.startsWith('595')) {
+                    numbers = numbers.substring(3);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' (' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ') ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += '-' + numbers.substring(6, 9);
+                            }
+                        } else {
+                            value += ')';
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'CO') {
+                // +57 300 000 0000
+                if (numbers.startsWith('57')) {
+                    numbers = numbers.substring(2);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ' ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += ' ' + numbers.substring(6, 10);
+                            }
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'PE') {
+                // +51 000 000 000
+                if (numbers.startsWith('51')) {
+                    numbers = numbers.substring(2);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ' ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += ' ' + numbers.substring(6, 9);
+                            }
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'BO') {
+                // +591 000 00000
+                if (numbers.startsWith('591')) {
+                    numbers = numbers.substring(3);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ' ' + numbers.substring(3, 8);
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'VE') {
+                // +58 000 000-0000
+                if (numbers.startsWith('58')) {
+                    numbers = numbers.substring(2);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ' ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += '-' + numbers.substring(6, 10);
+                            }
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'EC') {
+                // +593 00 000 0000
+                if (numbers.startsWith('593')) {
+                    numbers = numbers.substring(3);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 2);
+                        if (numbers.length > 2) {
+                            value += ' ' + numbers.substring(2, 5);
+                            if (numbers.length > 5) {
+                                value += ' ' + numbers.substring(5, 9);
+                            }
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'ES') {
+                // +34 000 000 000
+                if (numbers.startsWith('34')) {
+                    numbers = numbers.substring(2);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ' ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += ' ' + numbers.substring(6, 9);
+                            }
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (pais === 'PT') {
+                // +351 000 000 000
+                if (numbers.startsWith('351')) {
+                    numbers = numbers.substring(3);
+                }
+                if (numbers.length > 0) {
+                    value = config.ddi;
+                    if (numbers.length > 0) {
+                        value += ' ' + numbers.substring(0, 3);
+                        if (numbers.length > 3) {
+                            value += ' ' + numbers.substring(3, 6);
+                            if (numbers.length > 6) {
+                                value += ' ' + numbers.substring(6, 9);
+                            }
+                        }
+                    }
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else if (config.telefone.format === 'generico') {
+                // Formato genérico para países sem máscara específica
+                if (numbers.length > 0) {
+                    // Remover DDI se já estiver presente
+                    const ddiDigits = config.ddi.replace(/[^0-9]/g, '');
+                    if (numbers.startsWith(ddiDigits)) {
+                        numbers = numbers.substring(ddiDigits.length);
+                    }
+                    value = config.ddi + ' ' + numbers;
+                } else {
+                    value = config.ddi + ' ';
+                }
+            } else {
+                // Para outros países, manter o valor como está
+                if (config.ddi && !value.startsWith(config.ddi)) {
+                    value = config.ddi + ' ' + value;
+                }
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Ao perder o foco, garantir que o DDI está presente
+        telefoneInput.addEventListener('blur', function(e) {
+            const pais = paisSelect.value;
+            if (pais && configPaises[pais] && configPaises[pais].ddi) {
+                const ddi = configPaises[pais].ddi;
+                let value = e.target.value.trim();
+                if (value && !value.startsWith(ddi)) {
+                    // Se não começar com o DDI, adicionar
+                    const numbers = value.replace(/\D/g, '');
+                    if (numbers.length > 0) {
+                        e.target.value = ddi + ' ' + numbers;
+                    } else {
+                        e.target.value = ddi + ' ';
+                    }
+                } else if (!value) {
+                    e.target.value = ddi + ' ';
+                }
+            }
+        });
+    }
+    
+    // Validar antes de submeter
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const pais = paisSelect.value;
+            // Validação de país removida - todos os países estão na lista
+        });
+    }
+});
+</script>
+{% endblock %}
+

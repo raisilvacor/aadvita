@@ -1,0 +1,155 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if informativo %}Editar{% else %}Novo{% endif %} Informativo{% endblock %}
+
+{% block page_title %}{% if informativo %}Editar{% else %}Novo{% endif %} Informativo{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data" id="informativo-form">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="tipo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Tipo *
+            </label>
+            <select id="tipo" name="tipo" required
+                    style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                    onchange="toggleFields()">
+                <option value="">Selecione o tipo</option>
+                <option value="Noticia" {% if informativo and informativo.tipo == 'Noticia' %}selected{% endif %}>Notícia</option>
+                <option value="Podcast" {% if informativo and informativo.tipo == 'Podcast' %}selected{% endif %}>Podcast</option>
+            </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="titulo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Título *
+            </label>
+            <input type="text" id="titulo" name="titulo" value="{% if informativo %}{{ informativo.titulo }}{% endif %}" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="subtitulo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Subtítulo
+            </label>
+            <input type="text" id="subtitulo" name="subtitulo" value="{% if informativo and informativo.subtitulo %}{{ informativo.subtitulo }}{% endif %}"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Subtítulo opcional para complementar o título">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Campo opcional. Use para adicionar um subtítulo descritivo.
+            </small>
+        </div>
+        
+        <div class="form-group" id="conteudo-group" style="margin-bottom: 1.5rem; display: {% if informativo and informativo.tipo == 'Noticia' or not informativo %}block{% else %}none{% endif %};">
+            <label for="conteudo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Conteúdo (Texto da Notícia) *
+            </label>
+            <textarea id="conteudo" name="conteudo" rows="10"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if informativo and informativo.conteudo %}{{ informativo.conteudo }}{% endif %}</textarea>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Digite o conteúdo completo da notícia.
+            </small>
+        </div>
+        
+        <div class="form-group" id="url-soundcloud-group" style="margin-bottom: 1.5rem; display: {% if informativo and informativo.tipo == 'Podcast' %}block{% else %}none{% endif %};">
+            <label for="url_soundcloud" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                URL do SoundCloud *
+            </label>
+            <input type="url" id="url_soundcloud" name="url_soundcloud" 
+                   value="{% if informativo and informativo.url_soundcloud %}{{ informativo.url_soundcloud }}{% endif %}"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="https://soundcloud.com/...">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Cole a URL completa do podcast no SoundCloud. Exemplo: https://soundcloud.com/usuario/nome-do-podcast
+            </small>
+        </div>
+        
+        <div class="form-group" id="imagem-group" style="margin-bottom: 1.5rem; display: {% if informativo and informativo.tipo == 'Noticia' or not informativo %}block{% else %}none{% endif %};">
+            <label for="imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Imagem (Opcional)
+            </label>
+            {% if informativo and informativo.imagem %}
+            <div style="margin-bottom: 1rem;">
+                <img src="{{ url_for('static', filename=informativo.imagem) }}" 
+                     alt="Imagem atual" 
+                     style="max-width: 300px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db;">
+                <p style="color: var(--text-light); font-size: 0.875rem; margin-top: 0.5rem;">
+                    Imagem atual. Selecione uma nova imagem para substituir.
+                </p>
+            </div>
+            {% endif %}
+            <input type="file" id="imagem" name="imagem" accept="image/*"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP. Máximo: 16MB.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="data_publicacao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Data de Publicação *
+            </label>
+            <input type="date" id="data_publicacao" name="data_publicacao" 
+                   value="{% if informativo %}{{ informativo.data_publicacao.strftime('%Y-%m-%d') }}{% else %}{{ moment().format('YYYY-MM-DD') if moment else '' }}{% endif %}" 
+                   required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if informativo %}Atualizar{% else %}Salvar{% endif %}
+            </button>
+            <a href="{{ url_for('admin_informativos') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleFields() {
+    const tipo = document.getElementById('tipo').value;
+    const conteudoGroup = document.getElementById('conteudo-group');
+    const urlSoundcloudGroup = document.getElementById('url-soundcloud-group');
+    const imagemGroup = document.getElementById('imagem-group');
+    const conteudoField = document.getElementById('conteudo');
+    const urlSoundcloudField = document.getElementById('url_soundcloud');
+    
+    if (tipo === 'Noticia') {
+        conteudoGroup.style.display = 'block';
+        urlSoundcloudGroup.style.display = 'none';
+        imagemGroup.style.display = 'block';
+        conteudoField.required = true;
+        urlSoundcloudField.required = false;
+    } else if (tipo === 'Podcast') {
+        conteudoGroup.style.display = 'none';
+        urlSoundcloudGroup.style.display = 'block';
+        imagemGroup.style.display = 'none';
+        conteudoField.required = false;
+        urlSoundcloudField.required = true;
+    } else {
+        conteudoGroup.style.display = 'none';
+        urlSoundcloudGroup.style.display = 'none';
+        imagemGroup.style.display = 'none';
+        conteudoField.required = false;
+        urlSoundcloudField.required = false;
+    }
+}
+
+// Inicializar campos ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    toggleFields();
+    
+    // Se não houver data definida (novo informativo), usar data de hoje
+    const dataPublicacao = document.getElementById('data_publicacao');
+    if (!dataPublicacao.value) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dataPublicacao.value = `${year}-${month}-${day}`;
+    }
+});
+</script>
+{% endblock %}
+

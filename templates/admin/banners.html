@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gerenciar Banners{% endblock %}
+
+{% block page_title %}Gerenciar Banners da Página Inicial{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Banners</h2>
+        <p style="color: var(--text-light); margin-top: 0.5rem;">
+            Gerencie os banners exibidos na página inicial (Campanhas, Apoie-nos, Editais)
+        </p>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Título</th>
+                    <th>Descrição</th>
+                    <th>Conteúdo</th>
+                    <th>Status</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if banners %}
+                    {% for banner in banners %}
+                    <tr>
+                        <td><strong>{{ banner.tipo }}</strong></td>
+                        <td>{{ banner.titulo }}</td>
+                        <td>{{ banner.descricao or '-' }}</td>
+                        <td>
+                            {% set conteudos_count = banner.conteudos|length %}
+                            {% if conteudos_count > 0 %}
+                            <span class="badge badge-info" style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem;">
+                                {{ conteudos_count }} conteúdo{{ 's' if conteudos_count > 1 else '' }}
+                            </span>
+                            {% else %}
+                            <span style="color: var(--text-light); font-size: 0.875rem;">Sem conteúdos</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if banner.ativo else 'secondary' }}">
+                                {{ 'Ativo' if banner.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td>{{ banner.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_banners_editar', id=banner.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            Nenhum banner cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

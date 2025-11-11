@@ -1,0 +1,118 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dados da Associação{% endblock %}
+
+{% block page_title %}Dados da Associação{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Dados da Associação</h2>
+        <p style="color: #6b7280; margin: 0.5rem 0 0 0; font-size: 0.875rem;">
+            Configure as informações básicas da associação que serão utilizadas em documentos e comunicações.
+        </p>
+    </div>
+    
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="nome">Nome da Associação *</label>
+            <input type="text" id="nome" name="nome" 
+                   value="{% if dados %}{{ dados.nome }}{% endif %}" 
+                   required
+                   placeholder="Ex: Associação AADVITA"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Nome oficial da associação
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="cnpj">CNPJ *</label>
+            <input type="text" id="cnpj" name="cnpj" 
+                   value="{% if dados %}{{ dados.cnpj }}{% endif %}" 
+                   required
+                   placeholder="00.000.000/0001-00"
+                   maxlength="18"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                CNPJ da associação no formato: 00.000.000/0001-00
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="endereco">Endereço *</label>
+            <textarea id="endereco" name="endereco" rows="4" required
+                      placeholder="Rua, número, bairro, cidade - CEP"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; resize: vertical;">{% if dados %}{{ dados.endereco }}{% endif %}</textarea>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Endereço completo da associação
+            </small>
+        </div>
+        
+        {% if dados and dados.updated_at %}
+        <div style="padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+            <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">
+                <strong>Última atualização:</strong> {{ dados.updated_at.strftime('%d/%m/%Y às %H:%M') }}
+            </p>
+        </div>
+        {% endif %}
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card" style="margin-top: 2rem; background: #eff6ff; border: 2px solid #3b82f6;">
+    <div class="admin-card-header">
+        <h3 style="color: #1e40af; margin: 0;">ℹ️ Informações</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <ul style="margin: 0; padding-left: 1.5rem; color: #1e40af;">
+            <li>Estes dados serão utilizados em documentos gerados pelo sistema, como carteiras de associados.</li>
+            <li>Certifique-se de manter as informações atualizadas e precisas.</li>
+            <li>O CNPJ deve estar no formato correto: 00.000.000/0001-00</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Seção "O que fazemos" -->
+<div class="admin-card" style="margin-top: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">O que fazemos</h2>
+        <a href="{{ url_for('admin_o_que_fazemos') }}" class="btn-admin btn-admin-primary">
+            <span>🔧</span> Gerenciar Serviços
+        </a>
+    </div>
+    <div style="padding: 1.5rem;">
+        <p style="color: #6b7280; margin: 0 0 1rem 0;">
+            Gerencie os serviços exibidos no módulo "O que fazemos" da página inicial.
+        </p>
+        <a href="{{ url_for('admin_o_que_fazemos') }}" class="btn-admin btn-admin-secondary">
+            <span>👁️</span> Ver e Gerenciar Serviços
+        </a>
+    </div>
+</div>
+
+<script>
+// Máscara para CNPJ
+document.addEventListener('DOMContentLoaded', function() {
+    const cnpjInput = document.getElementById('cnpj');
+    if (cnpjInput) {
+        cnpjInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 14) {
+                value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                value = value.replace(/(\d{4})(\d)/, '$1-$2');
+                e.target.value = value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

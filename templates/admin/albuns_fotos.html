@@ -1,0 +1,150 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Fotos do Álbum: {{ album.titulo_pt }}{% endblock %}
+
+{% block page_title %}Fotos do Álbum: {{ album.titulo_pt }}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Gerenciar Fotos - {{ album.titulo_pt }}</h2>
+        <a href="{{ url_for('admin_albuns') }}" class="btn-admin btn-admin-secondary">
+            <span>↩️</span> Voltar para Álbuns
+        </a>
+    </div>
+    
+    <!-- Formulário para adicionar novas fotos -->
+    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.25rem; color: #374151;">Adicionar Fotos (Múltiplas)</h3>
+        <form method="POST" action="{{ url_for('admin_albuns_fotos_adicionar', id=album.id) }}" enctype="multipart/form-data">
+            <div style="margin-bottom: 1rem;">
+                <label for="fotos" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    📷 Fotos * (Você pode selecionar várias fotos de uma vez)
+                </label>
+                <input type="file" id="fotos" name="fotos" accept="image/*" multiple required
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #3b82f6; border-radius: 0.5rem; font-size: 1rem; background: #eff6ff;">
+                <small style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem; display: block;">
+                    Segure Ctrl (ou Cmd no Mac) para selecionar múltiplas fotos. Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP
+                </small>
+                <div id="preview-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label for="ordem_inicial" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                        Ordem Inicial
+                    </label>
+                    <input type="number" id="ordem_inicial" name="ordem_inicial" value="0" min="0"
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                    <small style="color: #6b7280; font-size: 0.875rem;">Ordem inicial para as fotos (será incrementada automaticamente)</small>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                        Fotos Selecionadas
+                    </label>
+                    <div id="file-count" style="padding: 0.75rem; background: #e5e7eb; border-radius: 0.5rem; font-size: 1rem; color: #374151;">
+                        Nenhuma foto selecionada
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-admin btn-admin-primary" style="margin-top: 1rem;">
+                <span>➕</span> Adicionar Fotos
+            </button>
+            <p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">
+                💡 <strong>Dica:</strong> Os títulos das fotos serão definidos automaticamente com o nome dos arquivos. Você pode editar individualmente cada foto depois de adicioná-las.
+            </p>
+        </form>
+    </div>
+    
+    <script>
+        // Preview de imagens e contador
+        document.getElementById('fotos').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('preview-container');
+            const fileCount = document.getElementById('file-count');
+            
+            previewContainer.innerHTML = '';
+            
+            if (files.length > 0) {
+                fileCount.textContent = files.length + ' foto(s) selecionada(s)';
+                
+                Array.from(files).forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const div = document.createElement('div');
+                            div.style.position = 'relative';
+                            div.style.border = '2px solid #3b82f6';
+                            div.style.borderRadius = '0.5rem';
+                            div.style.overflow = 'hidden';
+                            
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.style.width = '100%';
+                            img.style.height = '150px';
+                            img.style.objectFit = 'cover';
+                            img.style.display = 'block';
+                            
+                            const label = document.createElement('div');
+                            label.style.position = 'absolute';
+                            label.style.bottom = '0';
+                            label.style.left = '0';
+                            label.style.right = '0';
+                            label.style.background = 'rgba(0,0,0,0.7)';
+                            label.style.color = 'white';
+                            label.style.padding = '0.25rem';
+                            label.style.fontSize = '0.75rem';
+                            label.style.textAlign = 'center';
+                            label.textContent = file.name;
+                            
+                            div.appendChild(img);
+                            div.appendChild(label);
+                            previewContainer.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            } else {
+                fileCount.textContent = 'Nenhuma foto selecionada';
+            }
+        });
+    </script>
+    
+    <!-- Lista de fotos -->
+    <div>
+        <h3 style="margin-bottom: 1rem; font-size: 1.25rem; color: #374151;">Fotos Cadastradas ({{ fotos|length }})</h3>
+        {% if fotos %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem;">
+                {% for foto in fotos %}
+                <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; position: relative;">
+                    <img src="{{ url_for('static', filename=foto.caminho) }}" 
+                         alt="{{ foto.titulo_pt or 'Foto' }}"
+                         style="width: 100%; height: 200px; object-fit: cover; border-radius: 0.5rem; margin-bottom: 0.75rem;">
+                    {% if foto.titulo_pt %}
+                    <h4 style="margin-bottom: 0.5rem; font-size: 1rem; font-weight: 600; color: #374151;">{{ foto.titulo_pt }}</h4>
+                    {% endif %}
+                    {% if foto.descricao_pt %}
+                    <p style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #6b7280; line-height: 1.5;">{{ foto.descricao_pt }}</p>
+                    {% endif %}
+                    <p style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 1rem;">Ordem: {{ foto.ordem }}</p>
+                    <form method="POST" action="{{ url_for('admin_albuns_fotos_excluir', foto_id=foto.id) }}" 
+                          onsubmit="return confirm('Tem certeza que deseja excluir esta foto?');"
+                          style="margin-top: 0.5rem;">
+                        <button type="submit" class="btn-admin btn-admin-danger btn-admin-small" style="width: 100%;">
+                            <span>🗑️</span> Excluir
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem; background: #f9fafb; border-radius: 0.5rem; border: 2px dashed #d1d5db;">
+                <p style="color: #6b7280; font-size: 1.125rem;">Nenhuma foto cadastrada para este álbum.</p>
+                <p style="color: #9ca3af; margin-top: 0.5rem;">Adicione fotos usando o formulário acima.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

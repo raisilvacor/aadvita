@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Galeria') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Galeria') }}</h1>
+        <p class="page-description">{{ _('Confira nossa galeria completa de álbuns') }}</p>
+    </div>
+</section>
+
+<section class="galeria-section" aria-labelledby="galeria-title">
+    <div class="container">
+        {% if albuns %}
+            <div class="albuns-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
+                {% for album in albuns %}
+                <div class="album-card" style="background: white; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;"
+                     onclick="window.location.href='{{ url_for('galeria_album', id=album.id) }}'"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 12px rgba(0, 0, 0, 0.15)';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <div class="album-cover" style="width: 100%; height: 250px; overflow: hidden; position: relative;">
+                        {% if album.capa %}
+                        <img src="{{ url_for('static', filename=album.capa) }}" 
+                             alt="{{ get_titulo(album) }}" 
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 4rem;">
+                            📁
+                        </div>
+                        {% endif %}
+                        <div class="album-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 1.5rem; color: white;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.875rem; backdrop-filter: blur(10px);">
+                                    {{ album.fotos|length }} {{ _('foto(s)') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="album-info" style="padding: 1.5rem;">
+                        <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-color); margin-bottom: 0.5rem;">
+                            {{ get_titulo(album) }}
+                        </h3>
+                        {% if get_descricao(album) %}
+                        <p style="color: #6b7280; font-size: 1rem; line-height: 1.6; margin-bottom: 1rem;">
+                            {{ get_descricao(album)[:100] }}{% if get_descricao(album)|length > 100 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                        <a href="{{ url_for('galeria_album', id=album.id) }}" 
+                           class="btn btn-primary" 
+                           style="display: inline-block; margin-top: 0.5rem;">
+                            {{ _('Ver Álbum') }}
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert" style="text-align: center; padding: 4rem 2rem;">
+                <p class="empty-message" style="font-size: 1.25rem; color: #6b7280;">{{ _('Nenhum álbum cadastrado no momento.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Apoie-nos') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem; background: {% if banner %}linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%){% else %}var(--primary-color){% endif %};">
+    <div class="container">
+        <h1 id="page-title" class="page-title" style="color: white;">
+            {% if banner %}{{ banner.titulo }}{% else %}{{ _('Apoie-nos') }}{% endif %}
+        </h1>
+        {% if banner and banner.descricao %}
+        <p class="page-description" style="color: rgba(255, 255, 255, 0.95);">
+            {{ banner.descricao }}
+        </p>
+        {% else %}
+        <p class="page-description" style="color: rgba(255, 255, 255, 0.95);">
+            {{ _('Apoie nossa causa e faça a diferença') }}
+        </p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="apoie-section" style="padding: 3rem 0;">
+    <div class="container">
+        {% if conteudos %}
+        <div style="max-width: 900px; margin: 0 auto;">
+            {% for conteudo in conteudos %}
+            <article style="background: white; border-radius: 1rem; padding: 3rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 2rem;">
+                {% if conteudo.titulo %}
+                <h2 style="font-size: 2rem; font-weight: 700; color: var(--text-color); margin-bottom: 1.5rem; border-bottom: 3px solid var(--primary-color); padding-bottom: 0.5rem;">
+                    {{ conteudo.titulo }}
+                </h2>
+                {% endif %}
+                
+                {% if conteudo.imagem %}
+                <div style="margin-bottom: 1.5rem;">
+                    <img src="{{ url_for('static', filename=conteudo.imagem) }}" 
+                         alt="{{ conteudo.titulo }}" 
+                         style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                </div>
+                {% endif %}
+                
+                {% if conteudo.conteudo %}
+                <div style="line-height: 1.8; color: var(--text-color); font-size: 1.1rem; word-wrap: break-word; overflow-wrap: break-word; margin-bottom: 1.5rem;">
+                    {{ conteudo.conteudo|safe }}
+                </div>
+                {% endif %}
+                
+                {% if conteudo.arquivo_pdf %}
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; border: 2px solid #e5e7eb;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M14 2V8H20" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 13H8" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M16 17H8" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M10 9H8" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <div style="flex: 1;">
+                            <p style="margin: 0; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+                                {{ _('Documento PDF disponível') }}
+                            </p>
+                            <a href="{{ url_for('static', filename=conteudo.arquivo_pdf) }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="btn btn-primary"
+                               style="display: inline-block;">
+                                <span>📄</span> {{ _('Baixar PDF') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="background: white; border-radius: 1rem; padding: 3rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h2 style="font-size: 2rem; font-weight: 700; color: var(--text-color); margin-bottom: 1.5rem; text-align: center;">
+                    {{ _('Como Apoiar') }}
+                </h2>
+                <div style="line-height: 1.8; color: var(--text-color);">
+                    <p style="margin-bottom: 1.5rem; font-size: 1.1rem;">
+                        {{ _('Sua contribuição é fundamental para continuarmos promovendo inclusão e acessibilidade.') }}
+                    </p>
+                    <p style="margin-bottom: 1.5rem;">
+                        {{ _('Em breve, mais informações sobre como apoiar estarão disponíveis aqui.') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

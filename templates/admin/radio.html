@@ -1,0 +1,96 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Rádio AADVITA{% endblock %}
+
+{% block page_title %}Gerenciar Rádio AADVITA{% endblock %}
+
+{% block content %}
+<!-- Configuração da Rádio -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Configuração da Rádio</h2>
+    </div>
+    <div style="padding: 1.5rem;">
+        <form method="POST" action="{{ url_for('admin_radio_config') }}" style="max-width: 600px;">
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="url_streaming_principal" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    URL de Streaming Principal *
+                </label>
+                <input type="url" id="url_streaming_principal" name="url_streaming_principal" 
+                       value="{% if radio_config %}{{ radio_config.url_streaming_principal or '' }}{% endif %}"
+                       required
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                       placeholder="https://stream.zeno.fm/tngw1dzf8zquv">
+                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                    URL principal de streaming que será reproduzida automaticamente na página pública.
+                </small>
+            </div>
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar Configuração
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Programas de Rádio -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Programas de Rádio</h2>
+        <a href="{{ url_for('admin_radio_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Programa
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Apresentador</th>
+                    <th>Horário</th>
+                    <th>Status</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if programas %}
+                    {% for programa in programas %}
+                    <tr>
+                        <td>{{ programa.nome }}</td>
+                        <td>{{ programa.apresentador or '-' }}</td>
+                        <td>{{ programa.horario or '-' }}</td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if programa.ativo else 'secondary' }}">
+                                {{ 'Ativo' if programa.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td>{{ programa.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_radio_editar', id=programa.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_radio_excluir', id=programa.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este programa?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhum programa cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

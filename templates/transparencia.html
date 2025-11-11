@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Transparência') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Transparência') }}</h1>
+        <p class="page-description">{{ _('Acompanhe nossa gestão, relatórios e informações financeiras') }}</p>
+    </div>
+</section>
+
+<section class="transparencia-section" aria-labelledby="transparencia-content">
+    <div class="container">
+        <div class="transparencia-content">
+            <div class="transparencia-intro">
+                <h2 id="transparencia-content">{{ _('Nossa Compromisso com a Transparência') }}</h2>
+                <p>{{ _('A AADVITA acredita que a transparência é fundamental para construir confiança e fortalecer nossa relação com a comunidade. Por isso, disponibilizamos informações sobre nossa gestão, atividades e recursos financeiros.') }}</p>
+            </div>
+
+            <div class="transparencia-grid">
+                <div class="transparencia-card">
+                    <div class="transparencia-icon">📊</div>
+                    <h3>{{ _('Relatórios Financeiros') }}</h3>
+                    <p>{{ _('Acompanhe nossos relatórios financeiros, demonstrativos e balanços.') }}</p>
+                    {% if relatorios %}
+                        <a href="{{ url_for('relatorios_financeiros') }}" class="btn btn-primary">{{ _('Ver Relatórios') }}</a>
+                    {% else %}
+                        <div class="transparencia-status">
+                            <span class="status-badge">{{ _('Em breve') }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="transparencia-card">
+                    <div class="transparencia-icon">📋</div>
+                    <h3>{{ _('Estatuto e Documentos') }}</h3>
+                    <p>{{ _('Acesse nosso estatuto social, atas de reuniões e documentos oficiais.') }}</p>
+                    {% if documentos %}
+                        <a href="{{ url_for('estatuto_documentos') }}" class="btn btn-primary">{{ _('Ver Documentos') }}</a>
+                    {% else %}
+                        <div class="transparencia-status">
+                            <span class="status-badge">{{ _('Em breve') }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="transparencia-card">
+                    <div class="transparencia-icon">🤝</div>
+                    <h3>{{ _('Prestação de Contas') }}</h3>
+                    <p>{{ _('Confira como utilizamos os recursos recebidos e os resultados alcançados.') }}</p>
+                    {% if prestacoes %}
+                        <a href="{{ url_for('prestacao_contas') }}" class="btn btn-primary">{{ _('Ver Prestação de Contas') }}</a>
+                    {% else %}
+                        <div class="transparencia-status">
+                            <span class="status-badge">{{ _('Em breve') }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="transparencia-card">
+                    <div class="transparencia-icon">📈</div>
+                    <h3>{{ _('Projetos e Ações') }}</h3>
+                    <p>{{ _('Veja os projetos desenvolvidos e ações realizadas em benefício da comunidade.') }}</p>
+                    <a href="{{ url_for('projetos') }}" class="btn btn-primary">{{ _('Ver Projetos') }}</a>
+                </div>
+
+                <div class="transparencia-card">
+                    <div class="transparencia-icon">💰</div>
+                    <h3>{{ _('Doações e Recursos') }}</h3>
+                    <p>{{ _('Informações sobre doações recebidas e como contribuir com nossa causa.') }}</p>
+                    {% if informacoes_doacao %}
+                        <a href="{{ url_for('doacoes_recursos') }}" class="btn btn-primary">{{ _('Ver Informações') }}</a>
+                    {% else %}
+                        <div class="transparencia-status">
+                            <span class="status-badge">{{ _('Em breve') }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="transparencia-card">
+                    <div class="transparencia-icon">👥</div>
+                    <h3>{{ _('Diretoria e Conselho') }}</h3>
+                    <p>{{ _('Conheça os membros da diretoria e conselho fiscal responsáveis pela gestão.') }}</p>
+                    <a href="{{ url_for('sobre') }}" class="btn btn-primary">{{ _('Ver Diretoria') }}</a>
+                </div>
+            </div>
+
+            <!-- Seção de Informações de Contato -->
+            <div class="transparencia-info" style="margin-top: 4rem; padding-top: 3rem; border-top: 2px solid var(--border-color);">
+                <h2>{{ _('Informações de Contato') }}</h2>
+                <p>{{ _('Para mais informações sobre transparência, entre em contato conosco através dos canais oficiais.') }}</p>
+                <div class="contact-info">
+                    <p><strong>{{ _('E-mail:') }}</strong> <a href="mailto:contato@aadvita.org.br">contato@aadvita.org.br</a></p>
+                    <p><strong>{{ _('Telefone:') }}</strong> {{ _('(00) 00000-0000)') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

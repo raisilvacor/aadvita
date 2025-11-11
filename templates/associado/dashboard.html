@@ -1,0 +1,176 @@
+{% extends "associado/base.html" %}
+
+{% block title %}Dashboard - Associado{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Bem-vindo, {{ associado.nome_completo }}!</h2>
+    </div>
+    
+    <div class="associado-info-grid">
+        <div class="info-card">
+            {% if associado.foto %}
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <img src="{{ url_for('static', filename=associado.foto) }}" 
+                     alt="{{ associado.nome_completo }}" 
+                     style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #2563eb; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            </div>
+            {% else %}
+            <div class="info-icon">👤</div>
+            {% endif %}
+            <div class="info-content">
+                <h3>Seus Dados</h3>
+                <p><strong>CPF:</strong> {{ associado.cpf }}</p>
+                <p><strong>Data de Nascimento:</strong> {{ associado.data_nascimento.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Telefone:</strong> {{ associado.telefone }}</p>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-icon">📍</div>
+            <div class="info-content">
+                <h3>Endereço</h3>
+                <p>{{ associado.endereco }}</p>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-icon">📅</div>
+            <div class="info-content">
+                <h3>Membro desde</h3>
+                <p>{{ associado.created_at.strftime('%d/%m/%Y') }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="associado-actions">
+        <a href="{{ url_for('associado_perfil') }}" class="btn-admin btn-admin-primary">
+            <span>✏️</span> Editar Perfil
+        </a>
+        <a href="{{ url_for('agenda_presencial') }}" class="btn-admin btn-admin-secondary">
+            <span>📅</span> Ver Agenda Presencial
+        </a>
+        <a href="{{ url_for('agenda_virtual') }}" class="btn-admin btn-admin-secondary">
+            <span>💻</span> Ver Agenda Virtual
+        </a>
+        <a href="{{ url_for('eventos') }}" class="btn-admin btn-admin-secondary">
+            <span>🎉</span> Ver Eventos
+        </a>
+    </div>
+</div>
+
+<!-- Seção de Carteira de Associado -->
+{% if associado.carteira_pdf %}
+<div class="admin-card" style="margin-top: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">🪪 Carteira de Associado</h2>
+    </div>
+    
+    <div style="padding: 1.5rem; text-align: center;">
+        <div style="margin-bottom: 1.5rem;">
+            <p style="color: #374151; margin-bottom: 1rem;">Sua carteira de associado está disponível para visualização e download.</p>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{{ url_for('associado_carteira') }}" target="_blank" class="btn-admin btn-admin-primary" style="text-decoration: none;">
+                <span>👁️</span> Ver Carteira
+            </a>
+            <a href="{{ url_for('associado_carteira_download') }}" class="btn-admin btn-admin-secondary" style="text-decoration: none;">
+                <span>📥</span> Baixar Carteira
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="admin-card" style="margin-top: 2rem; background: #fef3c7; border: 2px solid #fbbf24;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">🪪 Carteira de Associado</h2>
+    </div>
+    
+    <div style="padding: 1.5rem; text-align: center;">
+        <p style="color: #92400e; margin: 0;">
+            <span>ℹ️</span> Sua carteira de associado ainda não foi cadastrada. Entre em contato com o administrador.
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Seção de Mensalidades -->
+<div class="admin-card" style="margin-top: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">💰 Minhas Mensalidades</h2>
+    </div>
+    
+    {% if mensalidades %}
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Referência</th>
+                    <th>Valor Base</th>
+                    <th>Desconto</th>
+                    <th>Valor Final</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mensalidade in mensalidades %}
+                <tr>
+                    <td>{{ "%02d/%d"|format(mensalidade.mes_referencia, mensalidade.ano_referencia) }}</td>
+                    <td>R$ {{ "%.2f"|format(mensalidade.valor_base) }}</td>
+                    <td>
+                        {% if mensalidade.desconto_tipo %}
+                            {% if mensalidade.desconto_tipo == 'porcentagem' %}
+                                {{ "%.2f"|format(mensalidade.desconto_valor) }}%
+                            {% else %}
+                                R$ {{ "%.2f"|format(mensalidade.desconto_valor) }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td><strong>R$ {{ "%.2f"|format(mensalidade.valor_final) }}</strong></td>
+                    <td>{{ mensalidade.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        {% set hoje = date.today() %}
+                        {% set vencida = mensalidade.status == 'pendente' and mensalidade.data_vencimento < hoje %}
+                        {% if mensalidade.status == 'pendente' %}
+                            {% if vencida %}
+                                <span class="status-badge" style="background: #dc2626; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⚠️ Atrasada
+                                </span>
+                            {% else %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⏳ Pendente
+                                </span>
+                            {% endif %}
+                        {% elif mensalidade.status == 'paga' %}
+                            <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                ✅ Paga
+                            </span>
+                            {% if mensalidade.data_pagamento %}
+                            <br><small style="font-size: 0.75rem; color: #6b7280;">
+                                Paga em {{ mensalidade.data_pagamento.strftime('%d/%m/%Y') }}
+                            </small>
+                            {% endif %}
+                        {% elif mensalidade.status == 'cancelada' %}
+                            <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                ❌ Cancelada
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 2rem;">
+        <p style="color: #6b7280;">Nenhuma mensalidade encontrada.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

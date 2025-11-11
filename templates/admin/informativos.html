@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Informativos{% endblock %}
+
+{% block page_title %}Gerenciar Informativos{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Informativos</h2>
+        <a href="{{ url_for('admin_informativos_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Informativo
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Título</th>
+                    <th>Data de Publicação</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if informativos %}
+                    {% for informativo in informativos %}
+                    <tr>
+                        <td>
+                            <span class="badge badge-{{ 'info' if informativo.tipo == 'Noticia' else 'warning' }}">
+                                {{ 'Notícia' if informativo.tipo == 'Noticia' else 'Podcast' }}
+                            </span>
+                        </td>
+                        <td>{{ informativo.titulo }}</td>
+                        <td>{{ informativo.data_publicacao.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_informativos_editar', id=informativo.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_informativos_excluir', id=informativo.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este informativo?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem;">
+                            Nenhum informativo cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

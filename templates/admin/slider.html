@@ -1,0 +1,104 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Slider (Home){% endblock %}
+
+{% block page_title %}Gerenciar Slider (Home){% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Imagens do Slider</h2>
+        <a href="{{ url_for('admin_slider_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Imagem
+        </a>
+    </div>
+    
+    <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: #1f2937;">
+            📐 Informações sobre Tamanhos Recomendados
+        </h3>
+        <ul style="margin: 0; padding-left: 1.5rem; color: #4b5563; line-height: 1.8;">
+            <li><strong>Largura recomendada:</strong> 1920px (Full HD) ou superior</li>
+            <li><strong>Altura recomendada:</strong> 600px a 800px</li>
+            <li><strong>Proporção:</strong> 16:9 ou 21:9 (formato panorâmico)</li>
+            <li><strong>Formato:</strong> JPG, PNG ou WEBP</li>
+            <li><strong>Tamanho do arquivo:</strong> Máximo 2MB recomendado para melhor performance</li>
+            <li><strong>Resolução:</strong> 72 DPI (para web)</li>
+        </ul>
+        <p style="margin-top: 0.75rem; margin-bottom: 0; color: #6b7280; font-size: 0.9rem;">
+            💡 <strong>Dica:</strong> Use imagens de alta qualidade com boa resolução. O slider se ajusta automaticamente à largura da tela, mantendo a proporção da imagem.
+        </p>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Imagem</th>
+                    <th>Título</th>
+                    <th>Link</th>
+                    <th>Ordem</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if slider_images %}
+                    {% for imagem in slider_images %}
+                    <tr>
+                        <td>
+                            {% if imagem.imagem %}
+                                <img src="{{ url_for('static', filename=imagem.imagem) }}" 
+                                     alt="{{ imagem.titulo }}" 
+                                     style="width: 200px; height: 120px; object-fit: cover; border-radius: 0.5rem; border: 2px solid #e5e7eb;">
+                            {% else %}
+                                <span style="color: #9ca3af;">Sem imagem</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ imagem.titulo }}</td>
+                        <td>
+                            {% if imagem.link %}
+                                <a href="{{ imagem.link }}" target="_blank" rel="noopener noreferrer" 
+                                   style="color: #3b82f6; text-decoration: underline; word-break: break-all;">
+                                    {{ imagem.link[:50] }}{% if imagem.link|length > 50 %}...{% endif %}
+                                </a>
+                            {% else %}
+                                <span style="color: #9ca3af;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ imagem.ordem }}</td>
+                        <td>
+                            {% if imagem.ativo %}
+                                <span style="color: #10b981; font-weight: 600;">✓ Ativo</span>
+                            {% else %}
+                                <span style="color: #9ca3af;">✗ Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_slider_editar', id=imagem.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_slider_excluir', id=imagem.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir esta imagem do slider?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhuma imagem cadastrada no slider.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

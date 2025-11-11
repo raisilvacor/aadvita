@@ -1,0 +1,832 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Sistema Financeiro{% endblock %}
+
+{% block page_title %}Sistema Financeiro - Mensalidades{% endblock %}
+
+{% block content %}
+<!-- Estatísticas -->
+<div class="stats-grid" style="margin-bottom: 2rem;">
+    <div class="stat-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b;">
+        <div class="stat-card-number">{{ stats.mensalidades_pendentes }}</div>
+        <div class="stat-card-label">Mensalidades Pendentes</div>
+        <div class="stat-card-value" style="margin-top: 0.5rem; font-size: 1.25rem; font-weight: 700; color: #92400e;">
+            R$ {{ "%.2f"|format(stats.total_pendente) }}
+        </div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-left: 4px solid #10b981;">
+        <div class="stat-card-number">{{ stats.mensalidades_pagas }}</div>
+        <div class="stat-card-label">Mensalidades Pagas</div>
+        <div class="stat-card-value" style="margin-top: 0.5rem; font-size: 1.25rem; font-weight: 700; color: #065f46;">
+            R$ {{ "%.2f"|format(stats.total_pago) }}
+        </div>
+    </div>
+</div>
+
+<!-- Card Mensalidades Atrasadas -->
+{% if stats.mensalidades_atrasadas and stats.mensalidades_atrasadas > 0 %}
+<div class="stat-card" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 4px solid #dc2626; margin-bottom: 2rem; width: 100%; max-width: 100%;">
+    <div class="stat-card-number" style="color: #dc2626; font-size: 2.5rem;">{{ stats.mensalidades_atrasadas }}</div>
+    <div class="stat-card-label" style="color: #991b1b; font-weight: 700; font-size: 1.125rem;">Mensalidades Atrasadas</div>
+    <div class="stat-card-value" style="margin-top: 0.5rem; font-size: 1.5rem; font-weight: 700; color: #991b1b;">
+        R$ {{ "%.2f"|format(stats.total_atrasadas) }}
+    </div>
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid rgba(220, 38, 38, 0.3);">
+        <div style="font-weight: 600; color: #991b1b; margin-bottom: 0.75rem; font-size: 1rem;">Associados com Mensalidades Atrasadas:</div>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+            {% for associado_atrasado in stats.associados_atrasados %}
+            <li style="padding: 0.5rem 0; color: #7f1d1d; border-bottom: 1px solid rgba(220, 38, 38, 0.2);">
+                <strong>{{ associado_atrasado.nome_completo }}</strong>
+                {% if associado_atrasado.cpf %}
+                <span style="color: #991b1b; font-size: 0.875rem; margin-left: 0.5rem;">(CPF: {{ associado_atrasado.cpf }})</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- Ações -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Ações</h2>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <form method="POST" action="{{ url_for('admin_financeiro_gerar') }}" id="formGerarMes" style="display: inline;">
+            <button type="submit" class="btn-admin btn-admin-primary" id="btnGerarMes">
+                <span>🔄</span> Gerar Mensalidades do Mês
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('admin_financeiro_gerar_anual') }}" id="formGerarAnual" style="display: inline;">
+            <button type="submit" class="btn-admin btn-admin-primary" id="btnGerarAnual" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <span>📅</span> Gerar Mensalidades Anual
+            </button>
+        </form>
+        <a href="{{ url_for('admin_associados', status='aprovados') }}" class="btn-admin btn-admin-secondary">
+            <span>👥</span> Configurar Mensalidades dos Associados
+        </a>
+    </div>
+    <div id="mensagem_validacao_gerar" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; border-radius: 0.25rem; font-weight: 600;">
+    </div>
+</div>
+
+{% if view_mode == 'associados' %}
+<!-- Lista de Associados -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Associados</h2>
+    </div>
+    
+    <!-- Barra de Pesquisa -->
+    <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+        <label for="pesquisa_cpf" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+            🔍 Buscar Associado por CPF
+        </label>
+        <input type="text" 
+               id="pesquisa_cpf" 
+               placeholder="Digite apenas os 11 dígitos do CPF (ex: 00000000000)" 
+               maxlength="11"
+               pattern="[0-9]*"
+               inputmode="numeric"
+               style="width: 100%; max-width: 400px; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+               autocomplete="off">
+        <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+            A lista será filtrada automaticamente conforme você digita (apenas números, máximo 11 dígitos)
+        </small>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table" id="tabela-associados">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="selecionar_todos" title="Selecionar todos">
+                    </th>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>Data de Nascimento</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if associados %}
+                    {% for associado_item in associados %}
+                    <tr class="linha-associado" data-cpf="{{ associado_item.cpf.replace('.', '').replace('-', '') }}">
+                        <td>
+                            <input type="checkbox" class="checkbox-associado" value="{{ associado_item.id }}" name="associados_selecionados">
+                        </td>
+                        <td>{{ associado_item.nome_completo }}</td>
+                        <td class="cpf-cell">{{ associado_item.cpf }}</td>
+                        <td>{{ associado_item.data_nascimento.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_financeiro', associado_id=associado_item.id) }}" 
+                               class="btn-admin btn-admin-primary btn-admin-small">
+                                <span>📋</span> Ver Mensalidades
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            Nenhum associado encontrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<!-- Lista de Mensalidades do Associado -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Mensalidades - {{ associado.nome_completo }}</h2>
+        <a href="{{ url_for('admin_financeiro') }}" class="btn-admin btn-admin-secondary">
+            <span>←</span> Voltar para Lista de Associados
+        </a>
+    </div>
+    
+    <!-- Ações em Lote (aparece quando há seleção) -->
+    <div id="acoes-lote" style="display: none; margin-bottom: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; border-left: 4px solid #3b82f6;">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <strong style="color: #1f2937;">Ações em lote:</strong>
+            <button onclick="abrirModalPagarLote()" class="btn-admin btn-admin-secondary btn-admin-small" style="background: #10b981;">
+                <span>✅</span> Marcar Selecionadas como Paga
+            </button>
+            <form method="POST" action="{{ url_for('admin_financeiro_cancelar_lote') }}?associado_id={{ associado.id }}" 
+                  id="formCancelarLote" style="display: inline;" 
+                  onsubmit="return confirmarCancelarLote();">
+                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                    <span>❌</span> Cancelar Selecionadas
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_financeiro_excluir_lote') }}?associado_id={{ associado.id }}" 
+                  id="formExcluirLote" style="display: inline;" 
+                  onsubmit="return confirmarExcluirLote();">
+                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small" style="background: #dc2626;">
+                    <span>🗑️</span> Excluir Selecionadas
+                </button>
+            </form>
+            <button onclick="limparSelecao()" class="btn-admin btn-admin-secondary btn-admin-small">
+                <span>↩️</span> Limpar Seleção
+            </button>
+        </div>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="selecionar_todas_mensalidades" title="Selecionar todas">
+                    </th>
+                    <th>Associado</th>
+                    <th>Referência</th>
+                    <th>Valor Base</th>
+                    <th>Desconto</th>
+                    <th>Valor Final</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if mensalidades %}
+                    {% for mensalidade in mensalidades %}
+                    <tr>
+                        <td>
+                            {% if mensalidade.status != 'paga' %}
+                                <input type="checkbox" class="checkbox-mensalidade" value="{{ mensalidade.id }}" name="mensalidades_selecionadas">
+                            {% else %}
+                                <span style="color: #9ca3af;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ mensalidade.associado.nome_completo }}</td>
+                        <td>{{ "%02d/%d"|format(mensalidade.mes_referencia, mensalidade.ano_referencia) }}</td>
+                        <td>R$ {{ "%.2f"|format(mensalidade.valor_base) }}</td>
+                        <td>
+                            {% if mensalidade.desconto_tipo %}
+                                {% if mensalidade.desconto_tipo == 'porcentagem' %}
+                                    {{ "%.2f"|format(mensalidade.desconto_valor) }}%
+                                {% else %}
+                                    R$ {{ "%.2f"|format(mensalidade.desconto_valor) }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td><strong>R$ {{ "%.2f"|format(mensalidade.valor_final) }}</strong></td>
+                        <td>{{ mensalidade.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% set hoje = date.today() %}
+                            {% set vencida = mensalidade.status == 'pendente' and mensalidade.data_vencimento < hoje %}
+                            {% if mensalidade.status == 'pendente' %}
+                                {% if vencida %}
+                                    <span class="status-badge" style="background: #dc2626; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                        ⚠️ Atrasada
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                        ⏳ Pendente
+                                    </span>
+                                {% endif %}
+                            {% elif mensalidade.status == 'paga' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Paga
+                                </span>
+                                {% if mensalidade.data_pagamento %}
+                                <br><small style="font-size: 0.75rem; color: #6b7280;">
+                                    Paga em {{ mensalidade.data_pagamento.strftime('%d/%m/%Y') }}
+                                </small>
+                                {% endif %}
+                            {% elif mensalidade.status == 'cancelada' %}
+                                <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ❌ Cancelada
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set hoje = date.today() %}
+                            {% set vencida = mensalidade.status == 'pendente' and mensalidade.data_vencimento < hoje %}
+                            {% if mensalidade.status == 'pendente' or vencida %}
+                                <button onclick="abrirModalPagar({{ mensalidade.id }})" 
+                                        class="btn-admin btn-admin-secondary btn-admin-small"
+                                        style="background: #10b981;">
+                                    <span>✅</span> Marcar como Paga
+                                </button>
+                                <form method="POST" action="{{ url_for('admin_financeiro_cancelar', id=mensalidade.id) }}?associado_id={{ associado.id }}" 
+                                      style="display: inline; margin-left: 0.5rem;" 
+                                      onsubmit="return confirm('Tem certeza que deseja cancelar esta mensalidade?');">
+                                    <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                        <span>❌</span> Cancelar
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin_financeiro_excluir', id=mensalidade.id) }}?associado_id={{ associado.id }}" 
+                                      style="display: inline; margin-left: 0.5rem;" 
+                                      onsubmit="return confirm('Tem certeza que deseja EXCLUIR esta mensalidade? Esta ação não pode ser desfeita.');">
+                                    <button type="submit" class="btn-admin btn-admin-danger btn-admin-small" style="background: #dc2626;">
+                                        <span>🗑️</span> Excluir
+                                    </button>
+                                </form>
+                            {% elif mensalidade.status == 'cancelada' %}
+                                <form method="POST" action="{{ url_for('admin_financeiro_excluir', id=mensalidade.id) }}?associado_id={{ associado.id }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('Tem certeza que deseja EXCLUIR esta mensalidade? Esta ação não pode ser desfeita.');">
+                                    <button type="submit" class="btn-admin btn-admin-danger btn-admin-small" style="background: #dc2626;">
+                                        <span>🗑️</span> Excluir
+                                    </button>
+                                </form>
+                            {% elif mensalidade.status == 'paga' %}
+                                <span style="color: #6b7280; font-size: 0.875rem; font-style: italic;">
+                                    Mensalidade paga não pode ser alterada ou excluída
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 2rem;">
+                            Nenhuma mensalidade encontrada para este associado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal para Marcar como Paga (individual) -->
+<div id="modalPagar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 0.5rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Marcar Mensalidade como Paga</h3>
+        <form id="formPagar" method="POST" action="">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Data de Pagamento:</label>
+                <input type="date" name="data_pagamento" id="data_pagamento_input" 
+                       class="form-input" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Observações (opcional):</label>
+                <textarea name="observacoes" rows="3" 
+                          class="form-input" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem;"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="fecharModalPagar()" class="btn-admin btn-admin-secondary">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-admin btn-admin-primary" style="background: #10b981;">
+                    Confirmar Pagamento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Marcar como Paga em Lote -->
+{% if associado %}
+<div id="modalPagarLote" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 2rem; border-radius: 0.5rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-top: 0;">Marcar Mensalidades Selecionadas como Pagas</h3>
+        <p style="margin-bottom: 1rem; color: #6b7280;">
+            <span id="qtd_mensalidades_selecionadas">0</span> mensalidade(s) selecionada(s)
+        </p>
+        <form id="formPagarLote" method="POST" action="{{ url_for('admin_financeiro_marcar_paga_lote') }}?associado_id={{ associado.id }}">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Data de Pagamento:</label>
+                <input type="date" name="data_pagamento" id="data_pagamento_lote_input" 
+                       class="form-input" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Observações (opcional):</label>
+                <textarea name="observacoes" rows="3" 
+                          class="form-input" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem;"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="fecharModalPagarLote()" class="btn-admin btn-admin-secondary">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-admin btn-admin-primary" style="background: #10b981;">
+                    Confirmar Pagamento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Definir data atual no input
+document.addEventListener('DOMContentLoaded', function() {
+    const hoje = new Date();
+    const dataStr = hoje.getFullYear() + '-' + 
+                   String(hoje.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(hoje.getDate()).padStart(2, '0');
+    const dataInput = document.getElementById('data_pagamento_input');
+    const dataInputLote = document.getElementById('data_pagamento_lote_input');
+    if (dataInput) {
+        dataInput.value = dataStr;
+    }
+    if (dataInputLote) {
+        dataInputLote.value = dataStr;
+    }
+    
+    // Selecionar todas as mensalidades
+    const selecionarTodas = document.getElementById('selecionar_todas_mensalidades');
+    const checkboxesMensalidades = document.querySelectorAll('.checkbox-mensalidade');
+    
+    if (selecionarTodas) {
+        selecionarTodas.addEventListener('change', function() {
+            checkboxesMensalidades.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            atualizarAcoesLote();
+        });
+    }
+    
+    // Atualizar quando checkbox individual mudar
+    checkboxesMensalidades.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            atualizarAcoesLote();
+            // Atualizar checkbox "selecionar todas"
+            if (selecionarTodas) {
+                const todasSelecionadas = Array.from(checkboxesMensalidades).every(cb => cb.checked);
+                selecionarTodas.checked = todasSelecionadas;
+            }
+        });
+    });
+    
+    atualizarAcoesLote();
+    
+    // Barra de pesquisa por CPF
+    const pesquisaCpf = document.getElementById('pesquisa_cpf');
+    if (pesquisaCpf) {
+        // Permitir apenas números e limitar a 11 dígitos
+        pesquisaCpf.addEventListener('input', function(e) {
+            // Remove tudo que não é número
+            let value = e.target.value.replace(/\D/g, '');
+            // Limita a 11 dígitos
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
+            e.target.value = value;
+            
+            // Filtrar a lista
+            const termoBusca = value;
+            const linhas = document.querySelectorAll('.linha-associado');
+            
+            linhas.forEach(linha => {
+                const cpfAssociado = linha.getAttribute('data-cpf');
+                
+                if (cpfAssociado.includes(termoBusca)) {
+                    linha.style.display = '';
+                } else {
+                    linha.style.display = 'none';
+                }
+            });
+            
+            // Atualizar checkbox "selecionar todos" baseado apenas nas linhas visíveis
+            const selecionarTodos = document.getElementById('selecionar_todos');
+            if (selecionarTodos) {
+                const linhasVisiveisCheckboxes = document.querySelectorAll('.linha-associado:not([style*="display: none"]) .checkbox-associado');
+                const todosSelecionados = linhasVisiveisCheckboxes.length > 0 && 
+                    Array.from(linhasVisiveisCheckboxes).every(cb => cb.checked);
+                selecionarTodos.checked = todosSelecionados;
+            }
+        });
+        
+        // Prevenir entrada de caracteres não numéricos
+        pesquisaCpf.addEventListener('keydown', function(e) {
+            // Permitir: backspace, delete, tab, escape, enter, setas
+            if ([8, 9, 27, 13, 46, 37, 38, 39, 40].indexOf(e.keyCode) !== -1 ||
+                // Permitir Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true)) {
+                return;
+            }
+            // Garantir que é um número
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+        
+        // Prevenir colar conteúdo não numérico
+        pesquisaCpf.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numbers = paste.replace(/\D/g, '').substring(0, 11);
+            this.value = numbers;
+            
+            // Disparar evento input para filtrar
+            this.dispatchEvent(new Event('input'));
+        });
+    }
+    
+    // Selecionar todos os associados
+    const selecionarTodos = document.getElementById('selecionar_todos');
+    const checkboxesAssociados = document.querySelectorAll('.checkbox-associado');
+    
+    if (selecionarTodos) {
+        selecionarTodos.addEventListener('change', function() {
+            // Selecionar apenas checkboxes de linhas visíveis
+            const linhasVisiveis = document.querySelectorAll('.linha-associado:not([style*="display: none"]) .checkbox-associado');
+            linhasVisiveis.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+    
+    // Atualizar quando checkbox individual mudar
+    checkboxesAssociados.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Atualizar checkbox "selecionar todos" baseado apenas nas linhas visíveis
+            if (selecionarTodos) {
+                const linhasVisiveisCheckboxes = document.querySelectorAll('.linha-associado:not([style*="display: none"]) .checkbox-associado');
+                const todosSelecionados = linhasVisiveisCheckboxes.length > 0 && 
+                    Array.from(linhasVisiveisCheckboxes).every(cb => cb.checked);
+                selecionarTodos.checked = todosSelecionados;
+            }
+        });
+    });
+    
+    // Validar formulários de geração
+    const formGerarMes = document.getElementById('formGerarMes');
+    const formGerarAnual = document.getElementById('formGerarAnual');
+    
+    if (formGerarMes) {
+        formGerarMes.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Limpar inputs anteriores
+            const inputsAntigos = formGerarMes.querySelectorAll('input[name="associados_selecionados"]');
+            inputsAntigos.forEach(input => input.remove());
+            
+            // Buscar TODOS os checkboxes (mesmo não selecionados) para debug
+            const todosCheckboxes = document.querySelectorAll('.checkbox-associado');
+            console.log('Total de checkboxes encontrados:', todosCheckboxes.length);
+            
+            // Buscar checkboxes selecionados
+            const checkboxes = document.querySelectorAll('.checkbox-associado:checked');
+            console.log('Checkboxes selecionados:', checkboxes.length);
+            
+            // Se não encontrou checkboxes, pode ser que não esteja na view de associados
+            // Ou pode ser que os checkboxes ainda não foram renderizados
+            if (todosCheckboxes.length === 0) {
+                console.log('AVISO: Nenhum checkbox encontrado na página. Pode estar em modo de visualização de mensalidades.');
+                // Permitir submit sem validação - o backend vai gerar para todos os associados
+                this.submit();
+                return true;
+            }
+            
+            if (checkboxes.length === 0) {
+                mostrarMensagemValidacao('Selecione pelo menos um associado para gerar mensalidades do mês.');
+                return false;
+            }
+            
+            // Adicionar checkboxes selecionados ao formulário
+            checkboxes.forEach(function(checkbox) {
+                console.log('Adicionando associado ID:', checkbox.value);
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'associados_selecionados';
+                input.value = checkbox.value;
+                formGerarMes.appendChild(input);
+            });
+            
+            // Submeter o formulário após adicionar os inputs
+            this.submit();
+            return true;
+        });
+    }
+    
+    if (formGerarAnual) {
+        formGerarAnual.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Limpar inputs anteriores
+            const inputsAntigos = formGerarAnual.querySelectorAll('input[name="associados_selecionados"]');
+            inputsAntigos.forEach(input => input.remove());
+            
+            // Buscar TODOS os checkboxes (mesmo não selecionados) para debug
+            const todosCheckboxes = document.querySelectorAll('.checkbox-associado');
+            console.log('Gerar Anual - Total de checkboxes encontrados:', todosCheckboxes.length);
+            
+            // Buscar checkboxes selecionados
+            const checkboxes = document.querySelectorAll('.checkbox-associado:checked');
+            console.log('Gerar Anual - Checkboxes selecionados:', checkboxes.length);
+            
+            // Se não encontrou checkboxes, pode ser que não esteja na view de associados
+            if (todosCheckboxes.length === 0) {
+                console.log('AVISO: Nenhum checkbox encontrado. O botão não pode ser usado sem selecionar um associado.');
+                mostrarMensagemValidacao('Selecione um associado na lista para gerar mensalidades anuais.');
+                return false;
+            }
+            
+            if (checkboxes.length === 0) {
+                mostrarMensagemValidacao('Selecione um associado para gerar mensalidades anuais.');
+                return false;
+            }
+            
+            if (checkboxes.length > 1) {
+                mostrarMensagemValidacao('Selecione apenas um associado por vez para gerar mensalidades anuais.');
+                return false;
+            }
+            
+            // Adicionar checkbox selecionado ao formulário
+            checkboxes.forEach(checkbox => {
+                console.log('Adicionando associado ID para gerar anual:', checkbox.value);
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'associados_selecionados';
+                input.value = checkbox.value;
+                formGerarAnual.appendChild(input);
+            });
+            
+            // Submeter o formulário após adicionar o input
+            this.submit();
+            return true;
+        });
+    }
+});
+
+// Função para validar ao clicar no botão (backup)
+function validarGerarMes(event) {
+    const checkboxes = document.querySelectorAll('.checkbox-associado:checked');
+    
+    if (checkboxes.length === 0) {
+        event.preventDefault();
+        mostrarMensagemValidacao('Selecione pelo menos um associado para gerar mensalidades do mês.');
+        return false;
+    }
+    
+    // Limpar inputs anteriores
+    const formGerarMes = document.getElementById('formGerarMes');
+    if (formGerarMes) {
+        const inputsAntigos = formGerarMes.querySelectorAll('input[name="associados_selecionados"]');
+        inputsAntigos.forEach(input => input.remove());
+        
+        // Adicionar checkboxes selecionados ao formulário
+        checkboxes.forEach(function(checkbox) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'associados_selecionados';
+            input.value = checkbox.value;
+            formGerarMes.appendChild(input);
+        });
+    }
+    
+    return true;
+}
+
+function mostrarMensagemValidacao(mensagem) {
+    const divMensagem = document.getElementById('mensagem_validacao_gerar');
+    if (divMensagem) {
+        divMensagem.textContent = mensagem;
+        divMensagem.style.display = 'block';
+        divMensagem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function atualizarAcoesLote() {
+    const checkboxes = document.querySelectorAll('.checkbox-mensalidade:checked');
+    const acoesLote = document.getElementById('acoes-lote');
+    const qtdSelecionadas = document.getElementById('qtd_mensalidades_selecionadas');
+    
+    // Se o elemento não existe (não está na view de mensalidades), não fazer nada
+    if (!acoesLote) {
+        return;
+    }
+    
+    if (checkboxes.length > 0) {
+        acoesLote.style.display = 'block';
+        if (qtdSelecionadas) {
+            qtdSelecionadas.textContent = checkboxes.length;
+        }
+    } else {
+        acoesLote.style.display = 'none';
+    }
+}
+
+function limparSelecao() {
+    const checkboxes = document.querySelectorAll('.checkbox-mensalidade');
+    const selecionarTodas = document.getElementById('selecionar_todas_mensalidades');
+    
+    if (checkboxes.length === 0) {
+        return; // Não está na view de mensalidades
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    if (selecionarTodas) {
+        selecionarTodas.checked = false;
+    }
+    atualizarAcoesLote();
+}
+
+function abrirModalPagarLote() {
+    const checkboxes = document.querySelectorAll('.checkbox-mensalidade:checked');
+    if (checkboxes.length === 0) {
+        alert('Selecione pelo menos uma mensalidade.');
+        return;
+    }
+    
+    // Adicionar IDs selecionados ao formulário
+    const form = document.getElementById('formPagarLote');
+    const modal = document.getElementById('modalPagarLote');
+    
+    if (!form || !modal) {
+        console.error('Formulário ou modal não encontrado');
+        return;
+    }
+    
+    // Remover inputs anteriores
+    const inputsAntigos = form.querySelectorAll('input[name="mensalidades_selecionadas"]');
+    inputsAntigos.forEach(input => input.remove());
+    
+    // Adicionar novos inputs
+    checkboxes.forEach(checkbox => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'mensalidades_selecionadas';
+        input.value = checkbox.value;
+        form.appendChild(input);
+    });
+    
+    modal.style.display = 'flex';
+}
+
+function fecharModalPagarLote() {
+    const modal = document.getElementById('modalPagarLote');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function confirmarCancelarLote() {
+    const checkboxes = document.querySelectorAll('.checkbox-mensalidade:checked');
+    if (checkboxes.length === 0) {
+        alert('Selecione pelo menos uma mensalidade.');
+        return false;
+    }
+    
+    // Adicionar IDs selecionados ao formulário
+    const form = document.getElementById('formCancelarLote');
+    if (!form) {
+        console.error('Formulário não encontrado');
+        return false;
+    }
+    
+    const inputsAntigos = form.querySelectorAll('input[name="mensalidades_selecionadas"]');
+    inputsAntigos.forEach(input => input.remove());
+    
+    checkboxes.forEach(checkbox => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'mensalidades_selecionadas';
+        input.value = checkbox.value;
+        form.appendChild(input);
+    });
+    
+    return confirm(`Tem certeza que deseja cancelar ${checkboxes.length} mensalidade(s) selecionada(s)?`);
+}
+
+function confirmarExcluirLote() {
+    const checkboxes = document.querySelectorAll('.checkbox-mensalidade:checked');
+    if (checkboxes.length === 0) {
+        alert('Selecione pelo menos uma mensalidade.');
+        return false;
+    }
+    
+    // Verificar se alguma mensalidade selecionada está paga
+    let temPaga = false;
+    checkboxes.forEach(checkbox => {
+        const row = checkbox.closest('tr');
+        if (row) {
+            const statusBadge = row.querySelector('.status-badge');
+            if (statusBadge && statusBadge.textContent.includes('Paga')) {
+                temPaga = true;
+            }
+        }
+    });
+    
+    if (temPaga) {
+        alert('Não é possível excluir mensalidades pagas.');
+        return false;
+    }
+    
+    // Adicionar IDs selecionados ao formulário
+    const form = document.getElementById('formExcluirLote');
+    if (!form) {
+        console.error('Formulário não encontrado');
+        return false;
+    }
+    
+    const inputsAntigos = form.querySelectorAll('input[name="mensalidades_selecionadas"]');
+    inputsAntigos.forEach(input => input.remove());
+    
+    checkboxes.forEach(checkbox => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'mensalidades_selecionadas';
+        input.value = checkbox.value;
+        form.appendChild(input);
+    });
+    
+    return confirm(`Tem certeza que deseja EXCLUIR ${checkboxes.length} mensalidade(s) selecionada(s)? Esta ação não pode ser desfeita.`);
+}
+
+function abrirModalPagar(mensalidadeId) {
+    const form = document.getElementById('formPagar');
+    const modal = document.getElementById('modalPagar');
+    
+    if (!form || !modal) {
+        console.error('Formulário ou modal não encontrado');
+        return;
+    }
+    
+    const associadoId = new URLSearchParams(window.location.search).get('associado_id');
+    let url = '/admin/financeiro/mensalidade/' + mensalidadeId + '/pagar';
+    if (associadoId) {
+        url += '?associado_id=' + associadoId;
+    }
+    form.action = url;
+    modal.style.display = 'flex';
+}
+
+function fecharModalPagar() {
+    const modal = document.getElementById('modalPagar');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Fechar modal ao clicar fora (executar após DOM carregar)
+document.addEventListener('DOMContentLoaded', function() {
+    const modalPagar = document.getElementById('modalPagar');
+    const modalPagarLote = document.getElementById('modalPagarLote');
+    
+    if (modalPagar) {
+        modalPagar.addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalPagar();
+            }
+        });
+    }
+    
+    if (modalPagarLote) {
+        modalPagarLote.addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalPagarLote();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Painel Administrativo{% endblock %} - AADVITA</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="admin-body">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <img src="{{ url_for('static', filename='images/logorodape.png') }}" alt="AADVITA" class="sidebar-logo">
+            <h2>Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="{{ url_for('admin_reuniones_presenciales') }}" class="nav-item {% if 'reuniones_presenciales' in request.endpoint %}active{% endif %}">
+                <span>📅</span> Reuniões Presenciais
+            </a>
+            <a href="{{ url_for('admin_reuniones_virtuales') }}" class="nav-item {% if 'reuniones_virtuales' in request.endpoint %}active{% endif %}">
+                <span>💻</span> Reuniões Virtuais
+            </a>
+            <a href="{{ url_for('admin_projetos') }}" class="nav-item {% if 'projetos' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+                <span>🚀</span> Projetos
+            </a>
+            <a href="{{ url_for('admin_eventos') }}" class="nav-item {% if 'eventos' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+                <span>🎉</span> Eventos
+            </a>
+            <a href="{{ url_for('admin_acoes') }}" class="nav-item {% if 'acoes' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+                <span>✨</span> Ações
+            </a>
+            <a href="{{ url_for('admin_albuns') }}" class="nav-item {% if 'albuns' in request.endpoint %}active{% endif %}">
+                <span>📁</span> Álbuns
+            </a>
+            <a href="{{ url_for('admin_videos') }}" class="nav-item {% if 'videos' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+                <span>🎥</span> Vídeos
+            </a>
+            <a href="{{ url_for('admin_apoiadores') }}" class="nav-item {% if 'apoiadores' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+                <span>🤝</span> Apoiadores
+            </a>
+            <a href="{{ url_for('admin_slider') }}" class="nav-item {% if 'slider' in request.endpoint %}active{% endif %}">
+                <span>🖼️</span> Slider (Home)
+            </a>
+            <a href="{{ url_for('admin_associados') }}" class="nav-item {% if 'associados' in request.endpoint and 'carteira' not in request.endpoint %}active{% endif %}">
+                <span>👥</span> Associados
+            </a>
+            <a href="{{ url_for('admin_carteiras') }}" class="nav-item {% if 'carteira' in request.endpoint %}active{% endif %}">
+                <span>🪪</span> Carteira de Associado
+            </a>
+            <a href="{{ url_for('admin_financeiro') }}" class="nav-item {% if 'financeiro' in request.endpoint %}active{% endif %}">
+                <span>💰</span> Sistema Financeiro
+            </a>
+            <a href="{{ url_for('admin_contas') }}" class="nav-item {% if 'contas' in request.endpoint %}active{% endif %}">
+                <span>📊</span> Contas
+            </a>
+            <a href="{{ url_for('admin_usuarios') }}" class="nav-item {% if 'usuarios' in request.endpoint %}active{% endif %}">
+                <span>👤</span> Usuários
+            </a>
+            <a href="{{ url_for('admin_rodape') }}" class="nav-item {% if 'rodape' in request.endpoint %}active{% endif %}">
+                <span>⚙️</span> Rodapé
+            </a>
+            <a href="{{ url_for('admin_dados_associacao') }}" class="nav-item {% if 'dados_associacao' in request.endpoint %}active{% endif %}">
+                <span>🏢</span> Dados da Associação
+            </a>
+            <a href="{{ url_for('admin_sobre') }}" class="nav-item {% if 'sobre' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+                <span>📄</span> Página Sobre
+            </a>
+            <a href="{{ url_for('admin_transparencia') }}" class="nav-item {% if 'transparencia' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
+                <span>🔍</span> Transparência
+            </a>
+            <a href="{{ url_for('index') }}" class="nav-item" target="_blank">
+                <span>🌐</span> Ver Site
+            </a>
+            <a href="{{ url_for('admin_logout') }}" class="nav-item nav-logout">
+                <span>🚪</span> Sair
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="admin-user">
+                <span>Olá, {{ session.get('admin_nome', 'Administrador') }}</span>
+            </div>
+        </header>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="admin-flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                            <button class="flash-close" type="button" aria-label="Fechar mensagem" onclick="this.closest('.flash-message').remove(); return false;">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="admin-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+    
+    <script>
+    // Garantir que não há lightbox modal ativo no admin
+    (function() {
+        function removeOverlays() {
+            // Remover qualquer lightbox modal do DOM no admin
+            const lightboxModal = document.getElementById('lightbox-modal');
+            if (lightboxModal) {
+                lightboxModal.remove();
+            }
+            
+            // Garantir que não há overlay bloqueando
+            const overlays = document.querySelectorAll('.lightbox-modal, [class*="overlay"]:not(.image-overlay), [class*="backdrop"]');
+            overlays.forEach(function(overlay) {
+                if (!overlay.closest('.admin-sidebar') && !overlay.closest('.admin-main')) {
+                    overlay.style.display = 'none';
+                    overlay.style.pointerEvents = 'none';
+                    overlay.style.visibility = 'hidden';
+                    overlay.style.opacity = '0';
+                    overlay.style.zIndex = '-1';
+                    overlay.style.background = 'transparent';
+                    overlay.style.backgroundColor = 'transparent';
+                }
+            });
+            
+            // Garantir que o body não está com overflow hidden
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+            
+            // Remover qualquer estilo inline que possa estar bloqueando
+            const adminBody = document.querySelector('.admin-body');
+            if (adminBody) {
+                adminBody.style.overflow = '';
+                adminBody.style.pointerEvents = '';
+            }
+            
+            // Remover qualquer elemento fixed com fundo escuro bloqueando
+            const fixedElements = document.querySelectorAll('[style*="position: fixed"], [style*="position:fixed"]');
+            fixedElements.forEach(function(el) {
+                if (!el.closest('.admin-sidebar') && !el.closest('.admin-main') && 
+                    !el.classList.contains('admin-sidebar') && !el.classList.contains('admin-header') &&
+                    !el.classList.contains('admin-flash-messages')) {
+                    const style = el.getAttribute('style') || '';
+                    if (style.includes('rgba(0') || style.includes('rgb(0, 0, 0') || 
+                        (style.includes('background') && (style.includes('black') || style.includes('0, 0, 0')))) {
+                        el.style.display = 'none';
+                        el.style.pointerEvents = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Executar imediatamente
+        removeOverlays();
+        
+        // Executar quando DOM carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', removeOverlays);
+        } else {
+            removeOverlays();
+        }
+        
+        // Executar após delays para garantir
+        setTimeout(removeOverlays, 100);
+        setTimeout(removeOverlays, 500);
+        setTimeout(removeOverlays, 1000);
+    })();
+    </script>
+</body>
+</html>
+

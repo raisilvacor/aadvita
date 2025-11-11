@@ -1,0 +1,192 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if projeto %}Editar{% else %}Novo{% endif %} Projeto{% endblock %}
+
+{% block page_title %}{% if projeto %}Editar{% else %}Novo{% endif %} Projeto{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="titulo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Título *
+            </label>
+            <input type="text" id="titulo" name="titulo" value="{% if projeto %}{{ projeto.titulo }}{% endif %}" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="descripcion" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Descrição *
+            </label>
+            <textarea id="descripcion" name="descripcion" rows="6" required
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.descripcion }}{% endif %}</textarea>
+        </div>
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 1.5rem;">Detalhes do Projeto</h3>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="identificacao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    1. Identificação do Projeto
+                </label>
+                <textarea id="identificacao" name="identificacao" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.identificacao or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="contexto_justificativa" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    2. Contexto e Justificativa
+                </label>
+                <textarea id="contexto_justificativa" name="contexto_justificativa" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.contexto_justificativa or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="objetivos" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    3. Objetivos
+                </label>
+                <textarea id="objetivos" name="objetivos" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.objetivos or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="publico_alvo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    4. Público-Alvo
+                </label>
+                <textarea id="publico_alvo" name="publico_alvo" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.publico_alvo or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="metodologia" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    5. Metodologia
+                </label>
+                <textarea id="metodologia" name="metodologia" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.metodologia or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="recursos_necessarios" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    6. Recursos Necessários
+                </label>
+                <textarea id="recursos_necessarios" name="recursos_necessarios" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.recursos_necessarios or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="parcerias" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    7. Parcerias
+                </label>
+                <textarea id="parcerias" name="parcerias" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.parcerias or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="resultados_esperados" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    8. Resultados Esperados
+                </label>
+                <textarea id="resultados_esperados" name="resultados_esperados" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.resultados_esperados or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="monitoramento_avaliacao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    9. Monitoramento e Avaliação
+                </label>
+                <textarea id="monitoramento_avaliacao" name="monitoramento_avaliacao" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.monitoramento_avaliacao or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="cronograma_execucao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    10. Cronograma de Execução (Exemplo)
+                </label>
+                <textarea id="cronograma_execucao" name="cronograma_execucao" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.cronograma_execucao or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="orcamento" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    11. Orçamento (Exemplo Resumido)
+                </label>
+                <textarea id="orcamento" name="orcamento" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.orcamento or '' }}{% endif %}</textarea>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="consideracoes_finais" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    12. Considerações Finais
+                </label>
+                <textarea id="consideracoes_finais" name="consideracoes_finais" rows="4"
+                          style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;">{% if projeto %}{{ projeto.consideracoes_finais or '' }}{% endif %}</textarea>
+            </div>
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+            <div class="form-group">
+                <label for="estado" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Estado
+                </label>
+                <select id="estado" name="estado" style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                    <option value="Ativo" {% if projeto and projeto.estado == 'Ativo' %}selected{% endif %}>Ativo</option>
+                    <option value="Em Andamento" {% if projeto and projeto.estado == 'Em Andamento' %}selected{% endif %}>Em Andamento</option>
+                    <option value="Concluído" {% if projeto and projeto.estado == 'Concluído' %}selected{% endif %}>Concluído</option>
+                    <option value="Pausado" {% if projeto and projeto.estado == 'Pausado' %}selected{% endif %}>Pausado</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="data_inicio" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Data de Início
+                </label>
+                <input type="date" id="data_inicio" name="data_inicio" 
+                       value="{% if projeto and projeto.data_inicio %}{{ projeto.data_inicio.strftime('%Y-%m-%d') }}{% endif %}"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            </div>
+            
+            <div class="form-group">
+                <label for="data_fim" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                    Data de Término
+                </label>
+                <input type="date" id="data_fim" name="data_fim" 
+                       value="{% if projeto and projeto.data_fim %}{{ projeto.data_fim.strftime('%Y-%m-%d') }}{% endif %}"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e5e7eb;">
+            <label for="imagen" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Foto do Projeto {% if projeto %}(deixe em branco para manter a atual){% endif %}
+            </label>
+            {% if projeto and projeto.imagen %}
+                <div style="margin-bottom: 1rem;">
+                    <img src="{{ url_for('static', filename=projeto.imagen) }}" 
+                         alt="{{ projeto.titulo }}" 
+                         style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 0.5rem; border: 2px solid #d1d5db;">
+                    <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+                        Foto atual
+                    </p>
+                </div>
+            {% endif %}
+            <input type="file" 
+                   id="imagen" 
+                   name="imagen" 
+                   accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP (máx. 16MB)
+            </small>
+        </div>
+        
+        <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_projetos') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Doações e Recursos') }} - {{ _('Transparência') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Doações e Recursos') }}</h1>
+        <p class="page-description">{{ _('Informações sobre doações recebidas e como contribuir com nossa causa') }}</p>
+    </div>
+</section>
+
+<section class="relatorios-section" aria-labelledby="doacoes-content">
+    <div class="container">
+        {% if informacoes_doacao %}
+            <div class="relatorios-list">
+                {% for info in informacoes_doacao %}
+                <div class="relatorio-item">
+                    <div class="relatorio-header">
+                        <h3>{{ get_text(info, 'titulo') or info.titulo_pt }}</h3>
+                    </div>
+                    
+                    {% if get_text(info, 'descricao') %}
+                        <div class="relatorio-descricao">
+                            <p>{{ get_text(info, 'descricao')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if get_text(info, 'como_contribuir') %}
+                        <div class="prestacao-section">
+                            <h4>{{ _('Como Contribuir:') }}</h4>
+                            <p>{{ get_text(info, 'como_contribuir')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <p>{{ _('Nenhuma informação de doação cadastrada no momento.') }}</p>
+            </div>
+        {% endif %}
+
+        <div class="relatorios-back">
+            <a href="{{ url_for('transparencia') }}" class="btn btn-secondary">
+                <span>←</span> {{ _('Voltar para Transparência') }}
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

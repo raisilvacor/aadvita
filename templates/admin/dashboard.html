@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.reuniones_presenciales }}</div>
+        <div class="stat-card-label">Reuniões Presenciais</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.reuniones_virtuales }}</div>
+        <div class="stat-card-label">Reuniões Virtuais</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.projetos }}</div>
+        <div class="stat-card-label">Projetos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.eventos }}</div>
+        <div class="stat-card-label">Eventos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.acoes }}</div>
+        <div class="stat-card-label">Ações</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.informativos }}</div>
+        <div class="stat-card-label">Informativos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.radio_programas }}</div>
+        <div class="stat-card-label">Programas de Rádio</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.imagens }}</div>
+        <div class="stat-card-label">Imagens</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.videos }}</div>
+        <div class="stat-card-label">Vídeos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-number">{{ stats.associados }}</div>
+        <div class="stat-card-label">Associados</div>
+    </div>
+</div>
+
+{% if stats.associados_pendentes and stats.associados_pendentes > 0 %}
+<div class="admin-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; margin-top: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title" style="color: #92400e;">
+            ⚠️ Associados Pendentes de Aprovação
+        </h2>
+    </div>
+    <p style="margin-bottom: 1rem; color: #78350f;">
+        Você tem <strong>{{ stats.associados_pendentes }}</strong> cadastro(s) aguardando aprovação.
+    </p>
+    <a href="{{ url_for('admin_associados', status='pendentes') }}" class="btn-admin btn-admin-primary" style="background: #f59e0b;">
+        <span>🔍</span> Ver Pendentes
+    </a>
+</div>
+{% endif %}
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Acesso Rápido</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+        <a href="{{ url_for('admin_reuniones_presenciales') }}" class="btn-admin btn-admin-primary">
+            <span>📅</span> Gerenciar Reuniões Presenciais
+        </a>
+        <a href="{{ url_for('admin_reuniones_virtuales') }}" class="btn-admin btn-admin-primary">
+            <span>💻</span> Gerenciar Reuniões Virtuais
+        </a>
+        <a href="{{ url_for('admin_projetos') }}" class="btn-admin btn-admin-primary">
+            <span>🚀</span> Gerenciar Projetos
+        </a>
+        <a href="{{ url_for('admin_eventos') }}" class="btn-admin btn-admin-primary">
+            <span>🎉</span> Gerenciar Eventos
+        </a>
+        <a href="{{ url_for('admin_acoes') }}" class="btn-admin btn-admin-primary">
+            <span>✨</span> Gerenciar Ações
+        </a>
+        <a href="{{ url_for('admin_informativos') }}" class="btn-admin btn-admin-primary">
+            <span>📰</span> Gerenciar Informativos
+        </a>
+        <a href="{{ url_for('admin_radio') }}" class="btn-admin btn-admin-primary">
+            <span>📻</span> Gerenciar Rádio AADVITA
+        </a>
+        <a href="{{ url_for('admin_banners') }}" class="btn-admin btn-admin-primary">
+            <span>🎨</span> Gerenciar Banners
+        </a>
+        <a href="{{ url_for('admin_slider') }}" class="btn-admin btn-admin-primary">
+            <span>🖼️</span> Gerenciar Slider (Home)
+        </a>
+        <a href="{{ url_for('admin_videos') }}" class="btn-admin btn-admin-primary">
+            <span>🎥</span> Gerenciar Vídeos
+        </a>
+        <a href="{{ url_for('admin_apoiadores') }}" class="btn-admin btn-admin-primary">
+            <span>🤝</span> Gerenciar Apoiadores
+        </a>
+        <a href="{{ url_for('admin_associados') }}" class="btn-admin btn-admin-primary">
+            <span>👥</span> Gerenciar Associados
+        </a>
+        <a href="{{ url_for('admin_financeiro') }}" class="btn-admin btn-admin-primary">
+            <span>💰</span> Sistema Financeiro
+        </a>
+        <a href="{{ url_for('admin_contas') }}" class="btn-admin btn-admin-primary">
+            <span>📊</span> Contas
+        </a>
+        <a href="{{ url_for('admin_usuarios') }}" class="btn-admin btn-admin-primary">
+            <span>👤</span> Gerenciar Usuários
+        </a>
+        <a href="{{ url_for('admin_rodape') }}" class="btn-admin btn-admin-secondary">
+            <span>⚙️</span> Configurar Rodapé
+        </a>
+    </div>
+</div>
+{% endblock %}
+

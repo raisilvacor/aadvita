@@ -1,0 +1,243 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Contas{% endblock %}
+
+{% block page_title %}Contas - Doações e Gastos{% endblock %}
+
+{% block content %}
+<!-- Cards de Estatísticas -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="admin-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+        <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+            R$ {{ "%.2f"|format(total_doacoes_financeira) }}
+        </div>
+        <div style="font-size: 1rem; opacity: 0.9;">
+            💰 Total de Doações Financeiras
+        </div>
+    </div>
+    
+    <div class="admin-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;">
+        <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+            {{ total_doacoes_material|int }} itens
+        </div>
+        <div style="font-size: 1rem; opacity: 0.9;">
+            📦 Total de Doações em Material
+        </div>
+    </div>
+    
+    <div class="admin-card" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white;">
+        <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+            {% if total_doacoes_servico_por_unidade %}
+                {% for unidade, total in total_doacoes_servico_por_unidade.items() %}
+                    <div style="margin-bottom: 0.5rem;">
+                        {{ total }} {{ unidade }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                0 unidades
+            {% endif %}
+        </div>
+        <div style="font-size: 1rem; opacity: 0.9;">
+            🛠️ Total de Doações em Serviços
+        </div>
+    </div>
+    
+    <div class="admin-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;">
+        <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+            R$ {{ "%.2f"|format(total_gastos) }}
+        </div>
+        <div style="font-size: 1rem; opacity: 0.9;">
+            💸 Total de Gastos
+        </div>
+    </div>
+</div>
+
+<!-- Seção de Doações -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Doações</h2>
+        <a href="{{ url_for('admin_doacao_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Doação
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Doador</th>
+                    <th>País</th>
+                    <th>Telefone</th>
+                    <th>Documento</th>
+                    <th>Valor/Quantidade</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if doacoes %}
+                    {% for doacao in doacoes %}
+                    <tr>
+                        <td>
+                            {% if doacao.tipo == 'financeira' %}
+                                <span style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    💰 Financeira
+                                </span>
+                            {% elif doacao.tipo == 'material' %}
+                                <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    📦 Material
+                                </span>
+                            {% elif doacao.tipo == 'servico' %}
+                                <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    🛠️ Serviço
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ doacao.descricao[:50] }}{% if doacao.descricao|length > 50 %}...{% endif %}</td>
+                        <td>{{ doacao.doador or '-' }}</td>
+                        <td>
+                            {% if doacao.pais %}
+                                {% if doacao.pais == 'BR' %}🇧🇷 Brasil
+                                {% elif doacao.pais == 'AR' %}🇦🇷 Argentina
+                                {% elif doacao.pais == 'UY' %}🇺🇾 Uruguai
+                                {% elif doacao.pais == 'PY' %}🇵🇾 Paraguai
+                                {% elif doacao.pais == 'CL' %}🇨🇱 Chile
+                                {% elif doacao.pais == 'CO' %}🇨🇴 Colômbia
+                                {% elif doacao.pais == 'PE' %}🇵🇪 Peru
+                                {% elif doacao.pais == 'BO' %}🇧🇴 Bolívia
+                                {% elif doacao.pais == 'VE' %}🇻🇪 Venezuela
+                                {% elif doacao.pais == 'EC' %}🇪🇨 Equador
+                                {% elif doacao.pais == 'US' %}🇺🇸 Estados Unidos
+                                {% elif doacao.pais == 'ES' %}🇪🇸 Espanha
+                                {% elif doacao.pais == 'PT' %}🇵🇹 Portugal
+                                {% else %}{{ doacao.pais }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ doacao.telefone or '-' }}</td>
+                        <td>
+                            {% if doacao.documento %}
+                                {% if doacao.tipo_documento == 'cpf' %}
+                                    {{ doacao.documento[:3] }}.{{ doacao.documento[3:6] }}.{{ doacao.documento[6:9] }}-{{ doacao.documento[9:] }}
+                                {% elif doacao.tipo_documento == 'cnpj' %}
+                                    {{ doacao.documento[:2] }}.{{ doacao.documento[2:5] }}.{{ doacao.documento[5:8] }}/{{ doacao.documento[8:12] }}-{{ doacao.documento[12:] }}
+                                {% elif doacao.tipo_documento in ['cuil', 'cuit'] %}
+                                    {{ doacao.documento[:2] }}-{{ doacao.documento[2:10] }}-{{ doacao.documento[10:] }}
+                                {% elif doacao.tipo_documento == 'rut_empresa' %}
+                                    {{ doacao.documento[:2] }}.{{ doacao.documento[2:5] }}.{{ doacao.documento[5:8] }}-{{ doacao.documento[8:] }}
+                                {% elif doacao.tipo_documento == 'nit' and doacao.pais == 'CO' %}
+                                    {{ doacao.documento[:3] }}.{{ doacao.documento[3:6] }}.{{ doacao.documento[6:9] }}-{{ doacao.documento[9:] }}
+                                {% elif doacao.tipo_documento == 'rif' %}
+                                    {{ doacao.documento }}
+                                {% elif doacao.tipo_documento == 'ein' %}
+                                    {{ doacao.documento[:2] }}-{{ doacao.documento[2:] }}
+                                {% elif doacao.tipo_documento == 'ssn' %}
+                                    {{ doacao.documento[:3] }}-{{ doacao.documento[3:5] }}-{{ doacao.documento[5:] }}
+                                {% else %}
+                                    {{ doacao.documento }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if doacao.tipo == 'financeira' %}
+                                R$ {{ "%.2f"|format(doacao.valor) if doacao.valor else '0.00' }}
+                            {% else %}
+                                {{ doacao.quantidade or 0 }} {{ doacao.unidade or 'unidades' }}
+                            {% endif %}
+                        </td>
+                        <td>{{ doacao.data_doacao.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_doacao_editar', id=doacao.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_doacao_excluir', id=doacao.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir esta doação?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 2rem;">
+                            Nenhuma doação cadastrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Seção de Gastos -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Gastos</h2>
+        <a href="{{ url_for('admin_gasto_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Gasto
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th>Fornecedor</th>
+                    <th>Valor</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if gastos %}
+                    {% for gasto in gastos %}
+                    <tr>
+                        <td>{{ gasto.descricao[:50] }}{% if gasto.descricao|length > 50 %}...{% endif %}</td>
+                        <td>
+                            <span style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem;">
+                                {{ gasto.categoria or 'Não definido' }}
+                            </span>
+                        </td>
+                        <td>{{ gasto.fornecedor or '-' }}</td>
+                        <td><strong>R$ {{ "%.2f"|format(gasto.valor) }}</strong></td>
+                        <td>{{ gasto.data_gasto.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_gasto_editar', id=gasto.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_gasto_excluir', id=gasto.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este gasto?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhum gasto cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

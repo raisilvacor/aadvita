@@ -1,0 +1,140 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Instagram - Gerenciar Posts{% endblock %}
+
+{% block page_title %}Instagram - Gerenciar Posts{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Posts do Instagram</h2>
+        <div style="display: flex; gap: 1rem;">
+            <form method="POST" action="{{ url_for('admin_instagram_sincronizar') }}" style="display: inline; margin: 0;">
+                <button type="submit" class="btn-admin btn-admin-primary" style="background: #10b981; border-color: #10b981;">
+                    <span>🔄</span> Sincronizar do Instagram
+                </button>
+            </form>
+            <a href="{{ url_for('admin_instagram_novo') }}" class="btn-admin btn-admin-primary">
+                <span>➕</span> Novo Post Manual
+            </a>
+        </div>
+    </div>
+    
+    <div style="padding: 1.5rem;">
+        <p style="color: #6b7280; margin-bottom: 1.5rem;">
+            Gerencie as fotos do Instagram que aparecem na página inicial. As 6 últimas fotos ativas serão exibidas.
+        </p>
+        
+        {% if posts %}
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Imagem</th>
+                        <th>Data do Post</th>
+                        <th>Legenda</th>
+                        <th>Ordem</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in posts %}
+                    <tr>
+                        <td>
+                            <img src="{{ post.imagem_url }}" 
+                                 alt="Post Instagram" 
+                                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem; border: 2px solid #e5e7eb;">
+                        </td>
+                        <td>{{ post.data_post.strftime('%d/%m/%Y') if post.data_post else '-' }}</td>
+                        <td>
+                            <strong>{{ post.legenda[:50] if post.legenda else 'Sem legenda' }}{% if post.legenda and post.legenda|length > 50 %}...{% endif %}</strong>
+                            {% if post.url_instagram %}
+                            <br>
+                            <small style="color: #6b7280;">
+                                <a href="{{ post.url_instagram }}" target="_blank" rel="noopener noreferrer">Ver no Instagram</a>
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>{{ post.ordem }}</td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if post.ativo else 'secondary' }}">
+                                {{ 'Ativo' if post.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{{ url_for('admin_instagram_editar', id=post.id) }}" 
+                                   class="btn-admin btn-admin-edit btn-admin-small">
+                                    <span>✏️</span> Editar
+                                </a>
+                                <form method="POST" action="{{ url_for('admin_instagram_excluir', id=post.id) }}" 
+                                      style="display: inline; margin: 0;"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir este post do Instagram?');">
+                                    <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                        <span>🗑️</span> Excluir
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem; color: #6b7280;">
+            <p style="margin: 0 0 1rem 0; font-size: 1.1rem;">Nenhum post do Instagram cadastrado.</p>
+            <a href="{{ url_for('admin_instagram_novo') }}" class="btn-admin btn-admin-primary">
+                <span>➕</span> Criar Primeiro Post
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="admin-card" style="margin-top: 2rem; background: #dbeafe; border: 2px solid #3b82f6;">
+    <div class="admin-card-header">
+        <h3 style="color: #1e40af; margin: 0;">🔄 Sincronização Automática</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <p style="margin: 0 0 1rem 0; color: #1e40af;">
+            <strong>Como funciona:</strong>
+        </p>
+        <ol style="margin: 0; padding-left: 1.5rem; color: #1e40af;">
+            <li>Configure a URL do Instagram no <a href="{{ url_for('admin_rodape') }}" style="color: #3b82f6; text-decoration: underline;">Rodapé</a> (ex: https://www.instagram.com/aadvita/).</li>
+            <li>Clique no botão "Sincronizar do Instagram" acima.</li>
+            <li>O sistema buscará automaticamente as 6 últimas fotos do perfil configurado.</li>
+            <li>As fotos serão adicionadas ao banco de dados e exibidas na página inicial.</li>
+        </ol>
+        <p style="margin-top: 1rem; color: #1e40af;">
+            <strong>Nota:</strong> A sincronização busca apenas fotos (não vídeos) do perfil público do Instagram. As 6 últimas fotos ativas (ordenadas por data de post) serão exibidas na página inicial.
+        </p>
+        <div style="margin-top: 1rem; padding: 1rem; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 0.5rem;">
+            <p style="margin: 0; color: #991b1b; font-size: 0.875rem;">
+                <strong>⚠️ Importante:</strong> O Instagram pode bloquear requisições automáticas. Se a sincronização não funcionar, você pode adicionar posts manualmente clicando em "Novo Post Manual" e copiando a URL da imagem de cada post.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card" style="margin-top: 2rem; background: #fef3c7; border: 2px solid #f59e0b;">
+    <div class="admin-card-header">
+        <h3 style="color: #92400e; margin: 0;">💡 Adicionar Post Manualmente</h3>
+    </div>
+    <div style="padding: 1.5rem;">
+        <p style="margin: 0 0 1rem 0; color: #92400e;">
+            Se preferir adicionar posts manualmente:
+        </p>
+        <ol style="margin: 0; padding-left: 1.5rem; color: #92400e;">
+            <li>Clique em "Novo Post Manual" acima.</li>
+            <li>Acesse o post no Instagram no navegador (versão web).</li>
+            <li>Clique com o botão direito na imagem e selecione "Abrir imagem em nova aba".</li>
+            <li>Copie a URL da imagem da barra de endereços.</li>
+            <li>Cole a URL no campo "URL da Imagem" ao criar/editar um post.</li>
+            <li>Opcionalmente, copie a URL do post do Instagram para o campo "URL do Post".</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
+

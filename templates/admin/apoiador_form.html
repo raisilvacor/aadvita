@@ -1,0 +1,110 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if apoiador %}Editar Apoiador{% else %}Novo Apoiador{% endif %}{% endblock %}
+
+{% block page_title %}{% if apoiador %}Editar Apoiador{% else %}Novo Apoiador{% endif %}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">{% if apoiador %}Editar Apoiador{% else %}Novo Apoiador{% endif %}</h2>
+        <a href="{{ url_for('admin_apoiadores') }}" class="btn-admin btn-admin-secondary">
+            <span>←</span> Voltar
+        </a>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" style="max-width: 800px; margin-top: 1.5rem;">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="nome" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Nome do Apoiador *
+            </label>
+            <input type="text" 
+                   id="nome" 
+                   name="nome" 
+                   value="{{ apoiador.nome if apoiador else '' }}" 
+                   required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="Digite o nome do apoiador">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="logo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Foto do Apoiador {% if apoiador %}(deixe em branco para manter a atual){% else %}*{% endif %}
+            </label>
+            {% if apoiador and apoiador.logo %}
+                <div style="margin-bottom: 1rem;">
+                    <img src="{{ url_for('static', filename=apoiador.logo) }}" 
+                         alt="{{ apoiador.nome }}" 
+                         style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 0.5rem; border: 2px solid #d1d5db;">
+                    <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+                        Foto atual
+                    </p>
+                </div>
+            {% endif %}
+            <input type="file" 
+                   id="logo" 
+                   name="logo" 
+                   accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                   {% if not apoiador %}required{% endif %}
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="tipo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Tipo de Apoiador *
+            </label>
+            <select id="tipo" 
+                    name="tipo" 
+                    required
+                    style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                <option value="">Selecione o tipo</option>
+                <option value="Empresa" {% if apoiador and apoiador.tipo == 'Empresa' %}selected{% endif %}>Empresa</option>
+                <option value="Pessoa Física" {% if apoiador and apoiador.tipo == 'Pessoa Física' %}selected{% endif %}>Pessoa Física</option>
+                <option value="Instituição" {% if apoiador and apoiador.tipo == 'Instituição' %}selected{% endif %}>Instituição</option>
+            </select>
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Selecione o tipo de apoiador para filtrar na página inicial
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="descricao" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Descrição
+            </label>
+            <textarea id="descricao" 
+                      name="descricao" 
+                      rows="5"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;"
+                      placeholder="Digite uma descrição sobre o apoiador">{{ apoiador.descricao if apoiador else '' }}</textarea>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="website" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Link do Site do Apoiador
+            </label>
+            <input type="url" 
+                   id="website" 
+                   name="website" 
+                   value="{{ apoiador.website if apoiador else '' }}" 
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;"
+                   placeholder="https://exemplo.com.br">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Digite a URL completa do site (ex: https://exemplo.com.br)
+            </small>
+        </div>
+        
+        <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if apoiador %}Salvar Alterações{% else %}Cadastrar Apoiador{% endif %}
+            </button>
+            <a href="{{ url_for('admin_apoiadores') }}" class="btn-admin btn-admin-secondary">
+                <span>❌</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Ações') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem;">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Nossas Ações') }}</h1>
+        <p class="page-description">{{ _('Acompanhe as ações e iniciativas desenvolvidas pela AADVITA') }}</p>
+    </div>
+</section>
+
+<section class="acoes-section" aria-labelledby="acoes-title" style="padding-top: 2rem; padding-bottom: 3rem;">
+    <div class="container">
+        {% if acoes %}
+            <div class="card-grid" role="list" style="margin-top: 2rem;">
+                {% for acao in acoes %}
+                <article class="card acao-card" role="listitem">
+                    {% if acao.imagem %}
+                    <div class="card-image">
+                        <img src="{{ url_for('static', filename=acao.imagem) }}" alt="{{ acao.titulo }}">
+                    </div>
+                    {% endif %}
+                    <div class="card-header">
+                        <h2 class="card-title">{{ acao.titulo }}</h2>
+                        <time datetime="{{ acao.data.strftime('%Y-%m-%d') }}" class="card-date">
+                            {{ acao.data.strftime('%d/%m/%Y') }}
+                        </time>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ acao.descricao }}</p>
+                        {% if acao.categoria %}
+                        <span class="badge">{{ acao.categoria }}</span>
+                        {% endif %}
+                        {% if acao.albuns %}
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                            <strong>{{ _('Álbuns:') }}</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                                {% for album in acao.albuns %}
+                                <a href="{{ url_for('galeria_album', id=album.id) }}" 
+                                   class="btn btn-secondary btn-sm"
+                                   style="text-decoration: none;">
+                                    📁 {{ get_titulo_album(album) }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">{{ _('Não há ações cadastradas no momento.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Agenda de Reuniões Presenciais') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Agenda de Reuniões Presenciais') }}</h1>
+        <p class="page-description">{{ _('Confira nossas próximas reuniões presenciais e eventos') }}</p>
+    </div>
+</section>
+
+<section class="agenda-section" aria-labelledby="agenda-title">
+    <div class="container">
+        {% if reuniones %}
+            <div class="agenda-list" role="list">
+                {% for reunion in reuniones %}
+                <article class="agenda-item" role="listitem">
+                    <div class="agenda-item-header">
+                        <h2 class="agenda-item-title">{{ reunion.titulo }}</h2>
+                        <div class="agenda-item-meta">
+                            <time datetime="{{ reunion.fecha.strftime('%Y-%m-%d') }}" class="agenda-date">
+                                <span class="meta-label">{{ _('Data:') }}</span>
+                                {{ reunion.fecha.strftime('%d/%m/%Y') }}
+                            </time>
+                            <time datetime="{{ reunion.hora }}" class="agenda-time">
+                                <span class="meta-label">{{ _('Hora:') }}</span>
+                                {{ reunion.hora }}
+                            </time>
+                        </div>
+                    </div>
+                    <div class="agenda-item-body">
+                        {% if reunion.descripcion %}
+                        <p class="agenda-description">{{ reunion.descripcion }}</p>
+                        {% endif %}
+                        <div class="agenda-details">
+                            <div class="detail-item">
+                                <strong>{{ _('Local:') }}</strong> {{ reunion.lugar }}
+                            </div>
+                            {% if reunion.direccion %}
+                            <div class="detail-item">
+                                <strong>{{ _('Endereço:') }}</strong> {{ reunion.direccion }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">{{ _('Não há reuniões presenciais cadastradas no momento.') }}</p>
+                <p>{{ _('Volte em breve para conferir nossa agenda atualizada.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

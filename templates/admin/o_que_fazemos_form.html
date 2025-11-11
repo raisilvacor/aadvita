@@ -1,0 +1,169 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if servico %}Editar{% else %}Novo{% endif %} Serviço - O que fazemos{% endblock %}
+
+{% block page_title %}{% if servico %}Editar{% else %}Novo{% endif %} Serviço{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="titulo">Título *</label>
+            <input type="text" id="titulo" name="titulo" 
+                   value="{% if servico %}{{ servico.titulo }}{% endif %}" 
+                   required
+                   placeholder="Ex: Biblioteca"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Título do serviço que será exibido na página inicial.
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao">Descrição *</label>
+            <textarea id="descricao" name="descricao" rows="4" required
+                      placeholder="Descreva o serviço oferecido..."
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; resize: vertical;">{% if servico %}{{ servico.descricao }}{% endif %}</textarea>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Descrição detalhada do serviço.
+            </small>
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="coluna">Coluna *</label>
+                <select id="coluna" name="coluna" required
+                        style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                    <option value="1" {% if servico and servico.coluna == 1 %}selected{% endif %}>Coluna 1</option>
+                    <option value="2" {% if servico and servico.coluna == 2 %}selected{% endif %}>Coluna 2</option>
+                    <option value="3" {% if servico and servico.coluna == 3 %}selected{% endif %}>Coluna 3</option>
+                </select>
+                <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                    Coluna onde o serviço será exibido (1, 2 ou 3).
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label for="ordem">Ordem de Exibição</label>
+                <input type="number" id="ordem" name="ordem" 
+                       value="{% if servico %}{{ servico.ordem }}{% else %}0{% endif %}"
+                       min="0"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+                <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                    Menor número aparece primeiro dentro da coluna.
+                </small>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="cor_icone">Cor do Ícone *</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="color" id="cor_icone" name="cor_icone" 
+                       value="{% if servico %}{{ servico.cor_icone }}{% else %}#3b82f6{% endif %}" 
+                       required
+                       style="width: 80px; height: 45px; border: 2px solid #d1d5db; border-radius: 0.5rem; cursor: pointer;">
+                <input type="text" id="cor_icone_text" 
+                       value="{% if servico %}{{ servico.cor_icone }}{% else %}#3b82f6{% endif %}" 
+                       pattern="^#[0-9A-Fa-f]{6}$"
+                       style="flex: 1; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: monospace;"
+                       readonly>
+            </div>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Cor de fundo do círculo do ícone (formato hexadecimal: #000000).
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="icone_svg">Ícone SVG (Opcional)</label>
+            <textarea id="icone_svg" name="icone_svg" rows="8"
+                      placeholder='<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">...</svg>'
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; font-family: monospace; resize: vertical;">{% if servico and servico.icone_svg %}{{ servico.icone_svg }}{% endif %}</textarea>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                SVG do ícone que será exibido. Deixe vazio para usar o ícone padrão (círculo com relógio). O SVG deve ter stroke ou fill="white" para aparecer corretamente sobre o fundo colorido.
+            </small>
+            <div id="icon-preview-container" style="margin-top: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; border: 2px solid #e5e7eb; display: none;">
+                <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #374151; font-size: 0.875rem;">Preview do Ícone:</p>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div id="icon-preview" style="width: 70px; height: 70px; border-radius: 50%; background: {% if servico %}{{ servico.cor_icone }}{% else %}#3b82f6{% endif %}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                        <div id="icon-preview-svg"></div>
+                    </div>
+                    <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">Ícone será exibido neste tamanho e cor.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="ativo" name="ativo" 
+                       {% if not servico or servico.ativo %}checked{% endif %}
+                       style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                <span style="font-weight: 600; color: #374151;">Serviço Ativo</span>
+            </label>
+            <small style="color: #6b7280; display: block; margin-top: 0.5rem;">
+                Apenas serviços ativos serão exibidos na página inicial.
+            </small>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> {% if servico %}Atualizar{% else %}Criar{% endif %} Serviço
+            </button>
+            <a href="{{ url_for('admin_o_que_fazemos') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const corIconeInput = document.getElementById('cor_icone');
+    const corIconeText = document.getElementById('cor_icone_text');
+    const iconeSvgTextarea = document.getElementById('icone_svg');
+    const previewContainer = document.getElementById('icon-preview-container');
+    const preview = document.getElementById('icon-preview');
+    const previewSvg = document.getElementById('icon-preview-svg');
+    
+    function updateIconPreview() {
+        if (!preview || !corIconeInput) return;
+        
+        // Atualizar cor de fundo
+        preview.style.background = corIconeInput.value;
+        
+        // Atualizar SVG
+        if (iconeSvgTextarea && iconeSvgTextarea.value.trim()) {
+            previewSvg.innerHTML = iconeSvgTextarea.value;
+            if (previewContainer) previewContainer.style.display = 'block';
+        } else {
+            // Ícone padrão
+            previewSvg.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/><path d="M12 8V12L16 14" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>';
+            if (previewContainer) previewContainer.style.display = 'block';
+        }
+    }
+    
+    if (corIconeInput && corIconeText) {
+        corIconeInput.addEventListener('input', function() {
+            corIconeText.value = this.value;
+            updateIconPreview();
+        });
+        
+        corIconeText.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                corIconeInput.value = this.value;
+                updateIconPreview();
+            }
+        });
+    }
+    
+    if (iconeSvgTextarea) {
+        iconeSvgTextarea.addEventListener('input', function() {
+            updateIconPreview();
+        });
+    }
+    
+    // Inicializar preview
+    updateIconPreview();
+});
+</script>
+{% endblock %}
+

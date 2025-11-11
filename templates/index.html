@@ -1,0 +1,1120 @@
+{% extends "base.html" %}
+
+{% block title %}AADVITA - {{ _('Início') }}{% endblock %}
+
+{% block content %}
+<!-- Slider Principal -->
+{% if slider_images %}
+<section class="hero-slider" aria-label="Slider Principal">
+    <div class="slider-container">
+        <div class="slider-wrapper">
+            <div class="slider-track" id="slider-track">
+                {% for imagem in slider_images %}
+                <div class="slider-slide {% if loop.index == 1 %}active{% endif %}" data-slide="{{ loop.index0 }}">
+                    {% if imagem.link %}
+                    <a href="{{ imagem.link }}" class="slider-link" aria-label="{{ imagem.titulo }}">
+                    {% endif %}
+                        <img src="{{ url_for('static', filename=imagem.imagem) }}" 
+                             alt="{{ imagem.titulo }}" 
+                             class="slider-image"
+                             loading="eager">
+                    {% if imagem.link %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Botões de Navegação (Setas) -->
+            {% if slider_images|length > 1 %}
+            <button class="slider-nav slider-prev" aria-label="Imagem anterior" id="slider-prev">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="slider-nav slider-next" aria-label="Próxima imagem" id="slider-next">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            
+            <!-- Indicadores (Pontos) -->
+            <div class="slider-indicators" id="slider-indicators">
+                {% for imagem in slider_images %}
+                <button class="slider-indicator {% if loop.index == 1 %}active{% endif %}" 
+                        data-slide="{{ loop.index0 }}" 
+                        aria-label="Ir para imagem {{ loop.index }}"
+                        aria-current="{% if loop.index == 1 %}true{% else %}false{% endif %}">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Banners de Acesso Rápido -->
+{% if banners %}
+<section class="banners-section" aria-label="{{ _('Acesso Rápido') }}" style="padding: 3rem 0; background: var(--bg-light);">
+    <div class="container">
+        <div class="banners-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto;">
+            <!-- Banner Campanhas -->
+            {% if banners.get('Campanhas') %}
+            {% set banner = banners.get('Campanhas') %}
+            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('campanhas') }}{% endif %}" class="banner-card" style="display: block; background: linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
+                        {{ banner.titulo }}
+                    </h3>
+                    <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
+                        Conheça nossas campanhas e participe.
+                    </p>
+                </div>
+            </a>
+            {% endif %}
+            
+            <!-- Banner Apoie-nos -->
+            {% if banners.get('Apoie-nos') %}
+            {% set banner = banners.get('Apoie-nos') %}
+            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('apoie') }}{% endif %}" class="banner-card" style="display: block; background: linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
+                        {{ banner.titulo }}
+                    </h3>
+                    <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
+                        Sua contribuição transforma vidas!
+                    </p>
+                </div>
+            </a>
+            {% endif %}
+            
+            <!-- Banner Editais -->
+            {% if banners.get('Editais') %}
+            {% set banner = banners.get('Editais') %}
+            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('editais') }}{% endif %}" class="banner-card" style="display: block; background: linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
+                        {{ banner.titulo }}
+                    </h3>
+                    <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
+                        Confira nossos editais e oportunidades.
+                    </p>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<style>
+.banner-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+.banner-card:active {
+    transform: translateY(-4px);
+}
+
+@media (max-width: 768px) {
+    .banners-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+    
+    .banner-card {
+        min-height: 180px !important;
+        padding: 2rem 1.5rem !important;
+    }
+}
+</style>
+
+<!-- Seção "O que fazemos" -->
+<section class="o-que-fazemos-section" aria-labelledby="o-que-fazemos-title" style="padding: 4rem 0; background: white;">
+    <div class="container">
+        <h2 id="o-que-fazemos-title" class="o-que-fazemos-title" style="text-align: center; font-size: 2.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
+            O que fazemos
+        </h2>
+        <div style="width: 80px; height: 4px; background: #eab308; margin: 0 auto 2rem; border-radius: 2px;"></div>
+        
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h3 style="font-size: 1.75rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
+                Bem-vindo à AADVITA
+            </h3>
+            <p style="font-size: 1.1rem; color: #6b7280; margin: 0; font-family: 'Inter', sans-serif;">
+                Associação dos Deficientes Visuais Tapuienses
+            </p>
+        </div>
+        
+        {% if servicos_o_que_fazemos and (servicos_o_que_fazemos.get(1) or servicos_o_que_fazemos.get(2) or servicos_o_que_fazemos.get(3)) %}
+        <div class="o-que-fazemos-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem 2rem; max-width: 1200px; margin: 0 auto;">
+            <!-- Coluna 1 -->
+            <div class="o-que-fazemos-column" style="position: relative;">
+                {% for servico in servicos_o_que_fazemos.get(1, []) %}
+                <div class="o-que-fazemos-item" style="margin-bottom: {% if not loop.last %}2.5rem{% else %}0{% endif %}; position: relative;">
+                    <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            <div class="o-que-fazemos-icon" style="width: 70px; height: 70px; border-radius: 50%; background: {{ servico.cor_icone }}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                                {% if servico.icone_svg %}
+                                    {{ servico.icone_svg|safe }}
+                                {% else %}
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+                                        <path d="M12 8V12L16 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            {% if not loop.last %}
+                            <div class="o-que-fazemos-line" style="position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: 2px; height: 60px; border-left: 2px dotted #d1d5db; z-index: 0;"></div>
+                            {% endif %}
+                        </div>
+                        <div style="flex: 1; padding-top: 0.5rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ servico.titulo }}</h3>
+                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ servico.descricao }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Coluna 2 -->
+            <div class="o-que-fazemos-column" style="position: relative;">
+                {% for servico in servicos_o_que_fazemos.get(2, []) %}
+                <div class="o-que-fazemos-item" style="margin-bottom: {% if not loop.last %}2.5rem{% else %}0{% endif %}; position: relative;">
+                    <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            <div class="o-que-fazemos-icon" style="width: 70px; height: 70px; border-radius: 50%; background: {{ servico.cor_icone }}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                                {% if servico.icone_svg %}
+                                    {{ servico.icone_svg|safe }}
+                                {% else %}
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+                                        <path d="M12 8V12L16 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            {% if not loop.last %}
+                            <div class="o-que-fazemos-line" style="position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: 2px; height: 60px; border-left: 2px dotted #d1d5db; z-index: 0;"></div>
+                            {% endif %}
+                        </div>
+                        <div style="flex: 1; padding-top: 0.5rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ servico.titulo }}</h3>
+                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ servico.descricao }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Coluna 3 -->
+            <div class="o-que-fazemos-column" style="position: relative;">
+                {% for servico in servicos_o_que_fazemos.get(3, []) %}
+                <div class="o-que-fazemos-item" style="margin-bottom: {% if not loop.last %}2.5rem{% else %}0{% endif %}; position: relative;">
+                    <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            <div class="o-que-fazemos-icon" style="width: 70px; height: 70px; border-radius: 50%; background: {{ servico.cor_icone }}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                                {% if servico.icone_svg %}
+                                    {{ servico.icone_svg|safe }}
+                                {% else %}
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+                                        <path d="M12 8V12L16 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            {% if not loop.last %}
+                            <div class="o-que-fazemos-line" style="position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: 2px; height: 60px; border-left: 2px dotted #d1d5db; z-index: 0;"></div>
+                            {% endif %}
+                        </div>
+                        <div style="flex: 1; padding-top: 0.5rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ servico.titulo }}</h3>
+                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ servico.descricao }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem; color: #6b7280;">
+            <p style="margin: 0; font-size: 1.1rem;">Nenhum serviço cadastrado no momento.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+@media (max-width: 1024px) {
+    .o-que-fazemos-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 2rem 1.5rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .o-que-fazemos-grid {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+    }
+    
+    .o-que-fazemos-title {
+        font-size: 2rem !important;
+    }
+    
+    .o-que-fazemos-line {
+        display: none !important;
+    }
+    
+    .o-que-fazemos-item {
+        margin-bottom: 2rem !important;
+    }
+}
+</style>
+
+<!-- Seção Informativo -->
+<section class="informativo-section" aria-labelledby="informativo-title" style="padding: 3rem 0; background: var(--bg-light);">
+    <div class="container">
+        <div class="informativo-banners-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 800px; margin: 0 auto;">
+            <!-- Banner Notícias -->
+            <a href="{{ url_for('informativo', tipo='Noticia') }}" class="informativo-banner-card" style="display: block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
+                        Notícias
+                    </h3>
+                    <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
+                        Fique por dentro das novidades da AADVITA.
+                    </p>
+                </div>
+            </a>
+            
+            <!-- Banner Podcast -->
+            <a href="{{ url_for('informativo', tipo='Podcast') }}" class="informativo-banner-card" style="display: block; background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
+                        Podcast
+                    </h3>
+                    <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
+                        Ouça nossos podcasts e conteúdos em áudio.
+                    </p>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<style>
+.informativo-banner-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.informativo-banner-card:active {
+    transform: translateY(-4px);
+}
+
+@media (max-width: 768px) {
+    .informativo-banners-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+    
+    .informativo-banner-card {
+        min-height: 180px !important;
+        padding: 2rem 1.5rem !important;
+    }
+}
+</style>
+
+<section id="destaques" class="destaques" aria-labelledby="destaques-title">
+    <div class="container">
+        <h2 id="destaques-title" class="section-title">{{ _('Destaques') }}</h2>
+        
+        <!-- Próximas Reuniões Presenciais -->
+        <section class="destaque-section" aria-labelledby="reunioes-presenciais-title">
+            <h3 id="reunioes-presenciais-title" class="destaque-title">
+                <span aria-hidden="true">📅</span> {{ _('Próximas Reuniões Presenciais') }}
+            </h3>
+            <div class="card-grid">
+                {% if reuniones_presenciales %}
+                    {% for reunion in reuniones_presenciales %}
+                    <article class="card" role="article">
+                        <div class="card-header">
+                            <h4 class="card-title">{{ reunion.titulo }}</h4>
+                            <time datetime="{{ reunion.fecha.strftime('%Y-%m-%d') }}" class="card-date">
+                                {{ reunion.fecha.strftime('%d/%m/%Y') }} às {{ reunion.hora }}
+                            </time>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ reunion.descripcion }}</p>
+                            <p class="card-location">
+                                <strong>{{ _('Local:') }}</strong> {{ reunion.lugar }}
+                            </p>
+                            {% if reunion.direccion %}
+                            <p class="card-address">{{ reunion.direccion }}</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-data">{{ _('Não há reuniões presenciais programadas no momento.') }}</p>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('agenda_presencial') }}" class="btn btn-secondary">{{ _('Ver todas as reuniões presenciais') }}</a>
+        </section>
+
+        <!-- Próximas Reuniões Virtuais -->
+        <section class="destaque-section destaque-section-blue" aria-labelledby="reunioes-virtuais-title">
+            <h3 id="reunioes-virtuais-title" class="destaque-title">
+                <span aria-hidden="true">💻</span> {{ _('Próximas Reuniões Virtuais') }}
+            </h3>
+            <div class="card-grid">
+                {% if reuniones_virtuales %}
+                    {% for reunion in reuniones_virtuales %}
+                    <article class="card" role="article">
+                        <div class="card-header">
+                            <h4 class="card-title">{{ reunion.titulo }}</h4>
+                            <time datetime="{{ reunion.fecha.strftime('%Y-%m-%d') }}" class="card-date">
+                                {{ reunion.fecha.strftime('%d/%m/%Y') }} às {{ reunion.hora }}
+                            </time>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ reunion.descripcion }}</p>
+                            <p class="card-platform">
+                                <strong>{{ _('Plataforma:') }}</strong> {{ reunion.plataforma }}
+                            </p>
+                            {% if reunion.link %}
+                            <a href="{{ reunion.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-link">
+                                {{ _('Acessar reunião') }}
+                                <span class="sr-only">{{ _('(abre em nova aba)') }}</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-data">{{ _('Não há reuniões virtuais programadas no momento.') }}</p>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('agenda_virtual') }}" class="btn btn-secondary">{{ _('Ver todas as reuniões virtuais') }}</a>
+        </section>
+
+        <!-- Projetos em Destaque -->
+        <section class="destaque-section" aria-labelledby="projetos-title">
+            <h3 id="projetos-title" class="destaque-title">
+                <span aria-hidden="true">🚀</span> {{ _('Projetos em Destaque') }}
+            </h3>
+            <div class="card-grid">
+                {% if projetos %}
+                    {% for projeto in projetos %}
+                    <article class="card" role="article">
+                        {% if projeto.imagen %}
+                        <div class="card-image">
+                            <img src="{{ url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.titulo }}">
+                        </div>
+                        {% endif %}
+                        <div class="card-header">
+                            <h4 class="card-title">{{ projeto.titulo }}</h4>
+                            <span class="badge badge-{{ 'success' if projeto.estado == 'Ativo' else 'secondary' }}">
+                                {{ projeto.estado }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ projeto.descripcion }}</p>
+                        </div>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-data">{{ _('Não há projetos cadastrados no momento.') }}</p>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('projetos') }}" class="btn btn-secondary">{{ _('Ver todos os projetos') }}</a>
+        </section>
+
+        <!-- Próximos Eventos -->
+        <section class="destaque-section" aria-labelledby="eventos-title">
+            <h3 id="eventos-title" class="destaque-title">
+                <span aria-hidden="true">🎉</span> {{ _('Próximos Eventos') }}
+            </h3>
+            <div class="card-grid">
+                {% if eventos %}
+                    {% for evento in eventos %}
+                    <article class="card" role="article">
+                        {% if evento.imagem %}
+                        <div class="card-image">
+                            <img src="{{ url_for('static', filename=evento.imagem) }}" alt="{{ evento.titulo }}">
+                        </div>
+                        {% endif %}
+                        <div class="card-header">
+                            <h4 class="card-title">{{ evento.titulo }}</h4>
+                            <time datetime="{{ evento.data.strftime('%Y-%m-%d') }}" class="card-date">
+                                {{ evento.data.strftime('%d/%m/%Y') }}{% if evento.hora %} às {{ evento.hora }}{% endif %}
+                            </time>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ evento.descricao }}</p>
+                            {% if evento.tipo %}
+                            <p class="card-platform">
+                                <strong>{{ _('Tipo:') }}</strong> {{ evento.tipo }}
+                            </p>
+                            {% endif %}
+                            {% if evento.local %}
+                            <p class="card-location">
+                                <strong>{{ _('Local:') }}</strong> {{ evento.local }}
+                            </p>
+                            {% endif %}
+                            {% if evento.endereco %}
+                            <p class="card-address">{{ evento.endereco }}</p>
+                            {% endif %}
+                            {% if evento.link %}
+                            <a href="{{ evento.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-link">
+                                {{ _('Acessar evento') }}
+                                <span class="sr-only">{{ _('(abre em nova aba)') }}</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-data">{{ _('Não há eventos cadastrados no momento.') }}</p>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('eventos') }}" class="btn btn-secondary">{{ _('Ver todos os eventos') }}</a>
+        </section>
+
+        <!-- Ações Recentes -->
+        <section class="destaque-section destaque-section-blue" aria-labelledby="acoes-title">
+            <h3 id="acoes-title" class="destaque-title">
+                <span aria-hidden="true">✨</span> {{ _('Ações Recentes') }}
+            </h3>
+            <div class="card-grid">
+                {% if acoes %}
+                    {% for acao in acoes %}
+                    <article class="card" role="article">
+                        {% if acao.imagem %}
+                        <div class="card-image">
+                            <img src="{{ url_for('static', filename=acao.imagem) }}" alt="{{ acao.titulo }}">
+                        </div>
+                        {% endif %}
+                        <div class="card-header">
+                            <h4 class="card-title">{{ acao.titulo }}</h4>
+                            <time datetime="{{ acao.data.strftime('%Y-%m-%d') }}" class="card-date">
+                                {{ acao.data.strftime('%d/%m/%Y') }}
+                            </time>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ acao.descricao }}</p>
+                            {% if acao.categoria %}
+                            <span class="badge">{{ acao.categoria }}</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-data">{{ _('Não há ações cadastradas no momento.') }}</p>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('acoes') }}" class="btn btn-secondary">{{ _('Ver todas as ações') }}</a>
+        </section>
+
+        <!-- Módulo Rádio AADVITA -->
+        <section class="radio-banner-section destaque-section" aria-labelledby="radio-banner-title" style="background: #3b82f6; padding: 3rem 2rem; margin: 3rem 0; border-radius: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap;">
+                <!-- Logo e Ilustração -->
+                <div style="display: flex; align-items: center; gap: 2rem; flex: 1; min-width: 300px;">
+                    <!-- Ilustração da pessoa com fone de ouvido e microfone -->
+                    <div style="flex-shrink: 0;">
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Cabeça -->
+                            <circle cx="60" cy="45" r="25" fill="#d4a574" stroke="#c49464" stroke-width="2"/>
+                            <!-- Cabelo encaracolado -->
+                            <path d="M45 35 Q40 25 50 20 Q55 18 60 20 Q65 18 70 20 Q80 25 75 35 Q75 30 70 28 Q65 26 60 28 Q55 26 50 28 Q45 30 45 35 Z" fill="#8b6f47" opacity="0.8"/>
+                            <!-- Fone de ouvido amarelo esquerdo -->
+                            <path d="M35 50 L35 65 Q35 70 40 70 L50 70 Q55 70 55 65 L55 50 Q55 45 50 45 L40 45 Q35 45 35 50 Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+                            <!-- Fone de ouvido amarelo direito -->
+                            <path d="M85 50 L85 65 Q85 70 90 70 L100 70 Q105 70 105 65 L105 50 Q105 45 100 45 L90 45 Q85 45 85 50 Z" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+                            <!-- Arco do fone -->
+                            <path d="M40 70 Q45 75 50 75 Q55 75 60 72 Q65 75 70 75 Q75 75 80 70" stroke="#f59e0b" stroke-width="4" fill="none" stroke-linecap="round"/>
+                            <!-- Olhos fechados -->
+                            <path d="M50 42 Q52 40 54 42" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                            <path d="M66 42 Q68 40 70 42" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                            <!-- Boca aberta (cantando) -->
+                            <ellipse cx="60" cy="52" rx="4" ry="3" fill="#ffffff" opacity="0.9"/>
+                            <!-- Corpo -->
+                            <rect x="50" y="70" width="20" height="30" rx="3" fill="#60a5fa" stroke="#3b82f6" stroke-width="2"/>
+                            <!-- Microfone azul claro -->
+                            <rect x="75" y="75" width="8" height="15" rx="1" fill="#60a5fa" stroke="#3b82f6" stroke-width="2"/>
+                            <circle cx="79" cy="92" r="3" fill="#3b82f6"/>
+                            <line x1="79" y1="75" x2="79" y2="70" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <!-- Logo Rádio AADVITA -->
+                    <div style="flex: 1;">
+                        <div style="color: white;">
+                            <div style="font-size: 2rem; font-weight: 700; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); letter-spacing: 0.05em; margin-bottom: 0.2rem;">
+                                Rádio
+                            </div>
+                            <div style="font-size: 3.5rem; font-weight: 900; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); letter-spacing: 0.05em; line-height: 1;">
+                                AADVITA
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Botão OUÇA – CLIQUE AQUI -->
+                <div style="flex-shrink: 0;">
+                    <a href="{{ url_for('radio') }}" class="radio-banner-button" style="display: inline-block; background: #fbbf24; color: white; padding: 1.25rem 2.5rem; border-radius: 0.75rem; text-decoration: none; font-weight: 800; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; border: 2px solid #f59e0b;">
+                        OUÇA – CLIQUE AQUI
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
+
+<section class="destaques" aria-labelledby="destaques-title-continuation" style="padding-top: 3rem;">
+    <div class="container">
+        <!-- AADVITA no Instagram -->
+        <section class="destaque-section" aria-labelledby="instagram-title" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 id="instagram-title" class="destaque-title" style="margin-bottom: 1.5rem;">
+                <span aria-hidden="true">📷</span> AADVITA no Instagram
+            </h3>
+
+            <!-- Widget do Instagram -->
+            {% if instagram_username %}
+            <div class="instagram-widget-container" style="width: 100%; margin: 1rem 0;">
+                <div style="width: 100%; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); background: white; padding: 1rem;">
+                    <iframe src="https://www.instagram.com/{{ instagram_username }}/embed" 
+                            width="100%" 
+                            height="900" 
+                            frameborder="0" 
+                            scrolling="no" 
+                            allowtransparency="true"
+                            style="width: 100%; border: 0; display: block; margin: 0 auto; max-width: 100%;">
+                    </iframe>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="{{ instagram_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                    <span>📷</span> Ver mais no Instagram
+                </a>
+            </div>
+            {% else %}
+            <p class="no-data">Configure a URL do Instagram no rodapé para exibir os posts.</p>
+            {% endif %}
+        </section>
+
+        <!-- Vídeos em Destaque -->
+        <section class="destaque-section" aria-labelledby="videos-title">
+            <h3 id="videos-title" class="destaque-title">
+                <span aria-hidden="true">🎥</span> {{ _('Vídeos em Destaque') }}
+            </h3>
+            
+            {% if videos %}
+                <div class="video-grid" role="list">
+                    {% for video in videos %}
+                    <article class="video-card" role="listitem">
+                        <div class="video-thumbnail-wrapper">
+                            <a href="{{ video.url_youtube }}" target="_blank" rel="noopener noreferrer" class="video-link" aria-label="{{ _('Assistir vídeo') }}: {{ video.titulo }}">
+                                <img src="{{ video.get_thumbnail_url() }}" 
+                                     alt="{{ video.titulo }}" 
+                                     class="video-thumbnail"
+                                     loading="lazy">
+                                <div class="video-play-button" aria-hidden="true">
+                                    <svg width="68" height="48" viewBox="0 0 68 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="red"/>
+                                        <path d="M45 24L27 14v20l18-10z" fill="white"/>
+                                    </svg>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="video-info">
+                            <h4 class="video-title">{{ video.titulo }}</h4>
+                            {% if video.descricao %}
+                            <p class="video-description">{{ video.descricao[:100] }}{% if video.descricao|length > 100 %}...{% endif %}</p>
+                            {% endif %}
+                            {% if video.categoria %}
+                            <span class="badge badge-secondary">{{ video.categoria }}</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="{{ url_for('videos') }}" class="btn btn-secondary">{{ _('Ver todos os vídeos') }}</a>
+                </div>
+            {% else %}
+                <p class="no-data">{{ _('Nenhum vídeo cadastrado no momento.') }}</p>
+            {% endif %}
+        </section>
+
+        <!-- Apoiadores -->
+        {% if apoiadores %}
+        <section class="destaque-section" aria-labelledby="apoiadores-title">
+            <h3 id="apoiadores-title" class="destaque-title">
+                <span aria-hidden="true">🤝</span> {{ _('Nossos Apoiadores') }}
+            </h3>
+            
+            <!-- Botões de Filtro -->
+            <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
+                <button class="apoiador-filter-btn active" data-filter="todos" style="padding: 0.75rem 2rem; border: 2px solid #d1d5db; background: #ffffff; color: #374151; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    Todos
+                </button>
+                <button class="apoiador-filter-btn" data-filter="Empresa" style="padding: 0.75rem 2rem; border: 2px solid #d1d5db; background: #ffffff; color: #374151; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    Empresa
+                </button>
+                <button class="apoiador-filter-btn" data-filter="Pessoa Física" style="padding: 0.75rem 2rem; border: 2px solid #d1d5db; background: #ffffff; color: #374151; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    Pessoa Física
+                </button>
+            </div>
+            
+            <!-- Grid de Apoiadores -->
+            <div class="apoiadores-grid-container" id="apoiadores-grid-container" style="position: relative; min-height: 300px;">
+                <div class="apoiadores-grid" id="apoiadores-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+                    {% for apoiador in apoiadores %}
+                    <div class="apoiador-grid-item" 
+                         data-tipo="{{ apoiador.tipo or 'Instituição' }}"
+                         style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease;">
+                        {% if apoiador.website %}
+                        <a href="{{ apoiador.website }}" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="apoiador-grid-link"
+                           aria-label="Visitar site de {{ apoiador.nome }}"
+                           style="display: block; text-decoration: none;">
+                        {% endif %}
+                        <div class="apoiador-image-container" style="background: transparent; border: none; padding: 1rem; display: flex; align-items: center; justify-content: center; height: 180px; transition: transform 0.3s ease;">
+                            <img src="{{ url_for('static', filename=apoiador.logo) }}" 
+                                 alt="{{ apoiador.nome }}" 
+                                 class="apoiador-grid-image"
+                                 style="max-width: 100%; max-height: 100%; object-fit: contain; width: auto; height: auto;"
+                                 loading="lazy">
+                        </div>
+                        {% if apoiador.website %}
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        
+        <style>
+        .apoiador-filter-btn:hover {
+            background: #f3f4f6 !important;
+            border-color: #9ca3af !important;
+        }
+        
+        .apoiador-filter-btn.active {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+        
+        .apoiador-grid-link:hover .apoiador-image-container,
+        .apoiador-image-container:hover {
+            transform: translateY(-8px) scale(1.05);
+        }
+        
+        .apoiador-grid-item.show {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+        
+        @media (max-width: 768px) {
+            .apoiadores-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+                gap: 1.5rem !important;
+            }
+            
+            .apoiador-image-container {
+                height: 140px !important;
+                padding: 1rem !important;
+            }
+            
+            .apoiador-filter-btn {
+                padding: 0.625rem 1.5rem !important;
+                font-size: 0.875rem !important;
+            }
+        }
+        </style>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.apoiador-filter-btn');
+            const gridItems = document.querySelectorAll('.apoiador-grid-item');
+            const gridContainer = document.getElementById('apoiadores-grid-container');
+            
+            // Mostrar todos os itens inicialmente
+            setTimeout(function() {
+                gridItems.forEach((item, index) => {
+                    setTimeout(function() {
+                        item.classList.add('show');
+                    }, index * 50); // Delay escalonado para animação
+                });
+            }, 100);
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const filter = this.getAttribute('data-filter');
+                    
+                    // Atualizar botões ativos
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Remover classe show de todos os itens
+                    gridItems.forEach(item => {
+                        item.classList.remove('show');
+                    });
+                    
+                    // Filtrar e animar
+                    setTimeout(function() {
+                        let visibleCount = 0;
+                        gridItems.forEach((item) => {
+                            const itemTipo = item.getAttribute('data-tipo') || 'Instituição';
+                            const shouldShow = filter === 'todos' || itemTipo === filter;
+                            
+                            if (shouldShow) {
+                                item.style.display = 'block';
+                                // Resetar posição para animação de baixo para cima
+                                item.style.opacity = '0';
+                                item.style.transform = 'translateY(20px)';
+                                
+                                setTimeout(function() {
+                                    item.classList.add('show');
+                                }, visibleCount * 30); // Delay escalonado para animação suave
+                                visibleCount++;
+                            } else {
+                                item.style.display = 'none';
+                                item.classList.remove('show');
+                            }
+                        });
+                        
+                        // Se não houver itens, mostrar mensagem
+                        if (visibleCount === 0) {
+                            const noResults = document.createElement('p');
+                            noResults.className = 'no-data';
+                            noResults.textContent = 'Nenhum apoiador encontrado para este filtro.';
+                            noResults.style.textAlign = 'center';
+                            noResults.style.padding = '3rem';
+                            noResults.style.color = '#6b7280';
+                            
+                            const existingNoData = gridContainer.querySelector('.no-data');
+                            if (existingNoData) {
+                                existingNoData.remove();
+                            }
+                            
+                            gridContainer.appendChild(noResults);
+                        } else {
+                            const existingNoData = gridContainer.querySelector('.no-data');
+                            if (existingNoData) {
+                                existingNoData.remove();
+                            }
+                        }
+                    }, 50);
+                });
+            });
+        });
+        </script>
+        {% endif %}
+    </div>
+</section>
+
+<!-- JavaScript do Slider -->
+{% if slider_images and slider_images|length > 1 %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sliderTrack = document.getElementById('slider-track');
+    const slides = document.querySelectorAll('.slider-slide');
+    const indicators = document.querySelectorAll('.slider-indicator');
+    const prevButton = document.getElementById('slider-prev');
+    const nextButton = document.getElementById('slider-next');
+    
+    if (!sliderTrack || !slides.length || slides.length <= 1) return;
+    
+    let currentSlide = 0;
+    let autoplayInterval = null;
+    const autoplayDelay = 5000; // 5 segundos
+    
+    function showSlide(index) {
+        // Garantir que o índice está dentro dos limites
+        if (index < 0) index = slides.length - 1;
+        if (index >= slides.length) index = 0;
+        
+        // Se já é o slide ativo, não fazer nada
+        if (slides[index] && slides[index].classList.contains('active')) {
+            return;
+        }
+        
+        const currentActive = document.querySelector('.slider-slide.active');
+        const nextSlide = slides[index];
+        
+        // Primeiro, adicionar active ao próximo slide (vai aparecer por baixo/ao lado)
+        if (nextSlide) {
+            nextSlide.classList.add('active');
+            nextSlide.style.zIndex = '3';
+        }
+        
+        // Usar requestAnimationFrame para garantir renderização
+        requestAnimationFrame(function() {
+            // Remover active do slide anterior
+            if (currentActive && currentActive !== nextSlide) {
+                currentActive.classList.remove('active');
+                currentActive.style.zIndex = '1';
+            }
+            
+            // Ajustar z-index do slide atual
+            if (nextSlide) {
+                nextSlide.style.zIndex = '2';
+            }
+        });
+        
+        // Atualizar indicadores
+        indicators.forEach((indicator, i) => {
+            if (i === index) {
+                indicator.classList.add('active');
+                indicator.setAttribute('aria-current', 'true');
+            } else {
+                indicator.classList.remove('active');
+                indicator.setAttribute('aria-current', 'false');
+            }
+        });
+        
+        currentSlide = index;
+    }
+    
+    function nextSlide() {
+        const next = (currentSlide + 1) % slides.length;
+        showSlide(next);
+    }
+    
+    function prevSlide() {
+        const prev = (currentSlide - 1 + slides.length) % slides.length;
+        showSlide(prev);
+    }
+    
+    function goToSlide(index) {
+        if (index >= 0 && index < slides.length) {
+            showSlide(index);
+        }
+    }
+    
+    function startAutoplay() {
+        // Limpar intervalo anterior se existir
+        if (autoplayInterval) {
+            clearInterval(autoplayInterval);
+        }
+        // Iniciar novo intervalo
+        autoplayInterval = setInterval(function() {
+            nextSlide();
+        }, autoplayDelay);
+    }
+    
+    function stopAutoplay() {
+        if (autoplayInterval) {
+            clearInterval(autoplayInterval);
+            autoplayInterval = null;
+        }
+    }
+    
+    // Event listeners
+    if (nextButton) {
+        nextButton.addEventListener('click', function() {
+            stopAutoplay();
+            nextSlide();
+            startAutoplay();
+        });
+    }
+    
+    if (prevButton) {
+        prevButton.addEventListener('click', function() {
+            stopAutoplay();
+            prevSlide();
+            startAutoplay();
+        });
+    }
+    
+    // Event listeners para os indicadores
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', function() {
+            stopAutoplay();
+            goToSlide(index);
+            startAutoplay();
+        });
+    });
+    
+    // Pausar autoplay ao passar o mouse sobre o slider
+    const sliderWrapper = document.querySelector('.slider-wrapper');
+    if (sliderWrapper) {
+        sliderWrapper.addEventListener('mouseenter', stopAutoplay);
+        sliderWrapper.addEventListener('mouseleave', startAutoplay);
+    }
+    
+    // Navegação por teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') {
+            stopAutoplay();
+            prevSlide();
+            startAutoplay();
+        } else if (e.key === 'ArrowRight') {
+            stopAutoplay();
+            nextSlide();
+            startAutoplay();
+        }
+    });
+    
+    // Pré-carregar todas as imagens
+    slides.forEach((slide) => {
+        const img = slide.querySelector('.slider-image');
+        if (img && img.src) {
+            // Forçar carregamento da imagem
+            const preloadImg = new Image();
+            preloadImg.src = img.src;
+        }
+    });
+    
+    // Inicializar o slider - mostrar primeiro slide
+    if (slides.length > 0) {
+        showSlide(0);
+    }
+    
+    // Iniciar autoplay automaticamente a cada 5 segundos
+    if (slides.length > 1) {
+        // Iniciar autoplay após 5 segundos
+        setTimeout(function() {
+            startAutoplay();
+        }, autoplayDelay);
+    }
+    
+    // Pausar quando a aba não estiver visível
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoplay();
+        } else {
+            if (slides.length > 1) {
+                startAutoplay();
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+
+<style>
+.radio-banner-button:hover {
+    background: #f59e0b !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.radio-banner-button:active {
+    transform: translateY(0);
+}
+
+.instagram-widget-container {
+    width: 100%;
+    max-width: 100%;
+}
+
+.instagram-widget-container > div {
+    width: 100%;
+    max-width: 100%;
+}
+
+.instagram-widget-container iframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .radio-banner-section {
+        padding: 2rem 1.5rem !important;
+        margin: 2rem 0 !important;
+    }
+    
+    .radio-banner-section > div {
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 1.5rem !important;
+    }
+    
+    .radio-banner-section svg {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .radio-banner-section > div > div:first-child > div:last-child > div > div:first-child {
+        font-size: 1.5rem !important;
+    }
+    
+    .radio-banner-section > div > div:first-child > div:last-child > div > div:last-child {
+        font-size: 2.5rem !important;
+    }
+    
+    .radio-banner-button {
+        padding: 1rem 2rem !important;
+        font-size: 0.95rem !important;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .instagram-widget-container iframe {
+        height: 600px !important;
+    }
+    
+    .instagram-link:hover .image-overlay {
+        opacity: 1 !important;
+    }
+    
+    .instagram-link {
+        position: relative;
+        display: block;
+        overflow: hidden;
+        border-radius: 1rem;
+    }
+</style>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" class="lightbox-modal" role="dialog" aria-labelledby="lightbox-title" aria-hidden="true">
+    <button class="lightbox-close" type="button" aria-label="{{ _('Fechar') }}" onclick="if(typeof closeLightbox === 'function') closeLightbox(); else { document.getElementById('lightbox-modal').classList.remove('active'); document.body.style.overflow = ''; }">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    <button class="lightbox-prev" aria-label="{{ _('Anterior') }}">
+        <span aria-hidden="true">&#8249;</span>
+    </button>
+    <button class="lightbox-next" aria-label="{{ _('Próxima') }}">
+        <span aria-hidden="true">&#8250;</span>
+    </button>
+    <div class="lightbox-content">
+        <img id="lightbox-image" src="" alt="{{ _('Imagem ampliada') }}" class="lightbox-img">
+        <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Agenda de Reuniões Virtuais') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Agenda de Reuniões Virtuais') }}</h1>
+        <p class="page-description">{{ _('Participe das nossas reuniões e eventos online') }}</p>
+    </div>
+</section>
+
+<section class="agenda-section" aria-labelledby="agenda-title">
+    <div class="container">
+        {% if reuniones %}
+            <div class="agenda-list" role="list">
+                {% for reunion in reuniones %}
+                <article class="agenda-item" role="listitem">
+                    <div class="agenda-item-header">
+                        <h2 class="agenda-item-title">{{ reunion.titulo }}</h2>
+                        <div class="agenda-item-meta">
+                            <time datetime="{{ reunion.fecha.strftime('%Y-%m-%d') }}" class="agenda-date">
+                                <span class="meta-label">{{ _('Data:') }}</span>
+                                {{ reunion.fecha.strftime('%d/%m/%Y') }}
+                            </time>
+                            <time datetime="{{ reunion.hora }}" class="agenda-time">
+                                <span class="meta-label">{{ _('Hora:') }}</span>
+                                {{ reunion.hora }}
+                            </time>
+                        </div>
+                    </div>
+                    <div class="agenda-item-body">
+                        {% if reunion.descripcion %}
+                        <p class="agenda-description">{{ reunion.descripcion }}</p>
+                        {% endif %}
+                        <div class="agenda-details">
+                            <div class="detail-item">
+                                <strong>{{ _('Plataforma:') }}</strong> {{ reunion.plataforma }}
+                            </div>
+                            {% if reunion.link %}
+                            <div class="detail-item">
+                                <a href="{{ reunion.link }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                                    {{ _('Acessar reunião') }}
+                                    <span class="sr-only">{{ _('(abre em nova aba)') }}</span>
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state" role="alert">
+                <p class="empty-message">{{ _('Não há reuniões virtuais cadastradas no momento.') }}</p>
+                <p>{{ _('Volte em breve para conferir nossa agenda atualizada.') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+

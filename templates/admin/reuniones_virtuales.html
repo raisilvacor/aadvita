@@ -1,0 +1,62 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Reuniões Virtuais{% endblock %}
+
+{% block page_title %}Gerenciar Reuniões Virtuais{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Reuniões Virtuais</h2>
+        <a href="{{ url_for('admin_reuniones_virtuales_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Reunião
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Plataforma</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if reuniones %}
+                    {% for reunion in reuniones %}
+                    <tr>
+                        <td>{{ reunion.titulo }}</td>
+                        <td>{{ reunion.fecha.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ reunion.hora }}</td>
+                        <td>{{ reunion.plataforma }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_reuniones_virtuales_editar', id=reunion.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_reuniones_virtuales_excluir', id=reunion.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir esta reunião?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            Nenhuma reunião virtual cadastrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
