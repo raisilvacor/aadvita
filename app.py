@@ -8366,28 +8366,54 @@ def init_db():
         except Exception as e:
             print(f"Aviso: Erro ao gerar mensalidades automaticamente: {str(e)}")
 
-# Inicializar banco de dados quando o app for importado (para produção com gunicorn)
-# Isso garante que o banco seja criado antes do servidor iniciar
-with app.app_context():
+# Função para inicializar o banco de dados quando necessário
+def ensure_db_initialized():
+    """Garante que o banco de dados está inicializado"""
     try:
-        # Verificar se as tabelas existem
-        from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        tables = inspector.get_table_names()
-        if not tables:
-            # Se não houver tabelas, inicializar o banco
-            print("Banco de dados não encontrado. Inicializando...")
-            init_db()
-        else:
-            # Garantir que o banco está atualizado
+        with app.app_context():
+            # Criar todas as tabelas (idempotente - não recria se já existirem)
             db.create_all()
+            
+            # Verificar se há usuários, se não houver, inicializar dados
+            try:
+                from sqlalchemy import inspect
+                inspector = inspect(db.engine)
+                tables = inspector.get_table_names()
+                
+                if tables and 'usuario' in tables:
+                    try:
+                        usuario_count = Usuario.query.count()
+                        if usuario_count == 0:
+                            # Se não houver usuários, inicializar o banco completamente
+                            print("Nenhum usuário encontrado. Inicializando banco de dados...")
+                            init_db()
+                    except Exception as e:
+                        print(f"Nota: Erro ao verificar usuários: {e}")
+                        # Se não conseguir verificar, tentar inicializar
+                        try:
+                            init_db()
+                        except:
+                            pass
+            except Exception as e:
+                print(f"Nota: Erro ao verificar tabelas: {e}")
+                # Tentar inicializar de qualquer forma
+                try:
+                    init_db()
+                except:
+                    pass
     except Exception as e:
-        print(f"Aviso: Erro ao verificar/inicializar banco de dados: {e}")
-        # Tentar criar as tabelas mesmo assim
-        try:
-            db.create_all()
-        except Exception as e2:
-            print(f"Erro ao criar tabelas: {e2}")
+        print(f"Aviso: Erro ao inicializar banco de dados: {e}")
+        # Não falhar a importação se houver erro no banco
+        # O banco será inicializado na primeira requisição
+
+# Inicializar banco quando o módulo for importado (para gunicorn)
+# Isso garante que as tabelas existam antes do servidor iniciar
+# Mas não falha a importação se houver problemas
+try:
+    ensure_db_initialized()
+except Exception as e:
+    print(f"Nota: Banco será inicializado na primeira requisição: {e}")
+    pass
 
 if __name__ == '__main__':
     init_db()
