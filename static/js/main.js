@@ -1,28 +1,21 @@
 // Acessibilidade e Funcionalidades JavaScript
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Menu Toggle para Mobile
-    const menuToggle = document.querySelector('.menu-toggle');
-    const navMenu = document.querySelector('.nav-menu');
-    const navOverlay = document.getElementById('nav-overlay');
-    const menuCloseBtn = document.querySelector('.menu-close-btn');
-    const menuCloseItem = document.querySelector('.menu-close-item');
+// MENU MOBILE - Código executado IMEDIATAMENTE, antes do DOMContentLoaded
+(function() {
+    'use strict';
     
-    // Mostrar/ocultar botão de fechar baseado no tamanho da tela
-    function updateMenuCloseButton() {
-        if (window.innerWidth <= 768) {
-            if (menuCloseItem) menuCloseItem.style.display = 'flex';
-            if (menuCloseBtn) menuCloseBtn.style.display = 'flex';
-        } else {
-            if (menuCloseItem) menuCloseItem.style.display = 'none';
-            if (menuCloseBtn) menuCloseBtn.style.display = 'none';
+    function initMobileMenu() {
+        const menuToggle = document.querySelector('.menu-toggle');
+        const navMenu = document.querySelector('.nav-menu');
+        const navOverlay = document.getElementById('nav-overlay');
+        const menuCloseBtn = document.querySelector('.menu-close-btn');
+        
+        if (!menuToggle || !navMenu) {
+            // Tentar novamente após um pequeno delay
+            setTimeout(initMobileMenu, 100);
+            return;
         }
-    }
-    
-    window.addEventListener('resize', updateMenuCloseButton);
-    updateMenuCloseButton();
-    
-    if (menuToggle && navMenu) {
+        
         let isMenuOpen = false;
         
         function openMenu() {
@@ -34,6 +27,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 navOverlay.classList.add('active');
             }
             document.body.style.overflow = 'hidden';
+            // Forçar repaint
+            navMenu.style.display = 'flex';
         }
         
         function closeMenu() {
@@ -47,70 +42,88 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.style.overflow = '';
         }
         
-        function toggleMenu() {
+        function toggleMenu(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }
             if (isMenuOpen) {
                 closeMenu();
             } else {
                 openMenu();
             }
+            return false;
         }
         
-        // Event listeners para o botão de toggle
-        menuToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleMenu();
-        });
+        // REMOVER TODOS OS EVENT LISTENERS ANTERIORES
+        const newToggle = menuToggle.cloneNode(true);
+        menuToggle.parentNode.replaceChild(newToggle, menuToggle);
         
-        // Para touch devices
-        menuToggle.addEventListener('touchend', function(e) {
+        // Adicionar listeners MÚLTIPLOS para garantir funcionamento
+        newToggle.onclick = toggleMenu;
+        newToggle.ontouchstart = function(e) { e.preventDefault(); toggleMenu(e); };
+        newToggle.ontouchend = function(e) { e.preventDefault(); toggleMenu(e); };
+        newToggle.addEventListener('click', toggleMenu, true);
+        newToggle.addEventListener('touchend', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            toggleMenu();
-        }, { passive: false });
+            toggleMenu(e);
+        }, { passive: false, capture: true });
         
         // Botão de fechar
         if (menuCloseBtn) {
-            menuCloseBtn.addEventListener('click', function(e) {
+            const newCloseBtn = menuCloseBtn.cloneNode(true);
+            menuCloseBtn.parentNode.replaceChild(newCloseBtn, menuCloseBtn);
+            newCloseBtn.onclick = function(e) {
                 e.preventDefault();
-                e.stopPropagation();
                 closeMenu();
-            });
-            menuCloseBtn.addEventListener('touchend', function(e) {
+            };
+            newCloseBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
                 closeMenu();
-            }, { passive: false });
+            }, true);
         }
         
-        // Fechar menu ao clicar no overlay
+        // Overlay
         if (navOverlay) {
-            navOverlay.addEventListener('click', function(e) {
-                e.preventDefault();
-                closeMenu();
-            });
+            navOverlay.onclick = closeMenu;
+            navOverlay.ontouchstart = function(e) { e.preventDefault(); closeMenu(); };
+            navOverlay.addEventListener('click', closeMenu, true);
             navOverlay.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 closeMenu();
             }, { passive: false });
         }
         
-        // Fechar menu ao clicar em um link
+        // Fechar ao clicar em links
         const navLinks = navMenu.querySelectorAll('a');
         navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                closeMenu();
-            });
+            link.addEventListener('click', closeMenu, true);
         });
         
-        // Fechar menu ao pressionar Escape
+        // Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && isMenuOpen) {
                 closeMenu();
-                menuToggle.focus();
+                newToggle.focus();
             }
-        });
+        }, true);
     }
+    
+    // Inicializar imediatamente e também no DOMContentLoaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMobileMenu);
+    } else {
+        initMobileMenu();
+    }
+    
+    // Também tentar após um pequeno delay
+    setTimeout(initMobileMenu, 50);
+    setTimeout(initMobileMenu, 200);
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
     
     // Menu Suspenso - Agendas
     const dropdownToggle = document.querySelector('.nav-dropdown-toggle');
