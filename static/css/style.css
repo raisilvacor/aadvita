@@ -911,7 +911,7 @@ textarea:focus {
 
 /* Hero action buttons (below slider) */
 .hero-action-buttons {
-    padding: 1.75rem 0;
+    padding: 2.5rem 0;
     background: var(--bg-light);
 }
 
