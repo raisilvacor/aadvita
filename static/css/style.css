@@ -167,6 +167,10 @@ textarea:focus {
     align-items: center;
 }
 
+.menu-close-item {
+    display: none;
+}
+
 .nav-menu a {
     text-decoration: none;
     color: var(--text-color);
@@ -1869,6 +1873,7 @@ textarea:focus {
     }
     
     .menu-close-item {
+        display: flex;
         text-align: right;
         margin-bottom: 1rem;
     }
