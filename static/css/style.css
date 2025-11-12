@@ -1642,7 +1642,7 @@ textarea:focus {
     }
     
     .logo-image {
-        height: 85px;
+        height: 100px !important;
     }
     
     .flash-messages {
@@ -1696,12 +1696,12 @@ textarea:focus {
         position: fixed !important;
         top: 0;
         left: 0;
-        width: 280px;
-        max-width: 85%;
+        width: 100% !important;
+        max-width: 100% !important;
         height: 100vh;
         background: white;
         flex-direction: column;
-        padding: 5rem 1rem 1rem;
+        padding: 4rem 1rem 1rem;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         display: none !important;
         gap: 0.5rem;

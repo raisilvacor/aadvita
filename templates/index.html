@@ -12,14 +12,17 @@
                 {% for imagem in slider_images %}
                 <div class="slider-slide {% if loop.index == 1 %}active{% endif %}" data-slide="{{ loop.index0 }}">
                     {% if imagem.link %}
-                    <a href="{{ imagem.link }}" class="slider-link" aria-label="{{ imagem.titulo }}">
-                    {% endif %}
+                    <a href="{{ imagem.link }}" class="slider-link" aria-label="{{ imagem.titulo }}" style="display: block; width: 100%; height: 100%;">
                         <img src="{{ url_for('static', filename=imagem.imagem) }}" 
                              alt="{{ imagem.titulo }}" 
                              class="slider-image"
                              loading="eager">
-                    {% if imagem.link %}
                     </a>
+                    {% else %}
+                    <img src="{{ url_for('static', filename=imagem.imagem) }}" 
+                         alt="{{ imagem.titulo }}" 
+                         class="slider-image"
+                         loading="eager">
                     {% endif %}
                 </div>
                 {% endfor %}

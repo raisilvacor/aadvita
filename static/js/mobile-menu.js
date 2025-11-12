@@ -80,6 +80,28 @@
             }, false);
         }
         
+        // Botão de fechar
+        var closeBtn = document.querySelector('.menu-close-btn');
+        if (closeBtn) {
+            var newCloseBtn = closeBtn.cloneNode(true);
+            closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+            closeBtn = newCloseBtn;
+            
+            closeBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeMenu();
+            };
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeMenu();
+            }, false);
+            closeBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                closeMenu();
+            }, false);
+        }
+        
         var links = menu.querySelectorAll('a');
         for (var i = 0; i < links.length; i++) {
             (function(link) {
