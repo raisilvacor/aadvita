@@ -1120,13 +1120,26 @@ class SliderImage(db.Model):
     
     def get_imagem_url(self):
         """Retorna a URL da imagem, seja base64 ou arquivo"""
-        from flask import url_for
-        if self.imagem_base64:
-            return f"/slider/{self.id}/imagem"
-        elif self.imagem.startswith('base64:'):
-            return f"/slider/{self.id}/imagem"
-        else:
-            return url_for('static', filename=self.imagem)
+        try:
+            from flask import url_for
+            # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
+            imagem_base64 = getattr(self, 'imagem_base64', None)
+            if imagem_base64:
+                return f"/slider/{self.id}/imagem"
+            elif self.imagem and 'base64:' in str(self.imagem):
+                return f"/slider/{self.id}/imagem"
+            elif self.imagem:
+                return url_for('static', filename=self.imagem)
+            return None
+        except Exception as e:
+            print(f"Erro em get_imagem_url: {e}")
+            try:
+                if self.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=self.imagem)
+            except:
+                pass
+            return None
     
     def __repr__(self):
         return f'<SliderImage {self.id}>'
@@ -8327,30 +8340,6 @@ def set_language(lang):
     return redirect(request.referrer or url_for('index'))
 
 # Context processor para disponibilizar variáveis em todos os templates
-def slider_imagem_url(slider_image):
-    """Helper function para obter URL da imagem do slider de forma segura"""
-    try:
-        # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
-        imagem_base64 = getattr(slider_image, 'imagem_base64', None)
-        if imagem_base64:
-            return f"/slider/{slider_image.id}/imagem"
-        elif slider_image.imagem and 'base64:' in slider_image.imagem:
-            return f"/slider/{slider_image.id}/imagem"
-        elif slider_image.imagem:
-            from flask import url_for
-            return url_for('static', filename=slider_image.imagem)
-        return None
-    except Exception as e:
-        print(f"Erro ao obter URL da imagem do slider: {e}")
-        # Fallback para arquivo estático
-        try:
-            if slider_image.imagem:
-                from flask import url_for
-                return url_for('static', filename=slider_image.imagem)
-        except:
-            pass
-        return None
-
 @app.context_processor
 def inject_conf():
     def user_tem_permissao(codigo_permissao):
@@ -8365,6 +8354,51 @@ def inject_conf():
             if usuario:
                 return usuario.tem_permissao(codigo_permissao)
         return False
+    
+    def slider_imagem_url(slider_image):
+        """Helper function para obter URL da imagem do slider de forma segura"""
+        if not slider_image:
+            return None
+        try:
+            # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
+            imagem_base64 = None
+            try:
+                imagem_base64 = getattr(slider_image, 'imagem_base64', None)
+            except (AttributeError, KeyError):
+                # Coluna pode não existir ainda
+                pass
+            
+            if imagem_base64:
+                return f"/slider/{slider_image.id}/imagem"
+            
+            # Verificar se imagem começa com base64:
+            try:
+                if slider_image.imagem and 'base64:' in str(slider_image.imagem):
+                    return f"/slider/{slider_image.id}/imagem"
+            except (AttributeError, KeyError):
+                pass
+            
+            # Fallback para arquivo estático
+            try:
+                if slider_image.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=slider_image.imagem)
+            except (AttributeError, KeyError, Exception):
+                pass
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL da imagem do slider: {e}")
+            import traceback
+            traceback.print_exc()
+            # Fallback final
+            try:
+                if hasattr(slider_image, 'imagem') and slider_image.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=slider_image.imagem)
+            except:
+                pass
+            return None
     
     # Buscar dados da associação
     try:
@@ -8536,26 +8570,41 @@ def init_db():
             is_sqlite = db.engine.url.drivername == 'sqlite'
             
             with db.engine.connect() as conn:
+                # Verificar se a tabela existe primeiro
                 if is_sqlite:
-                    result = conn.execute(text("PRAGMA table_info(slider_image)"))
-                    columns = [row[1] for row in result]
+                    result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='slider_image'"))
+                    table_exists = result.fetchone() is not None
                 else:
                     result = conn.execute(text("""
-                        SELECT column_name 
-                        FROM information_schema.columns 
-                        WHERE table_name = 'slider_image' AND column_name = 'imagem_base64'
+                        SELECT table_name 
+                        FROM information_schema.tables 
+                        WHERE table_name = 'slider_image'
                     """))
-                    columns = [row[0] for row in result]
+                    table_exists = result.fetchone() is not None
                 
-                if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                if table_exists:
                     if is_sqlite:
-                        conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
+                        result = conn.execute(text("PRAGMA table_info(slider_image)"))
+                        columns = [row[1] for row in result]
                     else:
-                        conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
-                    conn.commit()
-                    print("✅ Coluna imagem_base64 adicionada à tabela slider_image.")
+                        result = conn.execute(text("""
+                            SELECT column_name 
+                            FROM information_schema.columns 
+                            WHERE table_name = 'slider_image' AND column_name = 'imagem_base64'
+                        """))
+                        columns = [row[0] for row in result]
+                    
+                    if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                        if is_sqlite:
+                            conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
+                        else:
+                            conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
+                        conn.commit()
+                        print("✅ Coluna imagem_base64 adicionada à tabela slider_image.")
         except Exception as e:
             print(f"⚠️ Aviso: Não foi possível adicionar coluna imagem_base64: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Verificar se já existem dados no banco (primeira inicialização)
         # Se já houver qualquer dado, não criar dados de exemplo
