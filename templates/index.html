@@ -160,8 +160,35 @@
             </p>
         </div>
         
-        {% if servicos_o_que_fazemos and (servicos_o_que_fazemos.get(1) or servicos_o_que_fazemos.get(2) or servicos_o_que_fazemos.get(3)) %}
-        <div class="o-que-fazemos-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem 2rem; max-width: 1200px; margin: 0 auto;">
+        {% if servicos_o_que_fazemos and (servicos_o_que_fazemos.get(1) or servicos_o_que_fazemos.get(2) or servicos_o_que_fazemos.get(3) or servicos_o_que_fazemos.get(4)) %}
+        <style>
+            .o-que-fazemos-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 2rem 1.5rem;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+            @media (max-width: 1200px) {
+                .o-que-fazemos-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 2rem 1.5rem;
+                }
+            }
+            @media (max-width: 900px) {
+                .o-que-fazemos-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 2rem 1.5rem;
+                }
+            }
+            @media (max-width: 600px) {
+                .o-que-fazemos-grid {
+                    grid-template-columns: 1fr;
+                    gap: 2rem;
+                }
+            }
+        </style>
+        <div class="o-que-fazemos-grid">
             <!-- Coluna 1 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(1, []) %}
@@ -223,6 +250,35 @@
             <!-- Coluna 3 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(3, []) %}
+                <div class="o-que-fazemos-item" style="position: relative;">
+                    <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            <div class="o-que-fazemos-icon" data-icon-color="{{ servico.cor_icone }}" style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                                {% if servico.icone_svg %}
+                                    {{ servico.icone_svg|safe }}
+                                {% else %}
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2" fill="none"/>
+                                        <path d="M12 8V12L16 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            {% if not loop.last %}
+                            <div class="o-que-fazemos-line" style="position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: 2px; height: 60px; border-left: 2px dotted #d1d5db; z-index: 0;"></div>
+                            {% endif %}
+                        </div>
+                        <div style="flex: 1; padding-top: 0.5rem;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ servico.titulo }}</h3>
+                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ servico.descricao }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Coluna 4 -->
+            <div class="o-que-fazemos-column" style="position: relative;">
+                {% for servico in servicos_o_que_fazemos.get(4, []) %}
                 <div class="o-que-fazemos-item" style="position: relative;">
                     <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
                         <div style="position: relative; flex-shrink: 0;">
