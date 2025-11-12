@@ -414,68 +414,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         }
     }
-    
-    // Event delegation no document - múltiplas abordagens para garantir funcionamento
-    function handleFlashClose(e) {
-        // Verificar se o clique foi no botão de fechar
-        let closeBtn = null;
-        
-        // Verificar se o target é o botão
-        if (e.target && e.target.classList && e.target.classList.contains('flash-close')) {
-            closeBtn = e.target;
+
+    function handleDocumentClick(e) {
+        const closeBtn = e.target.closest('.flash-close');
+        if (!closeBtn) {
+            return;
         }
-        // Verificar se o target está dentro do botão
-        else if (e.target && e.target.closest) {
-            closeBtn = e.target.closest('.flash-close');
-        }
-        
-        if (closeBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            
-            const message = closeBtn.closest('.flash-message');
-            if (message) {
-                closeFlashMessage(message);
-            }
-            return false;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const message = closeBtn.closest('.flash-message');
+        if (message) {
+            closeFlashMessage(message);
         }
     }
-    
-    // Adicionar listener com capture phase
-    document.addEventListener('click', handleFlashClose, true);
-    
-    // Também adicionar listener direto quando DOM estiver pronto
-    function attachDirectListeners() {
-        document.querySelectorAll('.flash-close').forEach(function(btn) {
-            // Remover listeners anteriores se existirem
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            
-            // Adicionar novo listener
-            newBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                const message = this.closest('.flash-message');
-                if (message) {
-                    closeFlashMessage(message);
-                }
-                return false;
-            }, true);
-        });
-    }
-    
-    // Executar quando DOM estiver pronto
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', attachDirectListeners);
-    } else {
-        attachDirectListeners();
-    }
-    
-    // Auto-fechar mensagens flash após 5 segundos
-    function autoCloseFlashMessages() {
-        document.querySelectorAll('.flash-message').forEach(function(message) {
+
+    document.addEventListener('click', handleDocumentClick);
+
+    function autoCloseFlashMessages(root) {
+        const scope = root || document;
+        scope.querySelectorAll('.flash-message').forEach(function(message) {
             if (!message.dataset.autoCloseSet) {
                 message.dataset.autoCloseSet = 'true';
                 setTimeout(function() {
@@ -486,25 +445,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    // Inicializar auto-close quando o DOM estiver pronto
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', autoCloseFlashMessages);
+        document.addEventListener('DOMContentLoaded', function() {
+            autoCloseFlashMessages(document);
+        });
     } else {
-        autoCloseFlashMessages();
+        autoCloseFlashMessages(document);
     }
-    
-    // Re-inicializar após mudanças no DOM
+
     if (typeof MutationObserver !== 'undefined') {
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
-                if (mutation.addedNodes.length) {
-                    attachDirectListeners();
-                    autoCloseFlashMessages();
-                }
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType !== 1) {
+                        return;
+                    }
+
+                    if (node.classList && node.classList.contains('flash-message')) {
+                        autoCloseFlashMessages(node.parentElement || document);
+                    } else if (node.querySelectorAll) {
+                        const hasFlash = node.querySelectorAll('.flash-message');
+                        if (hasFlash.length) {
+                            autoCloseFlashMessages(node);
+                        }
+                    }
+                });
             });
         });
-        
+
         observer.observe(document.body, {
             childList: true,
             subtree: true
