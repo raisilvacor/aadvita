@@ -3085,11 +3085,11 @@ def admin_instagram_sincronizar():
         
         username = username_match.group(1)
         
-        # Buscar posts do Instagram
+        # Buscar posts do Instagram (isso já baixa as imagens localmente)
         posts_cadastrados = buscar_posts_instagram(username, instagram_url)
         
         if posts_cadastrados:
-            flash(f'{posts_cadastrados} posts sincronizados com sucesso!', 'success')
+            flash(f'{posts_cadastrados} posts sincronizados e imagens baixadas com sucesso!', 'success')
         else:
             flash('Nenhum post encontrado. Tente adicionar posts manualmente ou verifique se o perfil é público.', 'warning')
         
@@ -3106,6 +3106,66 @@ def admin_instagram_sincronizar():
             flash(f'Erro ao sincronizar: {error_msg}. O Instagram pode estar bloqueando requisições automáticas. Tente adicionar posts manualmente.', 'error')
     
     return redirect(url_for('admin_instagram'))
+
+def baixar_e_salvar_imagem_instagram(url_imagem, shortcode):
+    """Baixa uma imagem do Instagram e salva localmente"""
+    try:
+        if not shortcode or not url_imagem:
+            return url_imagem
+        
+        # Criar diretório para imagens do Instagram se não existir
+        instagram_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'instagram')
+        os.makedirs(instagram_dir, exist_ok=True)
+        
+        # Nome do arquivo usando o shortcode do post
+        # Limpar o shortcode para usar como nome de arquivo
+        shortcode_clean = re.sub(r'[^\w\-]', '_', shortcode)
+        filename = f"instagram_{shortcode_clean}.jpg"
+        filepath = os.path.join(instagram_dir, filename)
+        
+        # Se o arquivo já existe, retornar o caminho relativo (mesmo formato usado no template)
+        if os.path.exists(filepath):
+            # Retornar caminho no formato: images/uploads/instagram/filename.jpg
+            return os.path.join('images', 'uploads', 'instagram', filename).replace('\\', '/')
+        
+        # Headers para baixar a imagem
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Referer': 'https://www.instagram.com/',
+            'Origin': 'https://www.instagram.com'
+        }
+        
+        # Baixar a imagem
+        response = requests.get(url_imagem, headers=headers, timeout=20, verify=False, stream=True)
+        if response.status_code == 200:
+            # Determinar a extensão correta do arquivo pelo Content-Type
+            content_type = response.headers.get('Content-Type', '')
+            if 'webp' in content_type:
+                filename = filename.replace('.jpg', '.webp')
+                filepath = os.path.join(instagram_dir, filename)
+            elif 'png' in content_type:
+                filename = filename.replace('.jpg', '.png')
+                filepath = os.path.join(instagram_dir, filename)
+            
+            # Salvar a imagem
+            with open(filepath, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            
+            print(f"[Instagram] Imagem salva localmente: {filename}")
+            # Retornar o caminho relativo no formato usado no template
+            return os.path.join('images', 'uploads', 'instagram', filename).replace('\\', '/')
+        else:
+            print(f"[Instagram] Erro ao baixar imagem: {response.status_code} - {url_imagem[:50]}...")
+            # Se não conseguir baixar, retornar a URL original
+            return url_imagem
+    except Exception as e:
+        print(f"[Instagram] Erro ao baixar e salvar imagem {shortcode}: {str(e)}")
+        # Se houver erro, retornar a URL original
+        return url_imagem
 
 def buscar_posts_instagram(username, instagram_url_base):
     """Busca as últimas fotos do Instagram e atualiza o banco de dados"""
@@ -3385,6 +3445,52 @@ def buscar_posts_instagram(username, instagram_url_base):
             url_instagram = f"{instagram_url_base.rstrip('/')}/p/{post_data['shortcode']}/"
             existing_post = InstagramPost.query.filter_by(url_instagram=url_instagram).first()
             
+            # Baixar e salvar imagem localmente
+            shortcode = post_data.get('shortcode', '')
+            display_url = post_data.get('display_url', '')
+            
+            # Verificar se o post existente já tem imagem local válida
+            imagem_existente_local = False
+            imagem_url = display_url  # Usar a URL da busca por padrão
+            
+            if existing_post and existing_post.imagem_url:
+                # Se a imagem já é local, verificar se o arquivo existe
+                if existing_post.imagem_url.startswith('images/'):
+                    # Verificar se o arquivo realmente existe no disco
+                    caminho_arquivo = os.path.join('static', existing_post.imagem_url)
+                    if os.path.exists(caminho_arquivo):
+                        # Arquivo existe, usar a imagem local
+                        imagem_existente_local = True
+                        imagem_url = existing_post.imagem_url
+                    else:
+                        # Arquivo não existe, tentar baixar novamente
+                        imagem_existente_local = False
+                        print(f"[Instagram] Imagem local não encontrada no disco: {existing_post.imagem_url}, tentando baixar novamente")
+                else:
+                    # Se a imagem não é local, tentar baixar
+                    imagem_existente_local = False
+            
+            # Tentar baixar a imagem e salvar localmente (só se não for local válida ou se for novo post)
+            if not imagem_existente_local and display_url and shortcode:
+                try:
+                    imagem_local = baixar_e_salvar_imagem_instagram(display_url, shortcode)
+                    # Se a imagem foi baixada com sucesso, usar o caminho local
+                    if imagem_local and not imagem_local.startswith('http'):
+                        imagem_url = imagem_local
+                        print(f"[Instagram] Imagem local salva para post {shortcode}: {imagem_url}")
+                    else:
+                        # Se falhou, usar a URL original (pode expirar)
+                        imagem_url = display_url
+                        print(f"[Instagram] Não foi possível baixar imagem local para post {shortcode}, usando URL original")
+                except Exception as img_error:
+                    print(f"[Instagram] Erro ao baixar imagem do post {shortcode}: {str(img_error)}")
+                    # Se falhar, usar a URL original ou manter a existente
+                    if not existing_post:
+                        imagem_url = display_url
+                    else:
+                        # Manter a URL existente se não conseguir baixar
+                        imagem_url = existing_post.imagem_url
+            
             if not existing_post:
                 # Criar novo post
                 data_post = datetime.utcnow()
@@ -3393,7 +3499,7 @@ def buscar_posts_instagram(username, instagram_url_base):
                 
                 new_post = InstagramPost(
                     url_instagram=url_instagram,
-                    imagem_url=post_data['display_url'],
+                    imagem_url=imagem_url,
                     legenda=post_data['caption'][:500] if post_data['caption'] else None,  # Limitar tamanho
                     data_post=data_post,
                     ordem=0,
@@ -3403,7 +3509,9 @@ def buscar_posts_instagram(username, instagram_url_base):
                 posts_cadastrados += 1
             else:
                 # Atualizar post existente
-                existing_post.imagem_url = post_data['display_url']
+                # Sempre atualizar a imagem se for local ou se a URL mudou
+                if imagem_url != existing_post.imagem_url:
+                    existing_post.imagem_url = imagem_url
                 if post_data['caption']:
                     existing_post.legenda = post_data['caption'][:500]
                 if post_data['taken_at_timestamp']:

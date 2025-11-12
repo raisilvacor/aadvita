@@ -561,7 +561,7 @@
                    class="instagram-post-card" 
                    style="display: block; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; text-decoration: none; color: inherit;">
                     <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; background: var(--bg-light);">
-                        <img src="{{ post.imagem_url }}" 
+                        <img src="{% if post.imagem_url and post.imagem_url.startswith('images/') %}{{ url_for('static', filename=post.imagem_url) }}{% else %}{{ post.imagem_url }}{% endif %}" 
                              alt="{% if post.legenda %}{{ post.legenda[:100] }}{% else %}Post do Instagram{% endif %}" 
                              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
                              loading="lazy"
