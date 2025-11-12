@@ -669,26 +669,11 @@
                 <span aria-hidden="true">🤝</span> {{ _('Nossos Apoiadores') }}
             </h3>
             
-            <!-- Botões de Filtro -->
-            <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
-                <button class="apoiador-filter-btn active" data-filter="todos" style="padding: 0.75rem 2rem; border: 2px solid #d1d5db; background: #ffffff; color: #374151; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                    Todos
-                </button>
-                <button class="apoiador-filter-btn" data-filter="Empresa" style="padding: 0.75rem 2rem; border: 2px solid #d1d5db; background: #ffffff; color: #374151; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                    Empresa
-                </button>
-                <button class="apoiador-filter-btn" data-filter="Pessoa Física" style="padding: 0.75rem 2rem; border: 2px solid #d1d5db; background: #ffffff; color: #374151; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                    Pessoa Física
-                </button>
-            </div>
-            
             <!-- Grid de Apoiadores -->
-            <div class="apoiadores-grid-container" id="apoiadores-grid-container" style="position: relative; min-height: 300px;">
-                <div class="apoiadores-grid" id="apoiadores-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+            <div class="apoiadores-grid-container" style="position: relative; min-height: 300px;">
+                <div class="apoiadores-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
                     {% for apoiador in apoiadores %}
-                    <div class="apoiador-grid-item" 
-                         data-tipo="{{ apoiador.tipo or 'Instituição' }}"
-                         style="opacity: 1; transform: translateY(0); transition: opacity 0.5s ease, transform 0.5s ease;">
+                    <div class="apoiador-grid-item" style="opacity: 1; transform: translateY(0);">
                         {% if apoiador.website %}
                         <a href="{{ apoiador.website }}" 
                            target="_blank" 
@@ -717,107 +702,6 @@
                 </div>
             </div>
         </section>
-        
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const filterButtons = document.querySelectorAll('.apoiador-filter-btn');
-            const gridItems = document.querySelectorAll('.apoiador-grid-item');
-            const gridContainer = document.getElementById('apoiadores-grid-container');
-            
-            // Garantir que todas as imagens sejam visíveis imediatamente
-            gridItems.forEach(function(item) {
-                // Manter item visível
-                item.style.opacity = '1';
-                item.style.transform = 'translateY(0)';
-                item.classList.add('show');
-                
-                const images = item.querySelectorAll('.apoiador-grid-image');
-                images.forEach(function(img) {
-                    img.style.opacity = '1';
-                    img.style.visibility = 'visible';
-                    img.style.filter = 'none';
-                    img.style.webkitFilter = 'none';
-                    img.style.display = 'block';
-                });
-            });
-            
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const filter = this.getAttribute('data-filter');
-                    
-                    // Atualizar botões ativos
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Remover classe show de todos os itens
-                    gridItems.forEach(item => {
-                        item.classList.remove('show');
-                    });
-                    
-                    // Filtrar e animar
-                    setTimeout(function() {
-                        let visibleCount = 0;
-                        gridItems.forEach((item) => {
-                            const itemTipo = item.getAttribute('data-tipo') || 'Instituição';
-                            const shouldShow = filter === 'todos' || itemTipo === filter;
-                            
-                            if (shouldShow) {
-                                item.style.display = 'block';
-                                // Resetar posição para animação de baixo para cima
-                                item.style.opacity = '0';
-                                item.style.transform = 'translateY(20px)';
-                                
-                                // Garantir que as imagens sejam sempre visíveis
-                                const images = item.querySelectorAll('.apoiador-grid-image');
-                                images.forEach(function(img) {
-                                    img.style.opacity = '1';
-                                    img.style.visibility = 'visible';
-                                    img.style.filter = 'none';
-                                    img.style.webkitFilter = 'none';
-                                });
-                                
-                                setTimeout(function() {
-                                    item.classList.add('show');
-                                    // Garantir novamente após animação
-                                    const images = item.querySelectorAll('.apoiador-grid-image');
-                                    images.forEach(function(img) {
-                                        img.style.opacity = '1';
-                                        img.style.visibility = 'visible';
-                                    });
-                                }, visibleCount * 30); // Delay escalonado para animação suave
-                                visibleCount++;
-                            } else {
-                                item.style.display = 'none';
-                                item.classList.remove('show');
-                            }
-                        });
-                        
-                        // Se não houver itens, mostrar mensagem
-                        if (visibleCount === 0) {
-                            const noResults = document.createElement('p');
-                            noResults.className = 'no-data';
-                            noResults.textContent = 'Nenhum apoiador encontrado para este filtro.';
-                            noResults.style.textAlign = 'center';
-                            noResults.style.padding = '3rem';
-                            noResults.style.color = '#6b7280';
-                            
-                            const existingNoData = gridContainer.querySelector('.no-data');
-                            if (existingNoData) {
-                                existingNoData.remove();
-                            }
-                            
-                            gridContainer.appendChild(noResults);
-                        } else {
-                            const existingNoData = gridContainer.querySelector('.no-data');
-                            if (existingNoData) {
-                                existingNoData.remove();
-                            }
-                        }
-                    }, 50);
-                });
-            });
-        });
-        </script>
         {% endif %}
     </div>
 </section>
