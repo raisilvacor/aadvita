@@ -3378,3 +3378,45 @@ textarea:focus {
     }
 }
 
+@media (max-width: 768px) {
+    .hero-action-buttons {
+        padding: 1.5rem 0;
+        margin-bottom: 0;
+        position: static;
+    }
+
+    .hero-action-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hero-action-link {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .hero-language-selector {
+        width: 100%;
+        position: static;
+    }
+
+    .hero-language-selector .lang-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 0.85rem 1.25rem;
+    }
+
+    .hero-language-selector .lang-dropdown {
+        position: static;
+        width: 100%;
+        margin-top: 0.5rem;
+        box-shadow: none;
+        border: 1px solid rgba(0,0,0,0.1);
+        padding: 0.75rem;
+    }
+
+    .hero-language-selector .lang-option-link {
+        justify-content: center;
+    }
+}
+
