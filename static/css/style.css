@@ -1711,18 +1711,18 @@ textarea:focus {
         max-height: 100vh;
         position: fixed;
         top: 0;
+        left: 0;
         right: 0;
-        width: 80%;
+        bottom: 0;
+        width: 100%;
         background-color: #fff;
         z-index: 9999;
         padding: 2rem 1rem;
-        transition: transform 0.3s ease;
-        transform: translateX(100%);
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+        transition: none;
     }
     
-    .nav-menu.active {
-        transform: translateX(0);
+    .nav-menu li {
+        margin-bottom: 0.7rem;
     }
     
     .menu-toggle {
@@ -1757,11 +1757,6 @@ textarea:focus {
     .menu-close-btn:focus {
         background: var(--border-color);
         outline: none;
-    }
-    
-    .nav-menu li {
-        margin-bottom: 0.5rem;
-        flex: 0 0 auto;
     }
     
     .nav-menu a,

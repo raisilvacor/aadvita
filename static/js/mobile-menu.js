@@ -4,20 +4,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const closeBtn = document.querySelector(".menu-close-btn");
     const overlay = document.getElementById("nav-overlay");
 
+    if (!menuToggle || !menu) {
+        return;
+    }
+
+    if (menu) {
+        menu.classList.remove("active");
+        menu.style.display = "none";
+    }
+
+    if (overlay) {
+        overlay.style.display = "none";
+    }
+
     function openMenu() {
         menu.classList.add("active");
         document.body.classList.add("menu-open");
-        if (overlay) {
-            overlay.style.display = "block";
-        }
+        menu.style.display = "flex";
+        if (overlay) overlay.style.display = "block";
     }
 
     function closeMenu() {
         menu.classList.remove("active");
         document.body.classList.remove("menu-open");
-        if (overlay) {
-            overlay.style.display = "none";
-        }
+        menu.style.display = "none";
+        if (overlay) overlay.style.display = "none";
     }
 
     if (menuToggle) {
