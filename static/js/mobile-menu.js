@@ -16,26 +16,27 @@
         
         function openMenu() {
             menuOpen = true;
+            document.body.classList.add('menu-open');
             menu.classList.add('active');
             menu.style.display = 'flex';
             menu.style.transform = 'translateX(0)';
             menu.style.visibility = 'visible';
+            menu.style.overflowY = 'auto';
             if (overlay) {
                 overlay.classList.add('active');
                 overlay.style.display = 'block';
             }
-            document.body.style.overflow = 'hidden';
         }
         
         function closeMenu() {
             menuOpen = false;
+            document.body.classList.remove('menu-open');
             menu.classList.remove('active');
             menu.style.transform = 'translateX(-100%)';
             if (overlay) {
                 overlay.classList.remove('active');
                 overlay.style.display = 'none';
             }
-            document.body.style.overflow = '';
             setTimeout(function() {
                 if (!menuOpen) {
                     menu.style.display = 'none';
