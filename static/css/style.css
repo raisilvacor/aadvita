@@ -3804,3 +3804,11 @@ textarea:focus {
     width: 100%;
 }
 
+.o-que-fazemos-column .o-que-fazemos-item {
+    margin-bottom: 2.5rem;
+}
+
+.o-que-fazemos-column .o-que-fazemos-item:last-child {
+    margin-bottom: 0;
+}
+

@@ -2,6 +2,21 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     
+    // Aplicar gradientes dinâmicos nos banners principais
+    const gradientCards = document.querySelectorAll('.banner-card[data-gradient-start][data-gradient-end]');
+    gradientCards.forEach(card => {
+        const start = card.dataset.gradientStart || '#2563eb';
+        const end = card.dataset.gradientEnd || '#1e40af';
+        card.style.background = `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
+    });
+
+    // Aplicar cores dinâmicas aos ícones da seção "O que fazemos"
+    const serviceIcons = document.querySelectorAll('.o-que-fazemos-icon[data-icon-color]');
+    serviceIcons.forEach(icon => {
+        const color = icon.dataset.iconColor || '#2563eb';
+        icon.style.backgroundColor = color;
+    });
+    
     // Menu Suspenso - Agendas
     const dropdownToggle = document.querySelector('.nav-dropdown-toggle');
     const dropdownMenu = document.querySelector('.nav-dropdown-menu');

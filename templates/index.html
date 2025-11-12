@@ -82,7 +82,7 @@
             <!-- Banner Campanhas -->
             {% if banners.get('Campanhas') %}
             {% set banner = banners.get('Campanhas') %}
-            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('campanhas') }}{% endif %}" class="banner-card" style="display: block; background: linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('campanhas') }}{% endif %}" class="banner-card" data-gradient-start="{{ banner.cor_gradiente_inicio }}" data-gradient-end="{{ banner.cor_gradiente_fim }}" style="display: block; border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
                 <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                     <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
@@ -102,7 +102,7 @@
             <!-- Banner Apoie-nos -->
             {% if banners.get('Apoie-nos') %}
             {% set banner = banners.get('Apoie-nos') %}
-            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('apoie') }}{% endif %}" class="banner-card" style="display: block; background: linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('apoie') }}{% endif %}" class="banner-card" data-gradient-start="{{ banner.cor_gradiente_inicio }}" data-gradient-end="{{ banner.cor_gradiente_fim }}" style="display: block; border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
                 <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                     <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
@@ -122,7 +122,7 @@
             <!-- Banner Editais -->
             {% if banners.get('Editais') %}
             {% set banner = banners.get('Editais') %}
-            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('editais') }}{% endif %}" class="banner-card" style="display: block; background: linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%); border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
+            <a href="{% if banner.url %}{{ banner.url }}{% else %}{{ url_for('editais') }}{% endif %}" class="banner-card" data-gradient-start="{{ banner.cor_gradiente_inicio }}" data-gradient-end="{{ banner.cor_gradiente_fim }}" style="display: block; border-radius: 1rem; padding: 2.5rem 2rem; text-decoration: none; color: white; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: all 0.3s ease; min-height: 200px;">
                 <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                     <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
@@ -165,10 +165,10 @@
             <!-- Coluna 1 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(1, []) %}
-                <div class="o-que-fazemos-item" style="margin-bottom: {% if not loop.last %}2.5rem{% else %}0{% endif %}; position: relative;">
+                <div class="o-que-fazemos-item" style="position: relative;">
                     <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
                         <div style="position: relative; flex-shrink: 0;">
-                            <div class="o-que-fazemos-icon" style="width: 70px; height: 70px; border-radius: 50%; background: {{ servico.cor_icone }}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                            <div class="o-que-fazemos-icon" data-icon-color="{{ servico.cor_icone }}" style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                                 {% if servico.icone_svg %}
                                     {{ servico.icone_svg|safe }}
                                 {% else %}
@@ -194,10 +194,10 @@
             <!-- Coluna 2 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(2, []) %}
-                <div class="o-que-fazemos-item" style="margin-bottom: {% if not loop.last %}2.5rem{% else %}0{% endif %}; position: relative;">
+                <div class="o-que-fazemos-item" style="position: relative;">
                     <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
                         <div style="position: relative; flex-shrink: 0;">
-                            <div class="o-que-fazemos-icon" style="width: 70px; height: 70px; border-radius: 50%; background: {{ servico.cor_icone }}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                            <div class="o-que-fazemos-icon" data-icon-color="{{ servico.cor_icone }}" style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                                 {% if servico.icone_svg %}
                                     {{ servico.icone_svg|safe }}
                                 {% else %}
@@ -223,10 +223,10 @@
             <!-- Coluna 3 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(3, []) %}
-                <div class="o-que-fazemos-item" style="margin-bottom: {% if not loop.last %}2.5rem{% else %}0{% endif %}; position: relative;">
+                <div class="o-que-fazemos-item" style="position: relative;">
                     <div style="display: flex; align-items: flex-start; gap: 1.5rem;">
                         <div style="position: relative; flex-shrink: 0;">
-                            <div class="o-que-fazemos-icon" style="width: 70px; height: 70px; border-radius: 50%; background: {{ servico.cor_icone }}; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                            <div class="o-que-fazemos-icon" data-icon-color="{{ servico.cor_icone }}" style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                                 {% if servico.icone_svg %}
                                     {{ servico.icone_svg|safe }}
                                 {% else %}
@@ -573,7 +573,7 @@
                     </div>
                     {% if post.legenda %}
                     <div style="padding: 1rem;">
-                        <p style="color: var(--text-color); font-size: 0.9rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        <p style="color: var(--text-color); font-size: 0.9rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                             {{ post.legenda[:150] }}{% if post.legenda|length > 150 %}...{% endif %}
                         </p>
                     </div>
