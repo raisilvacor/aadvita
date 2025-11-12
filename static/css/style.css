@@ -3654,6 +3654,7 @@ textarea:focus {
     max-width: 1200px !important;
     margin: 0 auto !important;
     width: 100% !important;
+    align-items: start !important;
 }
 
 /* Media query ajustada para não interferir em telas grandes */
@@ -3884,11 +3885,19 @@ textarea:focus {
     width: 100%;
 }
 
+.o-que-fazemos-column {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 2rem !important;
+}
+
 .o-que-fazemos-column .o-que-fazemos-item {
-    margin-bottom: 2.5rem;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 .o-que-fazemos-column .o-que-fazemos-item:last-child {
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
 }
 

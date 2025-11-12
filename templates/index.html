@@ -174,7 +174,12 @@
             .o-que-fazemos-column {
                 display: flex !important;
                 flex-direction: column !important;
+                align-items: stretch !important;
                 gap: 2rem !important;
+            }
+            .o-que-fazemos-item {
+                flex-shrink: 0 !important;
+                margin-bottom: 0 !important;
             }
             /* Apenas em telas menores que 900px usar 2 colunas */
             @media screen and (max-width: 900px) {
