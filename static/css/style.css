@@ -3648,7 +3648,12 @@ textarea:focus {
 }
 
 .o-que-fazemos-grid {
-    display: grid;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 3rem 2rem !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
 }
 
 @media (max-width: 1024px) {
