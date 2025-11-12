@@ -30,7 +30,7 @@
                     <tr>
                         <td>
                             {% if apoiador.logo %}
-                                <img src="{{ url_for('static', filename=apoiador.logo) }}" 
+                                <img src="{{ apoiador_logo_url(apoiador) or url_for('static', filename=apoiador.logo) }}" 
                                      alt="{{ apoiador.nome }}" 
                                      style="width: 80px; height: 80px; object-fit: cover; border-radius: 0.5rem;">
                             {% else %}

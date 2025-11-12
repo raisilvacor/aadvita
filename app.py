@@ -1094,7 +1094,8 @@ class Apoiador(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(200), nullable=False)
     tipo = db.Column(db.String(100))  # Empresa, Individual, Instituição
-    logo = db.Column(db.String(300))
+    logo = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    logo_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     website = db.Column(db.String(500))
     descricao = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
@@ -5650,19 +5651,31 @@ def admin_apoiadores_novo():
         
         # Processar upload da foto
         logo_path = None
+        logo_base64_data = None
         if 'logo' in request.files:
             file = request.files['logo']
             if file and file.filename != '' and allowed_file(file.filename):
-                upload_folder = app.config['UPLOAD_FOLDER']
-                os.makedirs(upload_folder, exist_ok=True)
+                # Ler dados do arquivo e converter para Base64
+                file_data = file.read()
+                file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
+                mime_types = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp'}
+                mime_type = mime_types.get(file_ext, 'image/jpeg')
+                logo_base64_data = base64.b64encode(file_data).decode('utf-8')
+                logo_path = f"base64:{mime_type}"  # Store mime type in 'logo' field
                 
-                # Gerar nome único para o arquivo
-                filename = secure_filename(file.filename)
-                unique_filename = f"{uuid.uuid4()}_{filename}"
-                filepath = os.path.join(upload_folder, unique_filename)
-                file.save(filepath)
-                
-                logo_path = f"images/uploads/{unique_filename}"
+                # Também salvar localmente para desenvolvimento local (opcional)
+                try:
+                    upload_folder = app.config['UPLOAD_FOLDER']
+                    os.makedirs(upload_folder, exist_ok=True)
+                    filename = secure_filename(file.filename)
+                    unique_filename = f"{uuid.uuid4()}_{filename}"
+                    filepath = os.path.join(upload_folder, unique_filename)
+                    file.seek(0)  # Reset file pointer after reading for base64
+                    file.save(filepath)
+                    # Manter o caminho local também para compatibilidade
+                    logo_path = f"images/uploads/{unique_filename}"
+                except Exception as e:
+                    print(f"[AVISO] Não foi possível salvar arquivo localmente: {e}")
             elif file and file.filename != '':
                 flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                 return redirect(url_for('admin_apoiadores_novo'))
@@ -5679,6 +5692,7 @@ def admin_apoiadores_novo():
                 descricao=descricao if descricao else None,
                 website=website if website else None,
                 logo=logo_path,
+                logo_base64=logo_base64_data,
                 created_at=datetime.now()
             )
             db.session.add(novo_apoiador)
@@ -5711,8 +5725,8 @@ def admin_apoiadores_editar(id):
         if 'logo' in request.files:
             file = request.files['logo']
             if file and file.filename != '' and allowed_file(file.filename):
-                # Remover foto antiga se existir
-                if apoiador.logo:
+                # Remover foto antiga se existir (apenas arquivo local, não base64)
+                if apoiador.logo and not (apoiador.logo.startswith('base64:') if apoiador.logo else False):
                     old_filepath = os.path.join('static', apoiador.logo)
                     if os.path.exists(old_filepath):
                         try:
@@ -5720,16 +5734,28 @@ def admin_apoiadores_editar(id):
                         except:
                             pass
                 
-                upload_folder = app.config['UPLOAD_FOLDER']
-                os.makedirs(upload_folder, exist_ok=True)
+                # Ler dados do arquivo e converter para Base64
+                file_data = file.read()
+                file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
+                mime_types = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp'}
+                mime_type = mime_types.get(file_ext, 'image/jpeg')
+                logo_base64_data = base64.b64encode(file_data).decode('utf-8')
+                apoiador.logo_base64 = logo_base64_data
+                apoiador.logo = f"base64:{mime_type}"  # Store mime type in 'logo' field
                 
-                # Gerar nome único para o arquivo
-                filename = secure_filename(file.filename)
-                unique_filename = f"{uuid.uuid4()}_{filename}"
-                filepath = os.path.join(upload_folder, unique_filename)
-                file.save(filepath)
-                
-                apoiador.logo = f"images/uploads/{unique_filename}"
+                # Também salvar localmente para desenvolvimento local (opcional)
+                try:
+                    upload_folder = app.config['UPLOAD_FOLDER']
+                    os.makedirs(upload_folder, exist_ok=True)
+                    filename = secure_filename(file.filename)
+                    unique_filename = f"{uuid.uuid4()}_{filename}"
+                    filepath = os.path.join(upload_folder, unique_filename)
+                    file.seek(0)  # Reset file pointer after reading for base64
+                    file.save(filepath)
+                    # Manter o caminho local também para compatibilidade
+                    apoiador.logo = f"images/uploads/{unique_filename}"
+                except Exception as e:
+                    print(f"[AVISO] Não foi possível salvar arquivo localmente: {e}")
             elif file and file.filename != '':
                 flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                 return redirect(url_for('admin_apoiadores_editar', id=id))
@@ -5756,14 +5782,56 @@ def admin_apoiadores_editar(id):
     
     return render_template('admin/apoiador_form.html', apoiador=apoiador)
 
+@app.route('/apoiador/<int:id>/logo')
+def apoiador_logo(id):
+    """Rota para servir imagens do apoiador do banco de dados (base64)"""
+    try:
+        apoiador = Apoiador.query.get_or_404(id)
+        logo_base64 = getattr(apoiador, 'logo_base64', None)
+        
+        if logo_base64:
+            mime_type = 'image/jpeg'
+            if apoiador.logo and apoiador.logo.startswith('base64:'):
+                mime_type = apoiador.logo.replace('base64:', '')
+            try:
+                image_data = base64.b64decode(logo_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar imagem base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        if apoiador.logo and not (apoiador.logo.startswith('base64:') if apoiador.logo else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(apoiador.logo)
+            file_name = os.path.basename(apoiador.logo)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except Exception as e:
+                print(f"Erro ao servir arquivo estático: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro na rota apoiador_logo: {e}")
+        import traceback
+        traceback.print_exc()
+        from flask import abort
+        abort(500)
+
 @app.route('/admin/apoiadores/<int:id>/excluir', methods=['POST'])
 @admin_required
 def admin_apoiadores_excluir(id):
     apoiador = Apoiador.query.get_or_404(id)
     
     try:
-        # Remover logo se existir
-        if apoiador.logo:
+        # Remover logo se existir (apenas arquivo local, não base64)
+        if apoiador.logo and not (apoiador.logo.startswith('base64:') if apoiador.logo else False):
             filepath = os.path.join('static', apoiador.logo)
             if os.path.exists(filepath):
                 try:
@@ -8405,6 +8473,51 @@ def inject_conf():
                 pass
             return None
     
+    def apoiador_logo_url(apoiador):
+        """Helper function para obter URL do logo do apoiador de forma segura"""
+        if not apoiador:
+            return None
+        try:
+            # Verificar se tem logo_base64 usando getattr (seguro se coluna não existir)
+            logo_base64 = None
+            try:
+                logo_base64 = getattr(apoiador, 'logo_base64', None)
+            except (AttributeError, KeyError):
+                # Coluna pode não existir ainda
+                pass
+            
+            if logo_base64:
+                return f"/apoiador/{apoiador.id}/logo"
+            
+            # Verificar se logo começa com base64:
+            try:
+                if apoiador.logo and 'base64:' in str(apoiador.logo):
+                    return f"/apoiador/{apoiador.id}/logo"
+            except (AttributeError, KeyError):
+                pass
+            
+            # Fallback para arquivo estático
+            try:
+                if apoiador.logo:
+                    from flask import url_for
+                    return url_for('static', filename=apoiador.logo)
+            except (AttributeError, KeyError, Exception):
+                pass
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL do logo do apoiador: {e}")
+            import traceback
+            traceback.print_exc()
+            # Fallback final
+            try:
+                if hasattr(apoiador, 'logo') and apoiador.logo:
+                    from flask import url_for
+                    return url_for('static', filename=apoiador.logo)
+            except:
+                pass
+            return None
+    
     # Buscar dados da associação
     try:
         dados_associacao = DadosAssociacao.get_dados()
@@ -8421,6 +8534,7 @@ def inject_conf():
     
     return dict(
         slider_imagem_url=slider_imagem_url,
+        apoiador_logo_url=apoiador_logo_url,
         current_user=session.get('admin_username'),
         current_language=session.get('language', 'pt'),
         languages=app.config['LANGUAGES'],
@@ -8898,12 +9012,13 @@ def ensure_db_initialized():
             db_type = db.engine.url.drivername
             print(f"📊 Tipo de banco de dados: {db_type}")
             
-            # PRIMEIRO: Adicionar coluna imagem_base64 se necessário ANTES de qualquer query
+            # PRIMEIRO: Adicionar colunas base64 se necessário ANTES de qualquer query
             try:
                 from sqlalchemy import text, inspect
                 inspector = inspect(db.engine)
-                table_exists = 'slider_image' in inspector.get_table_names()
                 
+                # Adicionar coluna imagem_base64 à tabela slider_image
+                table_exists = 'slider_image' in inspector.get_table_names()
                 if table_exists:
                     is_sqlite = db_type == 'sqlite'
                     with db.engine.connect() as conn:
@@ -8926,8 +9041,33 @@ def ensure_db_initialized():
                                 conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
                             conn.commit()
                             print("✅ Coluna imagem_base64 adicionada.")
+                
+                # Adicionar coluna logo_base64 à tabela apoiador
+                table_exists = 'apoiador' in inspector.get_table_names()
+                if table_exists:
+                    is_sqlite = db_type == 'sqlite'
+                    with db.engine.connect() as conn:
+                        if is_sqlite:
+                            result = conn.execute(text("PRAGMA table_info(apoiador)"))
+                            columns = [row[1] for row in result]
+                        else:
+                            result = conn.execute(text("""
+                                SELECT column_name 
+                                FROM information_schema.columns 
+                                WHERE table_name = 'apoiador' AND column_name = 'logo_base64'
+                            """))
+                            columns = [row[0] for row in result]
+                        
+                        if (is_sqlite and 'logo_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                            print("📝 Adicionando coluna logo_base64 à tabela apoiador...")
+                            if is_sqlite:
+                                conn.execute(text("ALTER TABLE apoiador ADD COLUMN logo_base64 TEXT"))
+                            else:
+                                conn.execute(text("ALTER TABLE apoiador ADD COLUMN logo_base64 TEXT"))
+                            conn.commit()
+                            print("✅ Coluna logo_base64 adicionada.")
             except Exception as e:
-                print(f"⚠️ Aviso ao verificar coluna imagem_base64: {e}")
+                print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
             # Criar todas as tabelas (idempotente - não recria se já existirem)
             db.create_all()
