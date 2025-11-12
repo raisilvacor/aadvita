@@ -191,7 +191,7 @@
                 }
             }
         </style>
-        <div class="o-que-fazemos-grid" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 3rem 2rem !important; max-width: 1200px !important; margin: 0 auto !important;">
+        <div class="o-que-fazemos-grid" id="o-que-fazemos-grid" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 3rem 2rem !important; max-width: 1200px !important; margin: 0 auto !important; width: 100% !important;">
             <!-- Coluna 1 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(1, []) %}

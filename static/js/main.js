@@ -397,6 +397,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Forçar 3 colunas no grid "O que fazemos" - correção para Render
+    const oQueFazemosGrid = document.getElementById('o-que-fazemos-grid');
+    if (oQueFazemosGrid) {
+        // Verificar largura da tela
+        const width = window.innerWidth || document.documentElement.clientWidth;
+        if (width > 900) {
+            oQueFazemosGrid.style.setProperty('grid-template-columns', 'repeat(3, 1fr)', 'important');
+            oQueFazemosGrid.style.setProperty('display', 'grid', 'important');
+        }
+    }
+    
     console.log('AADVITA - Site carregado com sucesso! Acessibilidade ativada.');
 });
 
