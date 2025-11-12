@@ -1704,25 +1704,30 @@ textarea:focus {
     }
     
     .nav-menu {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
         display: flex;
         flex-direction: column;
         align-items: stretch;
         overflow-y: auto;
-        max-height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        overflow-x: hidden;
         width: 100%;
-        background-color: #fff;
-        z-index: 9999;
+        max-height: 100vh;
+        background: #fff;
         padding: 2rem 1rem;
-        transition: none;
     }
     
     .nav-menu li {
-        margin-bottom: 0.7rem;
+        margin: 0 0 0.6rem 0;
+        width: 100%;
+    }
+    
+    .nav-menu a,
+    .nav-menu button {
+        display: block;
+        width: 100%;
+        text-align: left;
     }
     
     .menu-toggle {
@@ -1759,64 +1764,31 @@ textarea:focus {
         outline: none;
     }
     
-    .nav-menu a,
-    .nav-menu button {
-        display: block;
-        width: 100%;
-    }
-    
-    .associate-btn-wrapper {
-        order: 20;
-    }
-    
-    .login-btn-wrapper {
-        order: 21;
-    }
-    
-    .language-selector {
-        order: 22;
-    }
-    
     body.menu-open {
         overflow: hidden;
     }
     
-    .language-menu {
-        right: auto;
-        left: 0;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
+    .nav-item-dropdown .nav-dropdown-menu {
+        position: static;
+        display: none;
+        padding-left: .75rem;
+        margin-top: .35rem;
     }
     
-    .associate-btn-wrapper,
-    .login-btn-wrapper {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
+    .nav-item-dropdown.open .nav-dropdown-menu {
+        display: block;
     }
     
-    .btn-associate,
-    .btn-login {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-        white-space: nowrap !important;
-        overflow: visible !important;
-        text-overflow: clip !important;
-        padding: 1rem 1.25rem !important;
-        font-size: 1rem !important;
+    #nav-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.35);
+        z-index: 9998;
     }
     
-    .associate-btn-wrapper,
-    .login-btn-wrapper {
-        margin: 0 !important;
-        padding: 0 !important;
+    .nav-menu[style*="transform"] {
+        transform: none !important;
     }
     
     .card-grid {
