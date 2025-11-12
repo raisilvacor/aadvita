@@ -15,7 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
         menu.classList.add("active");
         menu.setAttribute("aria-hidden", "false");
         document.body.classList.add("menu-open");
-        if (overlay) overlay.style.display = "block";
+        toggle.setAttribute("aria-expanded", "true");
+        if (overlay) {
+            overlay.style.display = "block";
+            overlay.classList.add("active");
+        }
         const firstFocusable = menu.querySelector("a, button");
         if (firstFocusable) firstFocusable.focus();
     }
@@ -24,7 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
         menu.classList.remove("active");
         menu.setAttribute("aria-hidden", "true");
         document.body.classList.remove("menu-open");
-        if (overlay) overlay.style.display = "none";
+        toggle.setAttribute("aria-expanded", "false");
+        if (overlay) {
+            overlay.style.display = "none";
+            overlay.classList.remove("active");
+        }
         toggle.focus();
     }
 

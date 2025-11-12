@@ -57,6 +57,48 @@
 </section>
 {% endif %}
 
+<!-- Ações principais abaixo do slider -->
+<section class="hero-action-buttons" aria-label="{{ _('Ações principais') }}">
+    <div class="container hero-action-container">
+        <div class="hero-action-group">
+            <div class="associate-btn-wrapper">
+                <a href="{{ url_for('associe_se') }}" class="btn-associate hero-action-link">{{ _('Associe-se') }}</a>
+            </div>
+            <div class="login-btn-wrapper">
+                <a href="{{ url_for('login') }}" class="btn-login hero-action-link">{{ _('Entrar') }}</a>
+            </div>
+            <div class="language-selector hero-language-selector">
+                <div class="lang-btn" id="selected-lang" role="button" tabindex="0" aria-label="{{ _('Selecionar idioma') }}" aria-expanded="false" aria-haspopup="true">
+                    {% if current_language == 'pt' %}
+                    <img src="https://flagcdn.com/w20/br.png" alt="{{ _('Português') }}">
+                    <span>{{ _('Português') }}</span>
+                    {% elif current_language == 'es' %}
+                    <img src="https://flagcdn.com/w20/es.png" alt="{{ _('Español') }}">
+                    <span>{{ _('Español') }}</span>
+                    {% elif current_language == 'en' %}
+                    <img src="https://flagcdn.com/w20/us.png" alt="{{ _('English') }}">
+                    <span>{{ _('English') }}</span>
+                    {% endif %}
+                </div>
+                <div class="lang-dropdown" id="lang-options" role="menu" aria-label="{{ _('Opções de idioma') }}" style="display: none;">
+                    <a href="/set-language/pt" class="lang-option-link {% if current_language == 'pt' %}active{% endif %}" data-lang="pt">
+                        <img src="https://flagcdn.com/w20/br.png" alt="{{ _('Português') }}">
+                        <span>{{ _('Português') }}</span>
+                    </a>
+                    <a href="/set-language/es" class="lang-option-link {% if current_language == 'es' %}active{% endif %}" data-lang="es">
+                        <img src="https://flagcdn.com/w20/es.png" alt="{{ _('Español') }}">
+                        <span>{{ _('Español') }}</span>
+                    </a>
+                    <a href="/set-language/en" class="lang-option-link {% if current_language == 'en' %}active{% endif %}" data-lang="en">
+                        <img src="https://flagcdn.com/w20/us.png" alt="{{ _('English') }}">
+                        <span>{{ _('English') }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Banners de Acesso Rápido -->
 {% if banners %}
 <section class="banners-section" aria-label="{{ _('Acesso Rápido') }}" style="padding: 3rem 0; background: var(--bg-light);">
