@@ -3,7 +3,11 @@
 {% block title %}{{ _('Apoie-nos') }} - AADVITA{% endblock %}
 
 {% block content %}
-<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem; background: {% if banner %}linear-gradient(135deg, {{ banner.cor_gradiente_inicio }} 0%, {{ banner.cor_gradiente_fim }} 100%){% else %}var(--primary-color){% endif %};">
+{% if banner %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem; --gradient-start: {{ banner.cor_gradiente_inicio }}; --gradient-end: {{ banner.cor_gradiente_fim }}; background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);">
+{% else %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem; background: var(--primary-color);">
+{% endif %}
     <div class="container">
         <h1 id="page-title" class="page-title" style="color: white;">
             {% if banner %}{{ banner.titulo }}{% else %}{{ _('Apoie-nos') }}{% endif %}
@@ -76,18 +80,10 @@
         </div>
         {% else %}
         <div style="max-width: 800px; margin: 0 auto;">
-            <div style="background: white; border-radius: 1rem; padding: 3rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <h2 style="font-size: 2rem; font-weight: 700; color: var(--text-color); margin-bottom: 1.5rem; text-align: center;">
-                    {{ _('Como Apoiar') }}
-                </h2>
-                <div style="line-height: 1.8; color: var(--text-color);">
-                    <p style="margin-bottom: 1.5rem; font-size: 1.1rem;">
-                        {{ _('Sua contribuição é fundamental para continuarmos promovendo inclusão e acessibilidade.') }}
-                    </p>
-                    <p style="margin-bottom: 1.5rem;">
-                        {{ _('Em breve, mais informações sobre como apoiar estarão disponíveis aqui.') }}
-                    </p>
-                </div>
+            <div style="background: white; border-radius: 1rem; padding: 3rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); text-align: center;">
+                <p style="color: var(--text-light); font-size: 1.1rem;">
+                    {{ _('Nenhum conteúdo disponível no momento.') }}
+                </p>
             </div>
         </div>
         {% endif %}
