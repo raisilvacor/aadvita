@@ -29,11 +29,15 @@ if database_url:
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"✅ Usando PostgreSQL: {database_url[:50]}...")  # Log parcial da URL por segurança
 else:
     # SQLite local - usar caminho absoluto para persistência no Render
+    # AVISO: SQLite não persiste no Render! Use PostgreSQL em produção.
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'aadvita.db')
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    print("⚠️ AVISO: Usando SQLite local - dados NÃO persistirão no Render!")
+    print("⚠️ Configure DATABASE_URL no Render para usar PostgreSQL!")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['LANGUAGES'] = {
     'pt': 'Português',
@@ -8684,38 +8688,50 @@ def ensure_db_initialized():
     """Garante que o banco de dados está inicializado"""
     try:
         with app.app_context():
+            # Verificar qual banco está sendo usado
+            db_type = db.engine.url.drivername
+            print(f"📊 Tipo de banco de dados: {db_type}")
+            
             # Criar todas as tabelas (idempotente - não recria se já existirem)
             db.create_all()
+            print("✅ Tabelas do banco de dados verificadas/criadas")
             
             # Verificar se há usuários, se não houver, inicializar dados
             try:
                 from sqlalchemy import inspect
                 inspector = inspect(db.engine)
                 tables = inspector.get_table_names()
+                print(f"📋 Tabelas encontradas: {len(tables)}")
                 
                 if tables and 'usuario' in tables:
                     try:
                         usuario_count = Usuario.query.count()
+                        print(f"👥 Usuários no banco: {usuario_count}")
                         if usuario_count == 0:
                             # Se não houver usuários, inicializar o banco completamente
-                            print("Nenhum usuário encontrado. Inicializando banco de dados...")
+                            print("🔄 Nenhum usuário encontrado. Inicializando banco de dados...")
                             init_db()
+                        else:
+                            print("✅ Banco de dados já possui dados - não será reinicializado")
                     except Exception as e:
-                        print(f"Nota: Erro ao verificar usuários: {e}")
+                        print(f"⚠️ Nota: Erro ao verificar usuários: {e}")
                         # Se não conseguir verificar, tentar inicializar
                         try:
                             init_db()
                         except:
                             pass
+                else:
+                    print("⚠️ Tabela 'usuario' não encontrada - inicializando banco...")
+                    init_db()
             except Exception as e:
-                print(f"Nota: Erro ao verificar tabelas: {e}")
+                print(f"⚠️ Nota: Erro ao verificar tabelas: {e}")
                 # Tentar inicializar de qualquer forma
                 try:
                     init_db()
                 except:
                     pass
     except Exception as e:
-        print(f"Aviso: Erro ao inicializar banco de dados: {e}")
+        print(f"❌ Aviso: Erro ao inicializar banco de dados: {e}")
         # Não falhar a importação se houver erro no banco
         # O banco será inicializado na primeira requisição
 

@@ -11,7 +11,7 @@ services:
         fromDatabase:
           name: aadvita-db
           property: connectionString
-  - type: pspg
+  - type: pg
     name: aadvita-db
     databaseName: aadvita
     user: aadvita_user
