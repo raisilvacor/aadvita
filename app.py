@@ -5929,9 +5929,10 @@ def admin_informativos_excluir(id):
                 except Exception as e:
                     print(f"Erro ao remover arquivo da imagem: {str(e)}")
         
-        # Remover PDF se existir
-        if informativo.arquivo_pdf:
-            pdf_filepath = os.path.join('static', informativo.arquivo_pdf)
+        # Remover PDF se existir (apenas se atributo estiver presente)
+        arquivo_pdf = getattr(informativo, 'arquivo_pdf', None)
+        if arquivo_pdf:
+            pdf_filepath = os.path.join('static', arquivo_pdf)
             if os.path.exists(pdf_filepath):
                 try:
                     os.remove(pdf_filepath)
