@@ -3656,7 +3656,8 @@ textarea:focus {
     width: 100% !important;
 }
 
-@media (max-width: 1024px) {
+/* Media query ajustada para não interferir em telas grandes */
+@media (max-width: 900px) {
     .o-que-fazemos-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 2rem 1.5rem !important;

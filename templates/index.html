@@ -162,6 +162,7 @@
         
         {% if servicos_o_que_fazemos and (servicos_o_que_fazemos.get(1) or servicos_o_que_fazemos.get(2) or servicos_o_que_fazemos.get(3)) %}
         <style>
+            /* Forçar 3 colunas em telas grandes - prioridade máxima */
             .o-que-fazemos-grid {
                 display: grid !important;
                 grid-template-columns: repeat(3, 1fr) !important;
@@ -175,20 +176,22 @@
                 flex-direction: column !important;
                 gap: 2rem !important;
             }
-            @media (max-width: 900px) {
+            /* Apenas em telas menores que 900px usar 2 colunas */
+            @media screen and (max-width: 900px) {
                 .o-que-fazemos-grid {
                     grid-template-columns: repeat(2, 1fr) !important;
                     gap: 2rem 1.5rem !important;
                 }
             }
-            @media (max-width: 600px) {
+            /* Apenas em telas menores que 600px usar 1 coluna */
+            @media screen and (max-width: 600px) {
                 .o-que-fazemos-grid {
                     grid-template-columns: 1fr !important;
                     gap: 2rem !important;
                 }
             }
         </style>
-        <div class="o-que-fazemos-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem 2rem; max-width: 1200px; margin: 0 auto;">
+        <div class="o-que-fazemos-grid" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 3rem 2rem !important; max-width: 1200px !important; margin: 0 auto !important;">
             <!-- Coluna 1 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(1, []) %}
