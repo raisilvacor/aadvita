@@ -7644,6 +7644,25 @@ def apoie():
     conteudos = []
     if banner:
         conteudos = BannerConteudo.query.filter_by(banner_id=banner.id, ativo=True).order_by(BannerConteudo.ordem.asc()).all()
+        
+        # Se não houver conteúdos, criar um conteúdo padrão "Como Apoiar"
+        if not conteudos:
+            try:
+                conteudo_padrao = BannerConteudo(
+                    banner_id=banner.id,
+                    titulo='Como Apoiar',
+                    conteudo='<p>Sua contribuição é fundamental para continuarmos promovendo inclusão e acessibilidade.</p><p>Em breve, mais informações sobre como apoiar estarão disponíveis aqui.</p>',
+                    ordem=0,
+                    ativo=True
+                )
+                db.session.add(conteudo_padrao)
+                db.session.commit()
+                conteudos = [conteudo_padrao]
+            except Exception as e:
+                db.session.rollback()
+                # Se houver erro ao criar, continuar sem conteúdo
+                pass
+    
     return render_template('apoie.html', banner=banner, conteudos=conteudos)
 
 @app.route('/editais')
@@ -8289,14 +8308,28 @@ def init_db():
         except Exception:
             # Se falhar, provavelmente a coluna is_super_admin não existe
             # Tentar adicionar via SQL direto
-            from sqlalchemy import text
+            from sqlalchemy import text, inspect
             try:
+                # Verificar se é SQLite ou PostgreSQL
+                is_sqlite = db.engine.url.drivername == 'sqlite'
+                
                 with db.engine.connect() as conn:
                     # Verificar se a coluna existe
-                    result = conn.execute(text("PRAGMA table_info(usuario)"))
-                    columns = [row[1] for row in result]
-                    if 'is_super_admin' not in columns:
-                        conn.execute(text("ALTER TABLE usuario ADD COLUMN is_super_admin BOOLEAN DEFAULT 0"))
+                    if is_sqlite:
+                        result = conn.execute(text("PRAGMA table_info(usuario)"))
+                        columns = [row[1] for row in result]
+                    else:
+                        # PostgreSQL
+                        result = conn.execute(text("""
+                            SELECT column_name 
+                            FROM information_schema.columns 
+                            WHERE table_name = 'usuario' AND column_name = 'is_super_admin'
+                        """))
+                        columns = [row[0] for row in result]
+                    
+                    if (is_sqlite and 'is_super_admin' not in columns) or (not is_sqlite and len(columns) == 0):
+                        # PostgreSQL usa BOOLEAN, SQLite também suporta
+                        conn.execute(text("ALTER TABLE usuario ADD COLUMN is_super_admin BOOLEAN DEFAULT FALSE"))
                         conn.commit()
                         print("Coluna is_super_admin adicionada ao banco de dados.")
             except Exception as e:
