@@ -163,26 +163,32 @@
         {% if servicos_o_que_fazemos and (servicos_o_que_fazemos.get(1) or servicos_o_que_fazemos.get(2) or servicos_o_que_fazemos.get(3)) %}
         <style>
             .o-que-fazemos-grid {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 3rem 2rem;
-                max-width: 1200px;
-                margin: 0 auto;
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 3rem 2rem !important;
+                max-width: 1200px !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+            }
+            .o-que-fazemos-column {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 2rem !important;
             }
             @media (max-width: 900px) {
                 .o-que-fazemos-grid {
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 2rem 1.5rem;
+                    grid-template-columns: repeat(2, 1fr) !important;
+                    gap: 2rem 1.5rem !important;
                 }
             }
             @media (max-width: 600px) {
                 .o-que-fazemos-grid {
-                    grid-template-columns: 1fr;
-                    gap: 2rem;
+                    grid-template-columns: 1fr !important;
+                    gap: 2rem !important;
                 }
             }
         </style>
-        <div class="o-que-fazemos-grid">
+        <div class="o-que-fazemos-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem 2rem; max-width: 1200px; margin: 0 auto;">
             <!-- Coluna 1 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(1, []) %}
