@@ -143,29 +143,6 @@
 </section>
 {% endif %}
 
-<style>
-.banner-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
-}
-
-.banner-card:active {
-    transform: translateY(-4px);
-}
-
-@media (max-width: 768px) {
-    .banners-grid {
-        grid-template-columns: 1fr !important;
-        gap: 1.5rem !important;
-    }
-    
-    .banner-card {
-        min-height: 180px !important;
-        padding: 2rem 1.5rem !important;
-    }
-}
-</style>
-
 <!-- Seção "O que fazemos" -->
 <section class="o-que-fazemos-section" aria-labelledby="o-que-fazemos-title" style="padding: 4rem 0; background: white;">
     <div class="container">
@@ -280,34 +257,6 @@
     </div>
 </section>
 
-<style>
-@media (max-width: 1024px) {
-    .o-que-fazemos-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 2rem 1.5rem !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .o-que-fazemos-grid {
-        grid-template-columns: 1fr !important;
-        gap: 2rem !important;
-    }
-    
-    .o-que-fazemos-title {
-        font-size: 2rem !important;
-    }
-    
-    .o-que-fazemos-line {
-        display: none !important;
-    }
-    
-    .o-que-fazemos-item {
-        margin-bottom: 2rem !important;
-    }
-}
-</style>
-
 <!-- Seção Informativo -->
 <section class="informativo-section" aria-labelledby="informativo-title" style="padding: 3rem 0; background: var(--bg-light);">
     <div class="container">
@@ -348,29 +297,6 @@
         </div>
     </div>
 </section>
-
-<style>
-.informativo-banner-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3) !important;
-}
-
-.informativo-banner-card:active {
-    transform: translateY(-4px);
-}
-
-@media (max-width: 768px) {
-    .informativo-banners-grid {
-        grid-template-columns: 1fr !important;
-        gap: 1.5rem !important;
-    }
-    
-    .informativo-banner-card {
-        min-height: 180px !important;
-        padding: 2rem 1.5rem !important;
-    }
-}
-</style>
 
 <section id="destaques" class="destaques" aria-labelledby="destaques-title">
     <div class="container">
@@ -786,46 +712,6 @@
             </div>
         </section>
         
-        <style>
-        .apoiador-filter-btn:hover {
-            background: #f3f4f6 !important;
-            border-color: #9ca3af !important;
-        }
-        
-        .apoiador-filter-btn.active {
-            background: #2563eb !important;
-            border-color: #2563eb !important;
-            color: #ffffff !important;
-        }
-        
-        .apoiador-grid-link:hover .apoiador-image-container,
-        .apoiador-image-container:hover {
-            transform: translateY(-8px) scale(1.05);
-        }
-        
-        .apoiador-grid-item.show {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-        
-        @media (max-width: 768px) {
-            .apoiadores-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-                gap: 1.5rem !important;
-            }
-            
-            .apoiador-image-container {
-                height: 140px !important;
-                padding: 1rem !important;
-            }
-            
-            .apoiador-filter-btn {
-                padding: 0.625rem 1.5rem !important;
-                font-size: 0.875rem !important;
-            }
-        }
-        </style>
-        
         <script>
         document.addEventListener('DOMContentLoaded', function() {
             const filterButtons = document.querySelectorAll('.apoiador-filter-btn');
@@ -1141,80 +1027,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 {% endif %}
 
-<style>
-.radio-banner-button:hover {
-    background: #f59e0b !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
-}
-
-.radio-banner-button:active {
-    transform: translateY(0);
-}
-
-.instagram-widget-container {
-    width: 100%;
-    max-width: 100%;
-}
-
-.instagram-widget-container > div {
-    width: 100%;
-    max-width: 100%;
-}
-
-.instagram-widget-container iframe {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 100%;
-}
-
-@media (max-width: 768px) {
-    .radio-banner-section {
-        padding: 2rem 1.5rem !important;
-        margin: 2rem 0 !important;
-    }
-    
-    .radio-banner-section > div {
-        flex-direction: column !important;
-        text-align: center !important;
-        gap: 1.5rem !important;
-    }
-    
-    .radio-banner-section svg {
-        width: 100px !important;
-        height: 100px !important;
-    }
-    
-    .radio-banner-section > div > div:first-child > div:last-child > div > div:first-child {
-        font-size: 1.5rem !important;
-    }
-    
-    .radio-banner-section > div > div:first-child > div:last-child > div > div:last-child {
-        font-size: 2.5rem !important;
-    }
-    
-    .radio-banner-button {
-        padding: 1rem 2rem !important;
-        font-size: 0.95rem !important;
-        width: 100%;
-        text-align: center;
-    }
-    
-    .instagram-widget-container iframe {
-        height: 600px !important;
-    }
-    
-    .instagram-link:hover .image-overlay {
-        opacity: 1 !important;
-    }
-    
-    .instagram-link {
-        position: relative;
-        display: block;
-        overflow: hidden;
-        border-radius: 1rem;
-    }
-</style>
 
 <!-- Lightbox Modal -->
 <div id="lightbox-modal" class="lightbox-modal" role="dialog" aria-labelledby="lightbox-title" aria-hidden="true">
