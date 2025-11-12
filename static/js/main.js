@@ -209,8 +209,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         firstLink.click();
                     }
                 }
-        });
-    }
+            });
+        }
+    });
     
     // Seletor de idioma movido para arquivo separado (language-selector.js)
     
