@@ -2873,7 +2873,7 @@ def admin_o_que_fazemos_novo():
             cor_icone = request.form.get('cor_icone', '#3b82f6')
             icone_svg = request.form.get('icone_svg', '').strip()
             ordem = int(request.form.get('ordem', 0))
-            coluna = int(request.form.get('coluna', 1))
+            coluna_input = request.form.get('coluna')
             ativo = request.form.get('ativo') == 'on'
             
             if not titulo:
@@ -2884,8 +2884,18 @@ def admin_o_que_fazemos_novo():
                 flash('Descrição é obrigatória!', 'error')
                 return redirect(url_for('admin_o_que_fazemos_novo'))
             
-            if coluna not in [1, 2, 3]:
-                coluna = 1
+            # Distribuir automaticamente entre as 3 colunas (round-robin)
+            # Se o usuário não especificar uma coluna, calcular automaticamente
+            if coluna_input:
+                coluna = int(coluna_input)
+                if coluna not in [1, 2, 3]:
+                    coluna = 1
+            else:
+                # Contar serviços ativos existentes para distribuir automaticamente
+                total_servicos = OQueFazemosServico.query.filter_by(ativo=True).count()
+                # Distribuir em round-robin: 1, 2, 3, 1, 2, 3...
+                coluna = (total_servicos % 3) + 1
+                print(f"[DEBUG] Novo serviço será adicionado na coluna {coluna} (total de serviços: {total_servicos})")
             
             servico = OQueFazemosServico(
                 titulo=titulo,
@@ -7500,23 +7510,32 @@ def index():
     print(f"[DEBUG] Total de serviços: {total_servicos}")
     print(f"[DEBUG] Serviços por coluna - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
     
-    # Se todas as colunas estiverem vazias exceto uma, redistribuir automaticamente
-    colunas_com_conteudo = [i for i in [1, 2, 3] if len(servicos_por_coluna[i]) > 0]
-    if len(colunas_com_conteudo) < 2 and total_servicos > 0:
-        print(f"[DEBUG] AVISO: Serviços não estão distribuídos em 3 colunas. Redistribuindo...")
-        # Redistribuir serviços igualmente entre as 3 colunas
-        todos_servicos = []
-        for col in [1, 2, 3]:
-            todos_servicos.extend(servicos_por_coluna[col])
+    # Redistribuir automaticamente os serviços entre as 3 colunas de forma equilibrada
+    # Isso garante que os serviços sejam distribuídos horizontalmente (1, 2, 3, 1, 2, 3...)
+    if total_servicos > 0:
+        # Verificar se a distribuição está desequilibrada (diferença maior que 1 entre colunas)
+        tamanhos = [len(servicos_por_coluna[1]), len(servicos_por_coluna[2]), len(servicos_por_coluna[3])]
+        max_tamanho = max(tamanhos)
+        min_tamanho = min(tamanhos)
         
-        servicos_por_coluna = {1: [], 2: [], 3: []}
-        for idx, servico in enumerate(todos_servicos):
-            coluna = (idx % 3) + 1  # Distribuir em round-robin: 1, 2, 3, 1, 2, 3...
-            servicos_por_coluna[coluna].append(servico)
-            # Atualizar no banco também
-            servico.coluna = coluna
-        db.session.commit()
-        print(f"[DEBUG] Redistribuição concluída - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
+        # Se a diferença for maior que 1, redistribuir
+        if max_tamanho - min_tamanho > 1:
+            print(f"[DEBUG] Distribuição desequilibrada detectada. Redistribuindo automaticamente...")
+            # Coletar todos os serviços ordenados
+            todos_servicos = []
+            for col in [1, 2, 3]:
+                todos_servicos.extend(servicos_por_coluna[col])
+            
+            # Redistribuir em round-robin: 1, 2, 3, 1, 2, 3...
+            servicos_por_coluna = {1: [], 2: [], 3: []}
+            for idx, servico in enumerate(todos_servicos):
+                coluna = (idx % 3) + 1
+                servicos_por_coluna[coluna].append(servico)
+                # Atualizar no banco também
+                if servico.coluna != coluna:
+                    servico.coluna = coluna
+            db.session.commit()
+            print(f"[DEBUG] Redistribuição concluída - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
     
     # Buscar imagens do slider ativas, ordenadas por ordem
     slider_images = SliderImage.query.filter_by(ativo=True).order_by(SliderImage.ordem.asc(), SliderImage.created_at.asc()).all()
