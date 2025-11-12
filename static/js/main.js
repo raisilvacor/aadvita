@@ -4,28 +4,92 @@ document.addEventListener('DOMContentLoaded', function() {
     // Menu Toggle para Mobile
     const menuToggle = document.querySelector('.menu-toggle');
     const navMenu = document.querySelector('.nav-menu');
+    const navOverlay = document.getElementById('nav-overlay');
+    const menuCloseBtn = document.querySelector('.menu-close-btn');
+    const menuCloseItem = document.querySelector('.menu-close-item');
+    
+    // Mostrar/ocultar botão de fechar baseado no tamanho da tela
+    function updateMenuCloseButton() {
+        if (window.innerWidth <= 768) {
+            if (menuCloseItem) menuCloseItem.style.display = 'flex';
+            if (menuCloseBtn) menuCloseBtn.style.display = 'flex';
+        } else {
+            if (menuCloseItem) menuCloseItem.style.display = 'none';
+            if (menuCloseBtn) menuCloseBtn.style.display = 'none';
+        }
+    }
+    
+    window.addEventListener('resize', updateMenuCloseButton);
+    updateMenuCloseButton();
     
     if (menuToggle && navMenu) {
-        menuToggle.addEventListener('click', function() {
+        // Usar múltiplos métodos para garantir que funcione no mobile
+        function toggleMenu(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             const isExpanded = menuToggle.getAttribute('aria-expanded') === 'true';
-            menuToggle.setAttribute('aria-expanded', !isExpanded);
+            const newState = !isExpanded;
+            menuToggle.setAttribute('aria-expanded', newState);
             navMenu.classList.toggle('active');
-        });
+            
+            // Toggle overlay
+            if (navOverlay) {
+                navOverlay.classList.toggle('active');
+            }
+            
+            // Adicionar classe ao body para prevenir scroll quando menu está aberto
+            if (newState) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+        
+        function closeMenu() {
+            if (navMenu.classList.contains('active')) {
+                toggleMenu();
+            }
+        }
+        
+        // Adicionar listener com várias opções
+        menuToggle.addEventListener('click', toggleMenu);
+        menuToggle.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            toggleMenu(e);
+        }, { passive: false });
+        
+        // Botão de fechar
+        if (menuCloseBtn) {
+            menuCloseBtn.addEventListener('click', closeMenu);
+            menuCloseBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                closeMenu();
+            }, { passive: false });
+        }
+        
+        // Fechar menu ao clicar no overlay
+        if (navOverlay) {
+            navOverlay.addEventListener('click', closeMenu);
+            navOverlay.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                closeMenu();
+            }, { passive: false });
+        }
         
         // Fechar menu ao clicar em um link
         const navLinks = navMenu.querySelectorAll('a');
         navLinks.forEach(link => {
             link.addEventListener('click', function() {
-                navMenu.classList.remove('active');
-                menuToggle.setAttribute('aria-expanded', 'false');
+                closeMenu();
             });
         });
         
         // Fechar menu ao pressionar Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && navMenu.classList.contains('active')) {
-                navMenu.classList.remove('active');
-                menuToggle.setAttribute('aria-expanded', 'false');
+                closeMenu();
                 menuToggle.focus();
             }
         });

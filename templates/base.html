@@ -32,11 +32,18 @@
                 
                 <!-- Navigation -->
                 <nav role="navigation" aria-label="{{ _('Navegação principal') }}">
+                    <div class="nav-overlay" id="nav-overlay"></div>
                     <button class="menu-toggle" aria-label="{{ _('Abrir menu') }}" aria-expanded="false" aria-controls="main-menu">
                         <span class="menu-icon" aria-hidden="true"></span>
                         <span class="sr-only">{{ _('Menu') }}</span>
                     </button>
                     <ul id="main-menu" class="nav-menu" role="menubar">
+                        <li role="none" class="menu-close-item">
+                            <button class="menu-close-btn" aria-label="{{ _('Fechar menu') }}">
+                                <span aria-hidden="true">✕</span>
+                                <span class="sr-only">{{ _('Fechar menu') }}</span>
+                            </button>
+                        </li>
                         <li role="none"><a href="{{ url_for('index') }}" role="menuitem" aria-current="{% if request.endpoint == 'index' %}page{% endif %}">{{ _('Início') }}</a></li>
                         <li role="none"><a href="{{ url_for('sobre') }}" role="menuitem" aria-current="{% if request.endpoint == 'sobre' %}page{% endif %}">{{ _('Sobre') }}</a></li>
                         <li role="none"><a href="{{ url_for('transparencia') }}" role="menuitem" aria-current="{% if request.endpoint == 'transparencia' %}page{% endif %}">{{ _('Transparência') }}</a></li>
