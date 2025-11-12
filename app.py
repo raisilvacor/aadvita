@@ -3153,39 +3153,76 @@ def buscar_posts_instagram(username, instagram_url_base):
         # Parsear HTML
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Procurar pelos scripts que contêm dados JSON
-        scripts = soup.find_all('script', type='text/javascript')
+        # MÉTODO 1: Procurar por scripts com window._sharedData ou dados JSON
+        scripts = soup.find_all('script')
         posts_data = []
+        import json
         
         for script in scripts:
-            if script.string and 'window._sharedData' in script.string:
-                # Extrair dados JSON
-                json_match = re.search(r'window\._sharedData\s*=\s*({.+?});', script.string, re.DOTALL)
-                if json_match:
-                    import json
+            if not script.string:
+                continue
+            script_text = script.string
+            
+            # Tentar múltiplos padrões de JSON
+            patterns = [
+                r'window\._sharedData\s*=\s*({.+?});',
+                r'<script[^>]*>({.+?})</script>',
+                r'"ProfilePage":\s*\[({.+?})\]',
+                r'<script type="application/json"[^>]*>({.+?})</script>',
+            ]
+            
+            for pattern in patterns:
+                matches = re.finditer(pattern, script_text, re.DOTALL)
+                for match in matches:
                     try:
-                        data = json.loads(json_match.group(1))
-                        # Navegar até os posts
+                        json_str = match.group(1)
+                        # Limpar o JSON se necessário
+                        json_str = json_str.strip()
+                        if not json_str.startswith('{'):
+                            continue
+                        data = json.loads(json_str)
+                        
+                        # Tentar diferentes caminhos na estrutura JSON
+                        user_data = None
                         if 'entry_data' in data and 'ProfilePage' in data['entry_data']:
                             if len(data['entry_data']['ProfilePage']) > 0:
                                 user_data = data['entry_data']['ProfilePage'][0]
-                                if 'graphql' in user_data and 'user' in user_data['graphql']:
-                                    user = user_data['graphql']['user']
-                                    if 'edge_owner_to_timeline_media' in user:
-                                        edges = user['edge_owner_to_timeline_media']['edges']
-                                        for edge in edges[:6]:  # Limitar a 6 posts
-                                            node = edge['node']
+                        elif 'graphql' in data and 'user' in data['graphql']:
+                            user_data = {'graphql': {'user': data['graphql']['user']}}
+                        elif 'user' in data:
+                            user_data = {'graphql': {'user': data['user']}}
+                        
+                        if user_data and 'graphql' in user_data and 'user' in user_data['graphql']:
+                            user = user_data['graphql']['user']
+                            if 'edge_owner_to_timeline_media' in user:
+                                edges = user['edge_owner_to_timeline_media'].get('edges', [])
+                                for edge in edges[:6]:
+                                    node = edge.get('node', {})
+                                    if not node.get('is_video', False):
+                                        display_url = node.get('display_url', '') or node.get('thumbnail_src', '')
+                                        if display_url:
                                             post_data = {
                                                 'shortcode': node.get('shortcode', ''),
-                                                'display_url': node.get('display_url', ''),
-                                                'caption': node.get('edge_media_to_caption', {}).get('edges', [{}])[0].get('node', {}).get('text', '') if node.get('edge_media_to_caption', {}).get('edges') else '',
+                                                'display_url': display_url,
+                                                'caption': '',
                                                 'taken_at_timestamp': node.get('taken_at_timestamp', 0),
-                                                'is_video': node.get('is_video', False)
+                                                'is_video': False
                                             }
-                                            if not post_data['is_video']:  # Apenas fotos, não vídeos
-                                                posts_data.append(post_data)
-                    except Exception as json_error:
+                                            # Tentar pegar a legenda
+                                            if 'edge_media_to_caption' in node:
+                                                caption_edges = node['edge_media_to_caption'].get('edges', [])
+                                                if caption_edges and len(caption_edges) > 0:
+                                                    post_data['caption'] = caption_edges[0].get('node', {}).get('text', '')
+                                            
+                                            posts_data.append(post_data)
+                                if posts_data:
+                                    break
+                    except (json.JSONDecodeError, KeyError, TypeError) as e:
                         continue
+                if posts_data:
+                    break
+            if posts_data:
+                break
         
         # Método 3: Buscar links e imagens diretamente no HTML (scraping direto)
         if not posts_data:

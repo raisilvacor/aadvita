@@ -1606,16 +1606,34 @@ textarea:focus {
     
     .menu-toggle {
         display: block !important;
-        z-index: 1001;
-        position: relative;
+        z-index: 1001 !important;
+        position: relative !important;
         /* Garantir que o botão seja clicável */
         pointer-events: auto !important;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.3) !important;
         cursor: pointer !important;
         /* Forçar que seja visível e clicável */
         visibility: visible !important;
         opacity: 1 !important;
+        /* Garantir que não seja bloqueado */
+        background: transparent !important;
+        border: none !important;
+        padding: 0.5rem !important;
+        margin: 0 !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    .menu-toggle:active {
+        background: rgba(0, 0, 0, 0.05) !important;
+        transform: scale(0.95);
+    }
+    
+    .menu-toggle * {
+        pointer-events: none;
     }
     
     .header-content {
