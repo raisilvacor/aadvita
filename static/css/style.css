@@ -3728,17 +3728,60 @@ textarea:focus {
     object-fit: contain !important;
     width: auto !important;
     height: auto !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    background: transparent !important;
+    color: inherit !important;
+    mix-blend-mode: normal !important;
 }
 
 .apoiador-image-container {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    background: transparent !important;
+}
+
+.apoiador-image-container img {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    -webkit-filter: none !important;
 }
 
 .apoiador-grid-item.show .apoiador-grid-image {
     opacity: 1 !important;
     visibility: visible !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+
+.apoiador-grid-item .apoiador-grid-image {
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+
+/* Garantir que a imagem seja sempre visível, mesmo quando o item pai tem opacity: 0 */
+.apoiador-grid-item[style*="opacity: 0"] .apoiador-grid-image,
+.apoiador-grid-item[style*="opacity:0"] .apoiador-grid-image {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.apoiador-grid-link {
+    display: block !important;
+    text-decoration: none !important;
+    color: inherit !important;
+}
+
+.apoiador-grid-link img {
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    -webkit-filter: none !important;
 }
 
 @media (max-width: 768px) {
