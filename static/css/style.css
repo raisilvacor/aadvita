@@ -1761,12 +1761,25 @@ textarea:focus {
     
     .nav-menu li {
         margin-bottom: 0.5rem;
+        flex: 0 0 auto;
     }
     
     .nav-menu a,
     .nav-menu button {
         display: block;
         width: 100%;
+    }
+    
+    .associate-btn-wrapper {
+        order: 20;
+    }
+    
+    .login-btn-wrapper {
+        order: 21;
+    }
+    
+    .language-selector {
+        order: 22;
     }
     
     body.menu-open {
