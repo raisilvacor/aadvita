@@ -7,13 +7,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!menu || !toggle) return;
 
-    menu.classList.remove("active");
-    menu.setAttribute("aria-hidden", "true");
-    if (overlay) overlay.style.display = "none";
+    function hideMenu() {
+        menu.classList.remove("active");
+        menu.setAttribute("aria-hidden", "true");
+        menu.style.display = "none";
+        document.body.classList.remove("menu-open");
+        toggle.setAttribute("aria-expanded", "false");
+        if (overlay) {
+            overlay.style.display = "none";
+            overlay.classList.remove("active");
+        }
+    }
+
+    hideMenu();
 
     function openMenu() {
         menu.classList.add("active");
         menu.setAttribute("aria-hidden", "false");
+        menu.style.display = "flex";
         document.body.classList.add("menu-open");
         toggle.setAttribute("aria-expanded", "true");
         if (overlay) {
@@ -25,20 +36,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function closeMenu() {
-        menu.classList.remove("active");
-        menu.setAttribute("aria-hidden", "true");
-        document.body.classList.remove("menu-open");
-        toggle.setAttribute("aria-expanded", "false");
-        if (overlay) {
-            overlay.style.display = "none";
-            overlay.classList.remove("active");
-        }
+        hideMenu();
         toggle.focus();
     }
 
     toggle.addEventListener("click", (e) => {
         e.preventDefault();
-        openMenu();
+        if (menu.classList.contains("active")) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
     });
 
     if (closeBtn) {
@@ -53,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
+        if (e.key === "Escape" && menu.classList.contains("active")) {
             closeMenu();
         }
     });
