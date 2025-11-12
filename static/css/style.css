@@ -3719,6 +3719,28 @@ textarea:focus {
     transform: translateY(0) !important;
 }
 
+.apoiador-grid-image {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+.apoiador-image-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.apoiador-grid-item.show .apoiador-grid-image {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
 @media (max-width: 768px) {
     .apoiadores-section .apoiadores-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
