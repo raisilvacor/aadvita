@@ -1655,13 +1655,20 @@ textarea:focus {
     }
     
     .footer-bottom {
-        flex-direction: column;
-        text-align: center;
-        gap: 0.5rem;
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 0.5rem !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     .footer-developer {
-        margin-left: 0;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .footer-copyright {
+        margin: 0 !important;
     }
     
     .footer-links-donations-wrapper {
@@ -2033,13 +2040,20 @@ textarea:focus {
     }
     
     .footer-bottom {
-        flex-direction: column;
-        text-align: center;
-        gap: 0.5rem;
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 0.5rem !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     .footer-developer {
-        margin-left: 0;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    .footer-copyright {
+        margin: 0 !important;
     }
     
     .footer-links-donations-wrapper {
