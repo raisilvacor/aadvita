@@ -3733,6 +3733,15 @@ textarea:focus {
     background: transparent !important;
     color: inherit !important;
     mix-blend-mode: normal !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Forçar visibilidade mesmo quando o pai tem opacity */
+.apoiador-grid-item img.apoiador-grid-image {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
 }
 
 .apoiador-image-container {

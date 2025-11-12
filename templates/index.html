@@ -688,7 +688,7 @@
                     {% for apoiador in apoiadores %}
                     <div class="apoiador-grid-item" 
                          data-tipo="{{ apoiador.tipo or 'Instituição' }}"
-                         style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease;">
+                         style="opacity: 1; transform: translateY(0); transition: opacity 0.5s ease, transform 0.5s ease;">
                         {% if apoiador.website %}
                         <a href="{{ apoiador.website }}" 
                            target="_blank" 
@@ -726,29 +726,20 @@
             
             // Garantir que todas as imagens sejam visíveis imediatamente
             gridItems.forEach(function(item) {
+                // Manter item visível
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+                item.classList.add('show');
+                
                 const images = item.querySelectorAll('.apoiador-grid-image');
                 images.forEach(function(img) {
                     img.style.opacity = '1';
                     img.style.visibility = 'visible';
                     img.style.filter = 'none';
                     img.style.webkitFilter = 'none';
+                    img.style.display = 'block';
                 });
             });
-            
-            // Mostrar todos os itens inicialmente
-            setTimeout(function() {
-                gridItems.forEach((item, index) => {
-                    setTimeout(function() {
-                        item.classList.add('show');
-                        // Garantir novamente que as imagens sejam visíveis
-                        const images = item.querySelectorAll('.apoiador-grid-image');
-                        images.forEach(function(img) {
-                            img.style.opacity = '1';
-                            img.style.visibility = 'visible';
-                        });
-                    }, index * 50); // Delay escalonado para animação
-                });
-            }, 100);
             
             filterButtons.forEach(button => {
                 button.addEventListener('click', function() {
