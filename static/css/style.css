@@ -773,6 +773,7 @@ textarea:focus {
     justify-content: center;
 }
 
+.hero-action-group .transparency-btn-wrapper,
 .hero-action-group .associate-btn-wrapper,
 .hero-action-group .login-btn-wrapper,
 .hero-action-group .language-selector {
@@ -804,11 +805,35 @@ textarea:focus {
     border-radius: 2px;
 }
 
+.hero-action-group .btn-transparency,
 .hero-action-group .btn-associate,
 .hero-action-group .btn-login {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.hero-action-group .btn-transparency {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    color: #fff;
+    padding: 0.75rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+    transition: var(--transition);
+}
+
+.hero-action-group .btn-transparency:hover,
+.hero-action-group .btn-transparency:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.30);
+    color: #fff;
+}
+
+.hero-action-group .btn-transparency:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
 }
 
 .hero-action-group .lang-dropdown {
