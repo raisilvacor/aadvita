@@ -7490,11 +7490,33 @@ def index():
     # Organizar serviços por coluna
     servicos_por_coluna = {1: [], 2: [], 3: []}
     for servico in servicos_o_que_fazemos:
-        if servico.coluna in servicos_por_coluna:
-            servicos_por_coluna[servico.coluna].append(servico)
+        # Garantir que a coluna está entre 1 e 3
+        coluna = servico.coluna if servico.coluna in [1, 2, 3] else 1
+        if coluna in servicos_por_coluna:
+            servicos_por_coluna[coluna].append(servico)
     
     # Debug: verificar distribuição de serviços por coluna
+    total_servicos = len(servicos_por_coluna[1]) + len(servicos_por_coluna[2]) + len(servicos_por_coluna[3])
+    print(f"[DEBUG] Total de serviços: {total_servicos}")
     print(f"[DEBUG] Serviços por coluna - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
+    
+    # Se todas as colunas estiverem vazias exceto uma, redistribuir automaticamente
+    colunas_com_conteudo = [i for i in [1, 2, 3] if len(servicos_por_coluna[i]) > 0]
+    if len(colunas_com_conteudo) < 2 and total_servicos > 0:
+        print(f"[DEBUG] AVISO: Serviços não estão distribuídos em 3 colunas. Redistribuindo...")
+        # Redistribuir serviços igualmente entre as 3 colunas
+        todos_servicos = []
+        for col in [1, 2, 3]:
+            todos_servicos.extend(servicos_por_coluna[col])
+        
+        servicos_por_coluna = {1: [], 2: [], 3: []}
+        for idx, servico in enumerate(todos_servicos):
+            coluna = (idx % 3) + 1  # Distribuir em round-robin: 1, 2, 3, 1, 2, 3...
+            servicos_por_coluna[coluna].append(servico)
+            # Atualizar no banco também
+            servico.coluna = coluna
+        db.session.commit()
+        print(f"[DEBUG] Redistribuição concluída - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
     
     # Buscar imagens do slider ativas, ordenadas por ordem
     slider_images = SliderImage.query.filter_by(ativo=True).order_by(SliderImage.ordem.asc(), SliderImage.created_at.asc()).all()
