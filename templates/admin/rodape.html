@@ -68,10 +68,10 @@
         <div class="form-group">
             <label for="qrcode_file">Imagem do QR Code</label>
             <input type="file" id="qrcode_file" name="qrcode_file" accept="image/*">
-            {% if configs.get('footer_qrcode') %}
+            {% if configs.get('footer_qrcode') or configs.get('footer_qrcode_base64') %}
                 <div style="margin-top: 1rem;">
                     <label>QR Code Atual:</label>
-                    <img src="{{ url_for('static', filename=configs.get('footer_qrcode')) }}" 
+                    <img src="{{ qrcode_url() }}" 
                          alt="QR Code" 
                          style="max-width: 200px; max-height: 200px; display: block; margin-top: 0.5rem; border-radius: 0.5rem;">
                 </div>

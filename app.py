@@ -2826,21 +2826,50 @@ def admin_rodape():
                 file = request.files['qrcode_file']
                 if file.filename != '':
                     if file and allowed_file(file.filename):
-                        upload_folder = 'static/images'
-                        os.makedirs(upload_folder, exist_ok=True)
+                        # Ler dados do arquivo e converter para Base64
+                        file_data = file.read()
+                        file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
+                        mime_types = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp'}
+                        mime_type = mime_types.get(file_ext, 'image/png')
+                        qrcode_base64_data = base64.b64encode(file_data).decode('utf-8')
                         
-                        filename = secure_filename(file.filename)
-                        # Salvar como qrcode.png
-                        filepath = os.path.join(upload_folder, 'qrcode.png')
-                        file.save(filepath)
-                        
-                        config = Configuracao.query.filter_by(chave='footer_qrcode').first()
-                        if config:
-                            config.valor = 'images/qrcode.png'
-                            config.updated_at = datetime.utcnow()
+                        # Salvar Base64 na configuração
+                        config_base64 = Configuracao.query.filter_by(chave='footer_qrcode_base64').first()
+                        if config_base64:
+                            config_base64.valor = qrcode_base64_data
+                            config_base64.tipo = 'imagem_base64'
+                            config_base64.updated_at = datetime.utcnow()
                         else:
-                            config = Configuracao(chave='footer_qrcode', valor='images/qrcode.png', tipo='imagem')
-                            db.session.add(config)
+                            config_base64 = Configuracao(chave='footer_qrcode_base64', valor=qrcode_base64_data, tipo='imagem_base64')
+                            db.session.add(config_base64)
+                        
+                        # Salvar mime type na configuração footer_qrcode_mime
+                        config_mime = Configuracao.query.filter_by(chave='footer_qrcode_mime').first()
+                        if config_mime:
+                            config_mime.valor = mime_type
+                            config_mime.updated_at = datetime.utcnow()
+                        else:
+                            config_mime = Configuracao(chave='footer_qrcode_mime', valor=mime_type, tipo='texto')
+                            db.session.add(config_mime)
+                        
+                        # Também salvar localmente para desenvolvimento local (opcional)
+                        try:
+                            upload_folder = 'static/images'
+                            os.makedirs(upload_folder, exist_ok=True)
+                            filepath = os.path.join(upload_folder, 'qrcode.png')
+                            file.seek(0)  # Reset file pointer after reading for base64
+                            file.save(filepath)
+                            
+                            # Manter compatibilidade com o valor antigo
+                            config = Configuracao.query.filter_by(chave='footer_qrcode').first()
+                            if config:
+                                config.valor = 'images/qrcode.png'
+                                config.updated_at = datetime.utcnow()
+                            else:
+                                config = Configuracao(chave='footer_qrcode', valor='images/qrcode.png', tipo='imagem')
+                                db.session.add(config)
+                        except Exception as e:
+                            print(f"[AVISO] Não foi possível salvar arquivo localmente: {e}")
             
             db.session.commit()
             flash('Configurações do rodapé atualizadas com sucesso!', 'success')
@@ -5782,6 +5811,45 @@ def admin_apoiadores_editar(id):
     
     return render_template('admin/apoiador_form.html', apoiador=apoiador)
 
+@app.route('/qrcode/imagem')
+def qrcode_imagem():
+    """Rota para servir QR code do banco de dados (base64)"""
+    try:
+        config_base64 = Configuracao.query.filter_by(chave='footer_qrcode_base64').first()
+        
+        if config_base64 and config_base64.valor:
+            # Buscar mime type
+            mime_type = 'image/png'  # padrão
+            config_mime = Configuracao.query.filter_by(chave='footer_qrcode_mime').first()
+            if config_mime and config_mime.valor:
+                mime_type = config_mime.valor
+            
+            try:
+                image_data = base64.b64decode(config_base64.valor)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar QR code base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Fallback para arquivo estático
+        from flask import send_from_directory
+        import os
+        static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+        try:
+            return send_from_directory(os.path.join(static_dir, 'images'), 'qrcode.png')
+        except Exception as e:
+            print(f"Erro ao servir arquivo estático do QR code: {e}")
+            from flask import abort
+            abort(404)
+    except Exception as e:
+        print(f"Erro na rota qrcode_imagem: {e}")
+        import traceback
+        traceback.print_exc()
+        from flask import abort
+        abort(500)
+
 @app.route('/apoiador/<int:id>/logo')
 def apoiador_logo(id):
     """Rota para servir imagens do apoiador do banco de dados (base64)"""
@@ -8518,6 +8586,34 @@ def inject_conf():
                 pass
             return None
     
+    def qrcode_url():
+        """Helper function para obter URL do QR code de forma segura"""
+        try:
+            # Verificar se tem footer_qrcode_base64
+            config_base64 = Configuracao.query.filter_by(chave='footer_qrcode_base64').first()
+            if config_base64 and config_base64.valor:
+                return "/qrcode/imagem"
+            
+            # Fallback para arquivo estático
+            config = Configuracao.query.filter_by(chave='footer_qrcode').first()
+            if config and config.valor:
+                from flask import url_for
+                return url_for('static', filename=config.valor)
+            
+            # Fallback padrão
+            from flask import url_for
+            return url_for('static', filename='images/qrcode.png')
+        except Exception as e:
+            print(f"Erro ao obter URL do QR code: {e}")
+            import traceback
+            traceback.print_exc()
+            # Fallback final
+            try:
+                from flask import url_for
+                return url_for('static', filename='images/qrcode.png')
+            except:
+                return None
+    
     # Buscar dados da associação
     try:
         dados_associacao = DadosAssociacao.get_dados()
@@ -8535,6 +8631,7 @@ def inject_conf():
     return dict(
         slider_imagem_url=slider_imagem_url,
         apoiador_logo_url=apoiador_logo_url,
+        qrcode_url=qrcode_url,
         current_user=session.get('admin_username'),
         current_language=session.get('language', 'pt'),
         languages=app.config['LANGUAGES'],
