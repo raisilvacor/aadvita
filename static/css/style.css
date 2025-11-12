@@ -145,7 +145,7 @@ textarea:focus {
 }
 
 .logo-image {
-    height: 110px;
+    height: 110px !important;
     width: auto;
     max-width: 100%;
     object-fit: contain;
@@ -1339,7 +1339,8 @@ textarea:focus {
 
 /* Footer Links and Donations Layout */
 .footer-links-donations-wrapper {
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
     gap: 2rem;
     align-items: flex-start;
 }
@@ -1374,8 +1375,9 @@ textarea:focus {
 }
 
 .footer-bottom {
-    display: flex;
-    justify-content: space-between;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
     align-items: center;
     padding-top: 2rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
