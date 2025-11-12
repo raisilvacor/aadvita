@@ -624,6 +624,53 @@ textarea:focus {
     image-rendering: crisp-edges;
 }
 
+/* Instagram Posts Grid */
+.instagram-posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.instagram-post-card {
+    display: block;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.instagram-post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.instagram-post-card:hover img {
+    transform: scale(1.05);
+}
+
+.instagram-post-card:hover .instagram-overlay {
+    opacity: 1;
+}
+
+/* Responsividade para Instagram Posts */
+@media (max-width: 768px) {
+    .instagram-posts-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .instagram-posts-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+}
+
 /* Botões de Navegação (Setas) */
 .slider-nav {
     position: absolute;
@@ -1634,18 +1681,20 @@ textarea:focus {
         flex-direction: column;
         padding: 5rem 1rem 1rem;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        display: flex;
+        display: none;
         gap: 0.5rem;
         z-index: 1000;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         /* Menu começa fora da tela */
         transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
+        transition: transform 0.3s ease-in-out, display 0s 0.3s;
     }
     
     .nav-menu.active {
+        display: flex;
         transform: translateX(0);
+        transition: transform 0.3s ease-in-out;
     }
     
     .nav-menu li {
@@ -1749,10 +1798,41 @@ textarea:focus {
     }
 }
 
-/* Responsividade para Tablets */
+/* Responsividade para Tablets e Mobile - Slider com largura completa */
 @media (max-width: 768px) {
     .hero-slider {
-        height: 450px;
+        height: auto !important;
+        min-height: 250px;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        position: relative;
+    }
+    
+    .slider-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .slider-wrapper,
+    .slider-track {
+        height: 100%;
+    }
+    
+    .slider-slide {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+    
+    .slider-image {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 100%;
+        object-fit: contain !important;
+        object-position: center;
     }
     
     .slider-nav {
@@ -1790,8 +1870,16 @@ textarea:focus {
     }
     
     .hero-slider {
-        height: 400px;
-        min-height: 350px;
+        height: auto !important;
+        min-height: 200px;
+        padding-bottom: 75%; /* 4:3 aspect ratio para mobile */
+    }
+    
+    .slider-image {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 100%;
+        object-fit: contain !important;
     }
     
     .slider-nav {

@@ -7263,6 +7263,9 @@ def index():
         if username_match:
             instagram_username = username_match.group(1)
     
+    # Buscar posts do Instagram ativos (últimos 6)
+    instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
+    
     return render_template('index.html',
                          reuniones_presenciales=reuniones_presenciales,
                          reuniones_virtuales=reuniones_virtuales,
@@ -7271,6 +7274,7 @@ def index():
                          acoes=acoes,
                          instagram_url=instagram_url,
                          instagram_username=instagram_username,
+                         instagram_posts=instagram_posts,
                          videos=videos,
                          apoiadores=apoiadores,
                          banners=banners_dict,

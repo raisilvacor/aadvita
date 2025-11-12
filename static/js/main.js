@@ -23,55 +23,72 @@ document.addEventListener('DOMContentLoaded', function() {
     updateMenuCloseButton();
     
     if (menuToggle && navMenu) {
-        // Usar múltiplos métodos para garantir que funcione no mobile
-        function toggleMenu(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            const isExpanded = menuToggle.getAttribute('aria-expanded') === 'true';
-            const newState = !isExpanded;
-            menuToggle.setAttribute('aria-expanded', newState);
-            navMenu.classList.toggle('active');
-            
-            // Toggle overlay
+        let isMenuOpen = false;
+        
+        function openMenu() {
+            if (isMenuOpen) return;
+            isMenuOpen = true;
+            menuToggle.setAttribute('aria-expanded', 'true');
+            navMenu.classList.add('active');
             if (navOverlay) {
-                navOverlay.classList.toggle('active');
+                navOverlay.classList.add('active');
             }
-            
-            // Adicionar classe ao body para prevenir scroll quando menu está aberto
-            if (newState) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
+            document.body.style.overflow = 'hidden';
         }
         
         function closeMenu() {
-            if (navMenu.classList.contains('active')) {
-                toggleMenu();
+            if (!isMenuOpen) return;
+            isMenuOpen = false;
+            menuToggle.setAttribute('aria-expanded', 'false');
+            navMenu.classList.remove('active');
+            if (navOverlay) {
+                navOverlay.classList.remove('active');
+            }
+            document.body.style.overflow = '';
+        }
+        
+        function toggleMenu() {
+            if (isMenuOpen) {
+                closeMenu();
+            } else {
+                openMenu();
             }
         }
         
-        // Adicionar listener com várias opções
-        menuToggle.addEventListener('click', toggleMenu);
+        // Event listeners para o botão de toggle
+        menuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMenu();
+        });
+        
+        // Para touch devices
         menuToggle.addEventListener('touchend', function(e) {
             e.preventDefault();
-            toggleMenu(e);
+            e.stopPropagation();
+            toggleMenu();
         }, { passive: false });
         
         // Botão de fechar
         if (menuCloseBtn) {
-            menuCloseBtn.addEventListener('click', closeMenu);
+            menuCloseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeMenu();
+            });
             menuCloseBtn.addEventListener('touchend', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 closeMenu();
             }, { passive: false });
         }
         
         // Fechar menu ao clicar no overlay
         if (navOverlay) {
-            navOverlay.addEventListener('click', closeMenu);
+            navOverlay.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeMenu();
+            });
             navOverlay.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 closeMenu();
@@ -88,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Fechar menu ao pressionar Escape
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && navMenu.classList.contains('active')) {
+            if (e.key === 'Escape' && isMenuOpen) {
                 closeMenu();
                 menuToggle.focus();
             }
