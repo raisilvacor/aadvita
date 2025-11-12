@@ -5927,37 +5927,52 @@ def admin_slider_editar(id):
 @app.route('/slider/<int:id>/imagem')
 def slider_imagem(id):
     """Rota para servir imagens do slider do banco de dados (base64)"""
-    slider_image = SliderImage.query.get_or_404(id)
-    
-    # Se tem imagem em base64, servir ela
-    if slider_image.imagem_base64:
-        # Extrair o tipo MIME do campo imagem
-        mime_type = 'image/jpeg'  # padrão
-        if slider_image.imagem.startswith('base64:'):
-            mime_type = slider_image.imagem.replace('base64:', '')
+    try:
+        slider_image = SliderImage.query.get_or_404(id)
         
-        # Decodificar base64
-        try:
-            image_data = base64.b64decode(slider_image.imagem_base64)
-            from flask import Response
-            return Response(image_data, mimetype=mime_type)
-        except Exception as e:
-            print(f"Erro ao decodificar imagem base64: {e}")
-            # Retornar imagem padrão ou erro
-            from flask import abort
-            abort(404)
-    
-    # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
-    if slider_image.imagem and not slider_image.imagem.startswith('base64:'):
-        from flask import send_from_directory
-        import os
-        static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-        file_path = os.path.dirname(slider_image.imagem)
-        file_name = os.path.basename(slider_image.imagem)
-        return send_from_directory(os.path.join(static_dir, file_path), file_name)
-    
-    from flask import abort
-    abort(404)
+        # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
+        imagem_base64 = getattr(slider_image, 'imagem_base64', None)
+        
+        # Se tem imagem em base64, servir ela
+        if imagem_base64:
+            # Extrair o tipo MIME do campo imagem
+            mime_type = 'image/jpeg'  # padrão
+            if slider_image.imagem and slider_image.imagem.startswith('base64:'):
+                mime_type = slider_image.imagem.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(imagem_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar imagem base64: {e}")
+                # Retornar imagem padrão ou erro
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if slider_image.imagem and not (slider_image.imagem.startswith('base64:') if slider_image.imagem else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(slider_image.imagem)
+            file_name = os.path.basename(slider_image.imagem)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except Exception as e:
+                print(f"Erro ao servir arquivo estático: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro na rota slider_imagem: {e}")
+        import traceback
+        traceback.print_exc()
+        from flask import abort
+        abort(500)
 
 @app.route('/admin/slider/<int:id>/excluir', methods=['POST'])
 @admin_required
@@ -8312,6 +8327,30 @@ def set_language(lang):
     return redirect(request.referrer or url_for('index'))
 
 # Context processor para disponibilizar variáveis em todos os templates
+def slider_imagem_url(slider_image):
+    """Helper function para obter URL da imagem do slider de forma segura"""
+    try:
+        # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
+        imagem_base64 = getattr(slider_image, 'imagem_base64', None)
+        if imagem_base64:
+            return f"/slider/{slider_image.id}/imagem"
+        elif slider_image.imagem and 'base64:' in slider_image.imagem:
+            return f"/slider/{slider_image.id}/imagem"
+        elif slider_image.imagem:
+            from flask import url_for
+            return url_for('static', filename=slider_image.imagem)
+        return None
+    except Exception as e:
+        print(f"Erro ao obter URL da imagem do slider: {e}")
+        # Fallback para arquivo estático
+        try:
+            if slider_image.imagem:
+                from flask import url_for
+                return url_for('static', filename=slider_image.imagem)
+        except:
+            pass
+        return None
+
 @app.context_processor
 def inject_conf():
     def user_tem_permissao(codigo_permissao):
@@ -8342,6 +8381,7 @@ def inject_conf():
         footer_configs = {}
     
     return dict(
+        slider_imagem_url=slider_imagem_url,
         current_user=session.get('admin_username'),
         current_language=session.get('language', 'pt'),
         languages=app.config['LANGUAGES'],

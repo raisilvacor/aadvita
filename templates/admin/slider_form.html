@@ -50,7 +50,7 @@
             </label>
             {% if slider_image and slider_image.imagem %}
                 <div style="margin-bottom: 1rem;">
-                    <img src="{% if slider_image.imagem_base64 or (slider_image.imagem and 'base64:' in slider_image.imagem) %}/slider/{{ slider_image.id }}/imagem{% else %}{{ url_for('static', filename=slider_image.imagem) }}{% endif %}" 
+                    <img src="{{ slider_imagem_url(slider_image) or url_for('static', filename=slider_image.imagem) }}" 
                          alt="{{ slider_image.titulo }}" 
                          style="max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 0.5rem; border: 2px solid #d1d5db; padding: 0.5rem;">
                     <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
