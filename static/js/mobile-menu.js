@@ -3,11 +3,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const toggle = document.querySelector(".menu-toggle");
     const closeBtn = document.querySelector(".menu-close-btn");
     const overlay = document.getElementById("nav-overlay");
-    const dropdownToggles = document.querySelectorAll(".nav-item-dropdown > .nav-dropdown-toggle");
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
 
     if (!menu || !toggle) return;
 
+    const menuLinks = Array.from(menu.querySelectorAll("a"));
+
+    function resetDesktopState() {
+        menu.classList.remove("active");
+        menu.removeAttribute("aria-hidden");
+        menu.style.display = "";
+        document.body.classList.remove("menu-open");
+        toggle.setAttribute("aria-expanded", "false");
+        if (overlay) {
+            overlay.style.display = "none";
+            overlay.classList.remove("active");
+        }
+    }
+
     function hideMenu() {
+        if (!mobileQuery.matches) {
+            resetDesktopState();
+            return;
+        }
         menu.classList.remove("active");
         menu.setAttribute("aria-hidden", "true");
         menu.style.display = "none";
@@ -19,9 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    hideMenu();
-
-    function openMenu() {
+    function showMenu() {
+        if (!mobileQuery.matches) return;
         menu.classList.add("active");
         menu.setAttribute("aria-hidden", "false");
         menu.style.display = "flex";
@@ -31,56 +48,61 @@ document.addEventListener("DOMContentLoaded", () => {
             overlay.style.display = "block";
             overlay.classList.add("active");
         }
-        const firstFocusable = menu.querySelector("a, button");
-        if (firstFocusable) firstFocusable.focus();
-    }
-
-    function closeMenu() {
-        hideMenu();
-        toggle.focus();
-    }
-
-    toggle.addEventListener("click", (e) => {
-        e.preventDefault();
-        if (menu.classList.contains("active")) {
-            closeMenu();
-        } else {
-            openMenu();
+        if (menuLinks.length) {
+            requestAnimationFrame(() => menuLinks[0].focus());
         }
-    });
+    }
+
+    function applyInitialState() {
+        if (mobileQuery.matches) {
+            hideMenu();
+        } else {
+            resetDesktopState();
+        }
+    }
+
+    applyInitialState();
+    mobileQuery.addEventListener("change", applyInitialState);
+
+    function toggleMenu(event) {
+        if (!mobileQuery.matches) {
+            resetDesktopState();
+            return;
+        }
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        if (menu.classList.contains("active")) {
+            hideMenu();
+            toggle.focus();
+        } else {
+            showMenu();
+        }
+    }
+
+    toggle.addEventListener("click", toggleMenu);
 
     if (closeBtn) {
-        closeBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            closeMenu();
+        closeBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            hideMenu();
+            toggle.focus();
         });
     }
 
     if (overlay) {
-        overlay.addEventListener("click", closeMenu);
+        overlay.addEventListener("click", hideMenu);
     }
 
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && menu.classList.contains("active")) {
-            closeMenu();
-        }
-    });
-
-    const menuLinks = menu.querySelectorAll("a, button");
     menuLinks.forEach((link) => {
-        link.addEventListener("click", () => {
-            closeMenu();
-        });
+        link.addEventListener("click", () => hideMenu());
     });
 
-    dropdownToggles.forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const parent = btn.closest(".nav-item-dropdown");
-            if (!parent) return;
-            const expanded = btn.getAttribute("aria-expanded") === "true";
-            btn.setAttribute("aria-expanded", String(!expanded));
-            parent.classList.toggle("open", !expanded);
-        });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && menu.classList.contains("active")) {
+            hideMenu();
+            toggle.focus();
+        }
     });
 });
