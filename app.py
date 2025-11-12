@@ -8,6 +8,7 @@ from calendar import monthrange
 import os
 import uuid
 import re
+import base64
 import requests
 from bs4 import BeautifulSoup
 from reportlab.lib.pagesizes import A4, letter
@@ -1109,12 +1110,23 @@ class Imagem(db.Model):
 class SliderImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200))
-    imagem = db.Column(db.String(300), nullable=False)  # Caminho da imagem
+    imagem = db.Column(db.String(300), nullable=False)  # Caminho da imagem ou 'base64:...'
+    imagem_base64 = db.Column(db.Text)  # Imagem em base64 para persistência no Render
     link = db.Column(db.String(500))  # Link clicável (opcional)
     ordem = db.Column(db.Integer, default=0)  # Ordem de exibição
     ativo = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def get_imagem_url(self):
+        """Retorna a URL da imagem, seja base64 ou arquivo"""
+        from flask import url_for
+        if self.imagem_base64:
+            return f"/slider/{self.id}/imagem"
+        elif self.imagem.startswith('base64:'):
+            return f"/slider/{self.id}/imagem"
+        else:
+            return url_for('static', filename=self.imagem)
     
     def __repr__(self):
         return f'<SliderImage {self.id}>'
@@ -5777,26 +5789,48 @@ def admin_slider_novo():
             flash('O título da imagem é obrigatório!', 'error')
             return redirect(url_for('admin_slider_novo'))
         
-        # Processar upload da imagem
+        # Processar upload da imagem - salvar como base64 no banco para persistência no Render
+        imagem_base64_data = None
         imagem_path = None
+        
         if 'imagem' in request.files:
             file = request.files['imagem']
             if file and file.filename != '' and allowed_file(file.filename):
-                upload_folder = app.config['UPLOAD_FOLDER']
-                os.makedirs(upload_folder, exist_ok=True)
+                # Ler o arquivo e converter para base64
+                file_data = file.read()
+                file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                 
-                # Gerar nome único para o arquivo
-                filename = secure_filename(file.filename)
-                unique_filename = f"{uuid.uuid4()}_{filename}"
-                filepath = os.path.join(upload_folder, unique_filename)
-                file.save(filepath)
+                # Determinar o tipo MIME
+                mime_types = {
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'png': 'image/png',
+                    'gif': 'image/gif',
+                    'webp': 'image/webp'
+                }
+                mime_type = mime_types.get(file_ext, 'image/jpeg')
                 
-                imagem_path = f"images/uploads/{unique_filename}"
+                # Converter para base64
+                imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                imagem_path = f"base64:{mime_type}"
+                
+                # Também salvar localmente para desenvolvimento local (opcional)
+                try:
+                    upload_folder = app.config['UPLOAD_FOLDER']
+                    os.makedirs(upload_folder, exist_ok=True)
+                    filename = secure_filename(file.filename)
+                    unique_filename = f"{uuid.uuid4()}_{filename}"
+                    filepath = os.path.join(upload_folder, unique_filename)
+                    # Reescrever o arquivo (já foi lido acima)
+                    file.seek(0)
+                    file.save(filepath)
+                except Exception as e:
+                    print(f"[AVISO] Não foi possível salvar arquivo localmente: {e}")
             elif file and file.filename != '':
                 flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                 return redirect(url_for('admin_slider_novo'))
         
-        if not imagem_path:
+        if not imagem_base64_data:
             flash('A imagem é obrigatória!', 'error')
             return redirect(url_for('admin_slider_novo'))
         
@@ -5804,6 +5838,7 @@ def admin_slider_novo():
             nova_imagem = SliderImage(
                 titulo=titulo,
                 imagem=imagem_path,
+                imagem_base64=imagem_base64_data,
                 link=link if link else None,
                 ordem=int(ordem) if ordem else 0,
                 ativo=ativo,
@@ -5836,29 +5871,37 @@ def admin_slider_editar(id):
             flash('O título da imagem é obrigatório!', 'error')
             return redirect(url_for('admin_slider_editar', id=id))
         
-        # Processar upload da imagem (se uma nova foi enviada)
+        # Processar upload da imagem (se uma nova foi enviada) - salvar como base64
         if 'imagem' in request.files:
             file = request.files['imagem']
             if file and file.filename != '' and allowed_file(file.filename):
-                # Remover imagem antiga se existir
-                if slider_image.imagem:
+                # Ler o arquivo e converter para base64
+                file_data = file.read()
+                file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
+                
+                # Determinar o tipo MIME
+                mime_types = {
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'png': 'image/png',
+                    'gif': 'image/gif',
+                    'webp': 'image/webp'
+                }
+                mime_type = mime_types.get(file_ext, 'image/jpeg')
+                
+                # Converter para base64
+                imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                slider_image.imagem = f"base64:{mime_type}"
+                slider_image.imagem_base64 = imagem_base64_data
+                
+                # Tentar remover imagem antiga do sistema de arquivos (se existir)
+                if slider_image.imagem and not slider_image.imagem.startswith('base64:'):
                     old_filepath = os.path.join('static', slider_image.imagem)
                     if os.path.exists(old_filepath):
                         try:
                             os.remove(old_filepath)
                         except:
                             pass
-                
-                upload_folder = app.config['UPLOAD_FOLDER']
-                os.makedirs(upload_folder, exist_ok=True)
-                
-                # Gerar nome único para o arquivo
-                filename = secure_filename(file.filename)
-                unique_filename = f"{uuid.uuid4()}_{filename}"
-                filepath = os.path.join(upload_folder, unique_filename)
-                file.save(filepath)
-                
-                slider_image.imagem = f"images/uploads/{unique_filename}"
             elif file and file.filename != '':
                 flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                 return redirect(url_for('admin_slider_editar', id=id))
@@ -5880,6 +5923,41 @@ def admin_slider_editar(id):
             return redirect(url_for('admin_slider_editar', id=id))
     
     return render_template('admin/slider_form.html', slider_image=slider_image)
+
+@app.route('/slider/<int:id>/imagem')
+def slider_imagem(id):
+    """Rota para servir imagens do slider do banco de dados (base64)"""
+    slider_image = SliderImage.query.get_or_404(id)
+    
+    # Se tem imagem em base64, servir ela
+    if slider_image.imagem_base64:
+        # Extrair o tipo MIME do campo imagem
+        mime_type = 'image/jpeg'  # padrão
+        if slider_image.imagem.startswith('base64:'):
+            mime_type = slider_image.imagem.replace('base64:', '')
+        
+        # Decodificar base64
+        try:
+            image_data = base64.b64decode(slider_image.imagem_base64)
+            from flask import Response
+            return Response(image_data, mimetype=mime_type)
+        except Exception as e:
+            print(f"Erro ao decodificar imagem base64: {e}")
+            # Retornar imagem padrão ou erro
+            from flask import abort
+            abort(404)
+    
+    # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+    if slider_image.imagem and not slider_image.imagem.startswith('base64:'):
+        from flask import send_from_directory
+        import os
+        static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+        file_path = os.path.dirname(slider_image.imagem)
+        file_name = os.path.basename(slider_image.imagem)
+        return send_from_directory(os.path.join(static_dir, file_path), file_name)
+    
+    from flask import abort
+    abort(404)
 
 @app.route('/admin/slider/<int:id>/excluir', methods=['POST'])
 @admin_required
@@ -8411,6 +8489,33 @@ def init_db():
                     print(f'Usuário {primeiro_usuario.username} marcado como super admin automaticamente.')
         except Exception as e:
             print(f"Aviso: Não foi possível verificar/atualizar super admins: {e}")
+        
+        # Adicionar coluna imagem_base64 à tabela slider_image se não existir
+        try:
+            from sqlalchemy import text
+            is_sqlite = db.engine.url.drivername == 'sqlite'
+            
+            with db.engine.connect() as conn:
+                if is_sqlite:
+                    result = conn.execute(text("PRAGMA table_info(slider_image)"))
+                    columns = [row[1] for row in result]
+                else:
+                    result = conn.execute(text("""
+                        SELECT column_name 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'slider_image' AND column_name = 'imagem_base64'
+                    """))
+                    columns = [row[0] for row in result]
+                
+                if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                    if is_sqlite:
+                        conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
+                    else:
+                        conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
+                    conn.commit()
+                    print("✅ Coluna imagem_base64 adicionada à tabela slider_image.")
+        except Exception as e:
+            print(f"⚠️ Aviso: Não foi possível adicionar coluna imagem_base64: {e}")
         
         # Verificar se já existem dados no banco (primeira inicialização)
         # Se já houver qualquer dado, não criar dados de exemplo

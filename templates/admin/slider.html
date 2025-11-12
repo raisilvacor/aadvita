@@ -48,7 +48,7 @@
                     <tr>
                         <td>
                             {% if imagem.imagem %}
-                                <img src="{{ url_for('static', filename=imagem.imagem) }}" 
+                                <img src="{% if imagem.imagem_base64 or (imagem.imagem and 'base64:' in imagem.imagem) %}/slider/{{ imagem.id }}/imagem{% else %}{{ url_for('static', filename=imagem.imagem) }}{% endif %}" 
                                      alt="{{ imagem.titulo }}" 
                                      style="width: 200px; height: 120px; object-fit: cover; border-radius: 0.5rem; border: 2px solid #e5e7eb;">
                             {% else %}
