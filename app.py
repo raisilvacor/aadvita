@@ -1108,15 +1108,20 @@ class Imagem(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class SliderImage(db.Model):
+    __tablename__ = 'slider_image'
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200))
     imagem = db.Column(db.String(300), nullable=False)  # Caminho da imagem ou 'base64:...'
-    imagem_base64 = db.Column(db.Text)  # Imagem em base64 para persistência no Render
+    imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     link = db.Column(db.String(500))  # Link clicável (opcional)
     ordem = db.Column(db.Integer, default=0)  # Ordem de exibição
     ativo = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __mapper_args__ = {
+        'confirm_deleted_rows': False
+    }
     
     def get_imagem_url(self):
         """Retorna a URL da imagem, seja base64 ou arquivo"""
@@ -8564,47 +8569,7 @@ def init_db():
         except Exception as e:
             print(f"Aviso: Não foi possível verificar/atualizar super admins: {e}")
         
-        # Adicionar coluna imagem_base64 à tabela slider_image se não existir
-        try:
-            from sqlalchemy import text
-            is_sqlite = db.engine.url.drivername == 'sqlite'
-            
-            with db.engine.connect() as conn:
-                # Verificar se a tabela existe primeiro
-                if is_sqlite:
-                    result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table' AND name='slider_image'"))
-                    table_exists = result.fetchone() is not None
-                else:
-                    result = conn.execute(text("""
-                        SELECT table_name 
-                        FROM information_schema.tables 
-                        WHERE table_name = 'slider_image'
-                    """))
-                    table_exists = result.fetchone() is not None
-                
-                if table_exists:
-                    if is_sqlite:
-                        result = conn.execute(text("PRAGMA table_info(slider_image)"))
-                        columns = [row[1] for row in result]
-                    else:
-                        result = conn.execute(text("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'slider_image' AND column_name = 'imagem_base64'
-                        """))
-                        columns = [row[0] for row in result]
-                    
-                    if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
-                        if is_sqlite:
-                            conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
-                        else:
-                            conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
-                        conn.commit()
-                        print("✅ Coluna imagem_base64 adicionada à tabela slider_image.")
-        except Exception as e:
-            print(f"⚠️ Aviso: Não foi possível adicionar coluna imagem_base64: {e}")
-            import traceback
-            traceback.print_exc()
+        # Migração da coluna imagem_base64 já foi feita no início da função
         
         # Verificar se já existem dados no banco (primeira inicialização)
         # Se já houver qualquer dado, não criar dados de exemplo
@@ -8932,6 +8897,37 @@ def ensure_db_initialized():
             # Verificar qual banco está sendo usado
             db_type = db.engine.url.drivername
             print(f"📊 Tipo de banco de dados: {db_type}")
+            
+            # PRIMEIRO: Adicionar coluna imagem_base64 se necessário ANTES de qualquer query
+            try:
+                from sqlalchemy import text, inspect
+                inspector = inspect(db.engine)
+                table_exists = 'slider_image' in inspector.get_table_names()
+                
+                if table_exists:
+                    is_sqlite = db_type == 'sqlite'
+                    with db.engine.connect() as conn:
+                        if is_sqlite:
+                            result = conn.execute(text("PRAGMA table_info(slider_image)"))
+                            columns = [row[1] for row in result]
+                        else:
+                            result = conn.execute(text("""
+                                SELECT column_name 
+                                FROM information_schema.columns 
+                                WHERE table_name = 'slider_image' AND column_name = 'imagem_base64'
+                            """))
+                            columns = [row[0] for row in result]
+                        
+                        if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                            print("📝 Adicionando coluna imagem_base64 à tabela slider_image...")
+                            if is_sqlite:
+                                conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
+                            else:
+                                conn.execute(text("ALTER TABLE slider_image ADD COLUMN imagem_base64 TEXT"))
+                            conn.commit()
+                            print("✅ Coluna imagem_base64 adicionada.")
+            except Exception as e:
+                print(f"⚠️ Aviso ao verificar coluna imagem_base64: {e}")
             
             # Criar todas as tabelas (idempotente - não recria se já existirem)
             db.create_all()
