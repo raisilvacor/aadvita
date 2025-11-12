@@ -7493,6 +7493,9 @@ def index():
         if servico.coluna in servicos_por_coluna:
             servicos_por_coluna[servico.coluna].append(servico)
     
+    # Debug: verificar distribuição de serviços por coluna
+    print(f"[DEBUG] Serviços por coluna - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
+    
     # Buscar imagens do slider ativas, ordenadas por ordem
     slider_images = SliderImage.query.filter_by(ativo=True).order_by(SliderImage.ordem.asc(), SliderImage.created_at.asc()).all()
     
