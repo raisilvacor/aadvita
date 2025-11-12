@@ -3279,97 +3279,104 @@ def buscar_posts_instagram(username, instagram_url_base):
             except Exception as alt_error:
                 error_messages.append(f'Erro no método alternativo: {str(alt_error)}')
         
-        # Método 4: Tentar usar API GraphQL do Instagram (método mais confiável)
-        if not posts_data:
-            try:
-                # Tentar endpoint GraphQL do Instagram
-                api_url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}"
-                api_headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'application/json',
-                    'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-IG-App-ID': '936619743392459',
-                    'Referer': f'https://www.instagram.com/{username}/',
-                    'Origin': 'https://www.instagram.com'
-                }
-                
-                api_response = requests.get(api_url, headers=api_headers, timeout=15, verify=False)
-                if api_response.status_code == 200:
-                    import json
-                    try:
-                        api_data = api_response.json()
-                        if 'data' in api_data and 'user' in api_data['data']:
-                            user = api_data['data']['user']
-                            if 'edge_owner_to_timeline_media' in user:
-                                edges = user['edge_owner_to_timeline_media']['edges']
-                                for edge in edges[:6]:
-                                    node = edge['node']
-                                    if not node.get('is_video', False):
-                                        display_url = node.get('display_url', '')
-                                        if not display_url and 'thumbnail_src' in node:
-                                            display_url = node['thumbnail_src']
-                                        if display_url:
-                                            posts_data.append({
-                                                'shortcode': node.get('shortcode', ''),
-                                                'display_url': display_url,
-                                                'caption': node.get('edge_media_to_caption', {}).get('edges', [{}])[0].get('node', {}).get('text', '') if node.get('edge_media_to_caption', {}).get('edges') else '',
-                                                'taken_at_timestamp': node.get('taken_at_timestamp', 0),
-                                                'is_video': False
-                                            })
-                    except json.JSONDecodeError:
-                        pass
-            except Exception as api_error:
-                error_messages.append(f'API não disponível: {str(api_error)[:50]}')
-                pass
+        # Método 4: Tentar usar API GraphQL do Instagram (método mais confiável) - PRIORIDADE ALTA
+        try:
+            # Usar endpoint GraphQL do Instagram com headers atualizados
+            api_url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}"
+            api_headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                'Accept': '*/*',
+                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-IG-App-ID': '936619743392459',
+                'X-IG-WWW-Claim': '0',
+                'Referer': f'https://www.instagram.com/{username}/',
+                'Origin': 'https://www.instagram.com',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-origin',
+                'Connection': 'keep-alive'
+            }
+            
+            api_response = requests.get(api_url, headers=api_headers, timeout=20, verify=False, allow_redirects=True)
+            if api_response.status_code == 200:
+                import json
+                try:
+                    api_data = api_response.json()
+                    if 'data' in api_data and 'user' in api_data['data']:
+                        user = api_data['data']['user']
+                        if 'edge_owner_to_timeline_media' in user:
+                            edges = user['edge_owner_to_timeline_media'].get('edges', [])
+                            for edge in edges[:12]:  # Buscar mais para ter opções
+                                node = edge.get('node', {})
+                                if not node.get('is_video', False):
+                                    display_url = node.get('display_url', '')
+                                    if not display_url:
+                                        display_url = node.get('thumbnail_src', '')
+                                    if not display_url and 'thumbnail_resources' in node:
+                                        thumbnails = node.get('thumbnail_resources', [])
+                                        if thumbnails:
+                                            display_url = thumbnails[-1].get('src', '')
+                                    if display_url:
+                                        shortcode = node.get('shortcode', '')
+                                        caption = ''
+                                        if 'edge_media_to_caption' in node:
+                                            caption_edges = node['edge_media_to_caption'].get('edges', [])
+                                            if caption_edges:
+                                                caption = caption_edges[0].get('node', {}).get('text', '')
+                                        posts_data.append({
+                                            'shortcode': shortcode,
+                                            'display_url': display_url,
+                                            'caption': caption,
+                                            'taken_at_timestamp': node.get('taken_at_timestamp', 0),
+                                            'is_video': False
+                                        })
+                    if posts_data:
+                        # Limitar a 6 posts
+                        posts_data = posts_data[:6]
+                except (json.JSONDecodeError, KeyError) as e:
+                    error_messages.append(f'Erro ao parsear JSON da API: {str(e)[:50]}')
+        except Exception as api_error:
+            error_messages.append(f'API não disponível: {str(api_error)[:50]}')
         
-        # Método 5: Buscar via estrutura JSON embedida no HTML (mais recente)
+        # Método 4.5: Buscar JSON diretamente do HTML com padrão mais recente
         if not posts_data:
             try:
-                # Procurar por scripts com dados JSON
-                all_scripts = soup.find_all('script')
-                for script in all_scripts:
-                    if script.string and ('_sharedData' in script.string or 'ProfilePage' in script.string):
-                        # Tentar extrair JSON de diferentes formatos
-                        script_text = script.string
-                        # Procurar por JSON em diferentes padrões
-                        json_patterns = [
-                            r'window\._sharedData\s*=\s*({.+?});',
-                            r'<script[^>]*>({.+?})</script>',
-                            r'"ProfilePage":\s*\[({.+?})\]',
-                        ]
-                        for pattern in json_patterns:
-                            matches = re.finditer(pattern, script_text, re.DOTALL)
-                            for match in matches:
-                                try:
-                                    import json
-                                    data_str = match.group(1)
-                                    data = json.loads(data_str)
-                                    # Navegar pela estrutura
-                                    if 'entry_data' in data:
-                                        if 'ProfilePage' in data['entry_data']:
-                                            for page in data['entry_data']['ProfilePage']:
-                                                if 'graphql' in page and 'user' in page['graphql']:
-                                                    user = page['graphql']['user']
-                                                    if 'edge_owner_to_timeline_media' in user:
-                                                        edges = user['edge_owner_to_timeline_media']['edges']
-                                                        for edge in edges[:6]:
-                                                            node = edge['node']
-                                                            if not node.get('is_video', False):
-                                                                posts_data.append({
-                                                                    'shortcode': node.get('shortcode', ''),
-                                                                    'display_url': node.get('display_url', ''),
-                                                                    'caption': node.get('edge_media_to_caption', {}).get('edges', [{}])[0].get('node', {}).get('text', '') if node.get('edge_media_to_caption', {}).get('edges') else '',
-                                                                    'taken_at_timestamp': node.get('taken_at_timestamp', 0),
-                                                                    'is_video': False
-                                                                })
-                                                        if posts_data:
-                                                            break
-                                except:
-                                    continue
+                # Procurar por script type="application/json"
+                json_scripts = soup.find_all('script', type='application/json')
+                for script in json_scripts:
+                    try:
+                        import json
+                        data = json.loads(script.string)
+                        # Tentar diferentes caminhos
+                        if 'entry_data' in data:
+                            if 'ProfilePage' in data['entry_data']:
+                                for page in data['entry_data']['ProfilePage']:
+                                    if 'graphql' in page and 'user' in page['graphql']:
+                                        user = page['graphql']['user']
+                                        if 'edge_owner_to_timeline_media' in user:
+                                            edges = user['edge_owner_to_timeline_media'].get('edges', [])
+                                            for edge in edges[:6]:
+                                                node = edge.get('node', {})
+                                                if not node.get('is_video', False):
+                                                    display_url = node.get('display_url', '') or node.get('thumbnail_src', '')
+                                                    if display_url:
+                                                        posts_data.append({
+                                                            'shortcode': node.get('shortcode', ''),
+                                                            'display_url': display_url,
+                                                            'caption': node.get('edge_media_to_caption', {}).get('edges', [{}])[0].get('node', {}).get('text', '') if node.get('edge_media_to_caption', {}).get('edges') else '',
+                                                            'taken_at_timestamp': node.get('taken_at_timestamp', 0),
+                                                            'is_video': False
+                                                        })
+                                            if posts_data:
+                                                break
+                    except (json.JSONDecodeError, KeyError, AttributeError):
+                        continue
+                    if posts_data:
+                        break
             except Exception as e:
-                error_messages.append(f'Erro no método JSON: {str(e)[:50]}')
-                pass
+                error_messages.append(f'Erro no método JSON direto: {str(e)[:50]}')
         
         # Atualizar banco de dados
         posts_cadastrados = 0
@@ -3404,15 +3411,31 @@ def buscar_posts_instagram(username, instagram_url_base):
                 existing_post.ativo = True
                 existing_post.updated_at = datetime.utcnow()
         
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as commit_error:
+            db.session.rollback()
+            print(f"[Instagram] Erro ao fazer commit: {str(commit_error)}")
+            # Tentar buscar posts existentes mesmo se o commit falhou
+            posts_existentes = InstagramPost.query.filter_by(ativo=True).limit(6).count()
+            if posts_existentes > 0:
+                # Se houver posts existentes, retornar sucesso parcial
+                return posts_existentes
+            raise Exception(f'Erro ao salvar posts: {str(commit_error)}')
         
         if posts_cadastrados > 0:
             return posts_cadastrados
         elif posts_data:
-            # Posts encontrados mas nenhum foi cadastrado (provavelmente já existiam)
+            # Posts encontrados mas nenhum foi cadastrado (provavelmente já existiam e foram atualizados)
             return len(posts_data)
         else:
-            # Nenhum post encontrado
+            # Nenhum post encontrado - verificar se há posts existentes no banco
+            posts_existentes = InstagramPost.query.filter_by(ativo=True).limit(6).count()
+            if posts_existentes > 0:
+                # Se houver posts existentes, retornar sucesso parcial (não atualizou, mas há posts)
+                print(f"[Instagram] Nenhum novo post encontrado, mas há {posts_existentes} posts existentes no banco.")
+                return posts_existentes
+            # Nenhum post encontrado e nenhum post existente
             if error_messages:
                 raise Exception('; '.join(error_messages))
             else:
@@ -3420,6 +3443,15 @@ def buscar_posts_instagram(username, instagram_url_base):
         
     except Exception as e:
         db.session.rollback()
+        # Verificar se há posts existentes antes de lançar exceção
+        try:
+            posts_existentes = InstagramPost.query.filter_by(ativo=True).limit(6).count()
+            if posts_existentes > 0:
+                # Se houver posts existentes, retornar sucesso parcial (não atualizou, mas há posts)
+                print(f"[Instagram] Erro ao buscar novos posts: {str(e)}, mas há {posts_existentes} posts existentes no banco.")
+                return posts_existentes
+        except:
+            pass
         # Re-raise a exceção com mensagem mais clara
         raise Exception(str(e))
 
@@ -7365,26 +7397,42 @@ def index():
     # Buscar posts do Instagram ativos (últimos 6)
     instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
     
-    # Se não houver posts e houver URL do Instagram configurada, tentar buscar automaticamente
-    if not instagram_posts and instagram_url and instagram_username:
-        try:
-            # Buscar posts do Instagram automaticamente
-            # IMPORTANTE: Isso busca os posts diretamente do Instagram e salva no banco
-            print(f"Buscando posts do Instagram para @{instagram_username}...")
-            posts_cadastrados = buscar_posts_instagram(instagram_username, instagram_url)
-            print(f"Posts cadastrados: {posts_cadastrados}")
-            if posts_cadastrados:
-                # Buscar novamente após salvar
+    # Se houver URL do Instagram configurada, tentar atualizar posts periodicamente
+    if instagram_url and instagram_username:
+        # Se não houver posts OU se os posts são antigos (mais de 3 dias), tentar atualizar
+        precisa_atualizar = False
+        if not instagram_posts or len(instagram_posts) == 0:
+            precisa_atualizar = True
+        elif instagram_posts and len(instagram_posts) > 0:
+            # Verificar se o post mais recente tem mais de 3 dias
+            try:
+                post_mais_recente = instagram_posts[0]
+                if post_mais_recente.data_post and post_mais_recente.data_post < datetime.utcnow() - timedelta(days=3):
+                    precisa_atualizar = True
+            except:
+                # Se houver erro ao verificar data, tentar atualizar
+                precisa_atualizar = True
+        
+        # Tentar atualizar em background (não bloquear a página)
+        if precisa_atualizar:
+            try:
+                # Buscar posts do Instagram automaticamente
+                print(f"[Instagram] Atualizando posts para @{instagram_username}...")
+                posts_cadastrados = buscar_posts_instagram(instagram_username, instagram_url)
+                print(f"[Instagram] Posts atualizados: {posts_cadastrados}")
+                # Buscar novamente após atualizar
                 instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
-                print(f"Posts recuperados do banco: {len(instagram_posts)}")
-        except Exception as e:
-            # Log do erro mas não bloquear a página
-            error_msg = str(e)
-            print(f"ERRO ao buscar posts do Instagram: {error_msg}")
-            import traceback
-            traceback.print_exc()
-            # Tentar buscar posts existentes mesmo se a busca falhou
-            instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
+                print(f"[Instagram] Total de posts recuperados: {len(instagram_posts)}")
+            except Exception as e:
+                # Log do erro mas não bloquear a página - usar posts existentes
+                error_msg = str(e)
+                print(f"[Instagram] ERRO ao atualizar posts: {error_msg}")
+                import traceback
+                traceback.print_exc()
+                # Garantir que sempre tenha posts para exibir (mesmo que antigos)
+                if not instagram_posts or len(instagram_posts) == 0:
+                    instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
+                    print(f"[Instagram] Usando posts existentes: {len(instagram_posts)} posts")
     
     return render_template('index.html',
                          reuniones_presenciales=reuniones_presenciales,
