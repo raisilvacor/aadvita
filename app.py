@@ -9732,7 +9732,66 @@ _migration_cache = {}
 _migration_lock = False
 _migration_initialized = False
 
+def _add_column(inspector, conn, table_name, column_name, is_sqlite, column_type='TEXT'):
+    """Função auxiliar para adicionar coluna a uma tabela"""
+    try:
+        column_exists = False
+        
+        if is_sqlite:
+            result = conn.execute(text("PRAGMA table_info({})".format(table_name)))
+            columns = [row[1] for row in result]
+            column_exists = column_name in columns
+        else:
+            # PostgreSQL
+            result = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name = :table_name 
+                    AND column_name = :column_name
+                )
+            """), {'table_name': table_name, 'column_name': column_name})
+            column_exists = result.scalar()
+        
+        if not column_exists:
+            print(f"📝 Adicionando coluna {column_name} à tabela {table_name}...")
+            try:
+                if is_sqlite:
+                    conn.execute(text("ALTER TABLE {} ADD COLUMN {} {}".format(table_name, column_name, column_type)))
+                else:
+                    # PostgreSQL - usar IF NOT EXISTS via DO block com format dinâmico
+                    sql = f"""
+                        DO $$ 
+                        BEGIN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns 
+                                WHERE table_name = '{table_name}' 
+                                AND column_name = '{column_name}'
+                            ) THEN
+                                EXECUTE format('ALTER TABLE %I ADD COLUMN %I {column_type}', '{table_name}', '{column_name}');
+                            END IF;
+                        END $$;
+                    """
+                    conn.execute(text(sql))
+                conn.commit()
+                print(f"✅ Coluna {column_name} adicionada à tabela {table_name}.")
+            except Exception as e:
+                # Se a coluna já existe (erro de duplicação), ignorar
+                error_str = str(e).lower()
+                if 'duplicate' in error_str or 'already exists' in error_str or ('column' in error_str and 'already' in error_str):
+                    print(f"ℹ️ Coluna {table_name}.{column_name} já existe.")
+                else:
+                    raise
+        return True
+    except Exception as e:
+        print(f"⚠️ Erro ao adicionar coluna {table_name}.{column_name}: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def _add_base64_column(inspector, conn, table_name, column_name, is_sqlite):
+    """Função auxiliar para adicionar coluna base64 a uma tabela (alias para _add_column)"""
+    return _add_column(inspector, conn, table_name, column_name, is_sqlite, 'TEXT')
     """Função auxiliar para adicionar coluna base64 a uma tabela"""
     try:
         column_exists = False
