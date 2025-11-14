@@ -77,6 +77,9 @@
             <a href="{{ url_for('admin_transparencia') }}" class="nav-item {% if 'transparencia' in request.endpoint and 'admin' in request.endpoint %}active{% endif %}">
                 <span>🔍</span> Transparência
             </a>
+            <a href="{{ url_for('admin_modelos_documentos') }}" class="nav-item {% if 'modelos_documentos' in request.endpoint %}active{% endif %}">
+                <span>📄</span> Modelos de Documentos
+            </a>
             <a href="{{ url_for('index') }}" class="nav-item" target="_blank">
                 <span>🌐</span> Ver Site
             </a>
