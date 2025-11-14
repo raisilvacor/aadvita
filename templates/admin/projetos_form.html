@@ -179,6 +179,31 @@
             </small>
         </div>
         
+        <div class="form-group" style="margin-bottom: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e5e7eb;">
+            <label for="arquivo_pdf" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                PDF do Projeto {% if projeto %}(deixe em branco para manter o atual){% endif %}
+            </label>
+            {% if projeto and projeto.arquivo_pdf %}
+                <div style="margin-bottom: 1rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem; border: 2px solid #d1d5db;">
+                    <p style="margin: 0; color: #374151; font-weight: 600;">
+                        📄 PDF atual: <a href="{{ url_for('static', filename=projeto.arquivo_pdf) }}" target="_blank" style="color: var(--primary-color); text-decoration: none;">Ver PDF</a>
+                    </p>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="remover_pdf" value="1" style="cursor: pointer;">
+                        <span style="color: #6b7280; font-size: 0.875rem;">Remover PDF atual</span>
+                    </label>
+                </div>
+            {% endif %}
+            <input type="file" 
+                   id="arquivo_pdf" 
+                   name="arquivo_pdf" 
+                   accept=".pdf"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Apenas arquivos PDF são permitidos (máx. 16MB)
+            </small>
+        </div>
+        
         <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
             <button type="submit" class="btn-admin btn-admin-primary">
                 <span>💾</span> Salvar

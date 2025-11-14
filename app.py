@@ -1051,6 +1051,7 @@ class Projeto(db.Model):
     consideracoes_finais = db.Column(db.Text)
     imagen = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagen_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    arquivo_pdf = db.Column(db.String(300))  # Caminho do arquivo PDF do projeto
     estado = db.Column(db.String(50), default='Ativo')
     data_inicio = db.Column(db.Date)
     data_fim = db.Column(db.Date)
@@ -1844,6 +1845,25 @@ def admin_projetos_novo():
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_projetos_novo'))
             
+            # Processar upload do PDF
+            pdf_path = None
+            if 'arquivo_pdf' in request.files:
+                file = request.files['arquivo_pdf']
+                if file and file.filename != '' and allowed_pdf_file(file.filename):
+                    # Criar pasta para PDFs se não existir
+                    upload_folder_pdf = os.path.join('static', 'documents', 'projetos')
+                    os.makedirs(upload_folder_pdf, exist_ok=True)
+                    
+                    filename = secure_filename(file.filename)
+                    unique_filename = f"{uuid.uuid4()}_{filename}"
+                    filepath = os.path.join(upload_folder_pdf, unique_filename)
+                    file.save(filepath)
+                    
+                    pdf_path = f"documents/projetos/{unique_filename}"
+                elif file and file.filename != '':
+                    flash('Tipo de arquivo não permitido para PDF. Use apenas arquivos .pdf', 'error')
+                    return redirect(url_for('admin_projetos_novo'))
+            
             projeto = Projeto(
                 titulo=request.form.get('titulo'),
                 descripcion=request.form.get('descripcion'),
@@ -1862,7 +1882,8 @@ def admin_projetos_novo():
                 estado=request.form.get('estado', 'Ativo'),
                 data_inicio=datetime.strptime(data_inicio_str, "%Y-%m-%d").date() if data_inicio_str else None,
                 data_fim=datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None,
-                imagen=imagen_path
+                imagen=imagen_path,
+                arquivo_pdf=pdf_path
             )
             db.session.add(projeto)
             db.session.commit()
@@ -1909,6 +1930,44 @@ def admin_projetos_editar(id):
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_projetos_editar', id=id))
+            
+            # Processar upload do PDF
+            if 'arquivo_pdf' in request.files:
+                file = request.files['arquivo_pdf']
+                if file and file.filename != '' and allowed_pdf_file(file.filename):
+                    # Remover PDF antigo se existir
+                    if projeto.arquivo_pdf:
+                        old_filepath = os.path.join('static', projeto.arquivo_pdf)
+                        if os.path.exists(old_filepath):
+                            try:
+                                os.remove(old_filepath)
+                            except:
+                                pass
+                    
+                    # Criar pasta para PDFs se não existir
+                    upload_folder_pdf = os.path.join('static', 'documents', 'projetos')
+                    os.makedirs(upload_folder_pdf, exist_ok=True)
+                    
+                    filename = secure_filename(file.filename)
+                    unique_filename = f"{uuid.uuid4()}_{filename}"
+                    filepath = os.path.join(upload_folder_pdf, unique_filename)
+                    file.save(filepath)
+                    
+                    projeto.arquivo_pdf = f"documents/projetos/{unique_filename}"
+                elif file and file.filename != '':
+                    flash('Tipo de arquivo não permitido para PDF. Use apenas arquivos .pdf', 'error')
+                    return redirect(url_for('admin_projetos_editar', id=id))
+            
+            # Remover PDF se solicitado
+            if request.form.get('remover_pdf') == '1':
+                if projeto.arquivo_pdf:
+                    old_filepath = os.path.join('static', projeto.arquivo_pdf)
+                    if os.path.exists(old_filepath):
+                        try:
+                            os.remove(old_filepath)
+                        except:
+                            pass
+                projeto.arquivo_pdf = None
             
             projeto.titulo = request.form.get('titulo')
             projeto.descripcion = request.form.get('descripcion')
@@ -8107,6 +8166,34 @@ def projetos():
 def projeto(id):
     projeto = Projeto.query.get_or_404(id)
     return render_template('projeto.html', projeto=projeto)
+
+@app.route('/projetos/<int:id>/download')
+def projeto_download_pdf(id):
+    """Rota para download do PDF do projeto"""
+    projeto = Projeto.query.get_or_404(id)
+    
+    if not projeto.arquivo_pdf:
+        from flask import abort
+        abort(404)
+    
+    from flask import send_from_directory
+    import os
+    
+    file_path = os.path.dirname(projeto.arquivo_pdf)
+    file_name = os.path.basename(projeto.arquivo_pdf)
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+    
+    try:
+        return send_from_directory(
+            os.path.join(static_dir, file_path), 
+            file_name, 
+            as_attachment=True,
+            download_name=f'projeto_{projeto.titulo.replace(" ", "_")}.pdf'
+        )
+    except Exception as e:
+        print(f"Erro ao servir PDF do projeto: {e}")
+        from flask import abort
+        abort(404)
 
 @app.route('/acoes')
 def acoes():
