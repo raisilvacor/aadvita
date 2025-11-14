@@ -6723,6 +6723,9 @@ def admin_radio_config():
 @app.route('/admin/banners')
 @admin_required
 def admin_banners():
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     banners = Banner.query.order_by(Banner.ordem.asc()).all()
     # Garantir que existam os 3 banners padrão
     tipos_banners = ['Campanhas', 'Apoie-nos', 'Editais']
@@ -6773,6 +6776,9 @@ def admin_banners():
 @app.route('/admin/banners/<int:id>/editar', methods=['GET', 'POST'])
 @admin_required
 def admin_banners_editar(id):
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     banner = Banner.query.get_or_404(id)
     conteudos = BannerConteudo.query.filter_by(banner_id=id).order_by(BannerConteudo.ordem.asc()).all()
     
@@ -6860,6 +6866,9 @@ def admin_banners_editar(id):
 @app.route('/admin/banners/<int:banner_id>/conteudos/novo', methods=['GET', 'POST'])
 @admin_required
 def admin_banner_conteudo_novo(banner_id):
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     banner = Banner.query.get_or_404(banner_id)
     
     if request.method == 'POST':
@@ -6958,6 +6967,9 @@ def admin_banner_conteudo_novo(banner_id):
 @app.route('/admin/banners/conteudos/<int:id>/editar', methods=['GET', 'POST'])
 @admin_required
 def admin_banner_conteudo_editar(id):
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     conteudo = BannerConteudo.query.get_or_404(id)
     banner = conteudo.banner
     
@@ -7949,6 +7961,9 @@ def index():
     # Buscar apoiadores com logo
     apoiadores = Apoiador.query.filter(Apoiador.logo != None, Apoiador.logo != '').order_by(Apoiador.nome.asc()).all()
     
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     # Buscar banners ativos
     banners = Banner.query.filter_by(ativo=True).order_by(Banner.ordem.asc()).all()
     # Criar dicionário para facilitar acesso
@@ -8163,6 +8178,9 @@ def campanhas():
 
 @app.route('/apoie')
 def apoie():
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     banner = Banner.query.filter_by(tipo='Apoie-nos', ativo=True).first()
     conteudos = []
     if banner:
