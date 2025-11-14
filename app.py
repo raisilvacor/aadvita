@@ -1049,7 +1049,8 @@ class Projeto(db.Model):
     cronograma_execucao = db.Column(db.Text)
     orcamento = db.Column(db.Text)
     consideracoes_finais = db.Column(db.Text)
-    imagen = db.Column(db.String(300))
+    imagen = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    imagen_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     estado = db.Column(db.String(50), default='Ativo')
     data_inicio = db.Column(db.Date)
     data_fim = db.Column(db.Date)
@@ -1072,7 +1073,8 @@ class Acao(db.Model):
     descricao = db.Column(db.Text, nullable=False)
     data = db.Column(db.Date, nullable=False)
     categoria = db.Column(db.String(100))
-    imagem = db.Column(db.String(300))
+    imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamento com fotos
@@ -1188,7 +1190,8 @@ class Evento(db.Model):
     endereco = db.Column(db.Text)
     tipo = db.Column(db.String(100))  # Presencial, Virtual, Híbrido
     link = db.Column(db.String(500))
-    imagem = db.Column(db.String(300))
+    imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamento com fotos
@@ -1488,7 +1491,8 @@ class Informativo(db.Model):
     subtitulo = db.Column(db.String(300))  # Subtítulo opcional
     conteudo = db.Column(db.Text)  # Texto para notícias
     url_soundcloud = db.Column(db.String(500))  # URL do SoundCloud para podcasts
-    imagem = db.Column(db.String(300))  # Imagem opcional para notícias
+    imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     data_publicacao = db.Column(db.Date, nullable=False, default=date.today)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -1501,7 +1505,8 @@ class RadioPrograma(db.Model):
     horario = db.Column(db.String(100))  # Ex: "Segunda a Sexta, 14h às 16h"
     url_streaming = db.Column(db.String(500))  # URL para streaming ao vivo
     url_arquivo = db.Column(db.String(500))  # URL para arquivo de áudio (episódio)
-    imagem = db.Column(db.String(300))  # Imagem do programa
+    imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     ativo = db.Column(db.Boolean, default=True)
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -1519,7 +1524,8 @@ class Banner(db.Model):
     titulo = db.Column(db.String(200), nullable=False)
     descricao = db.Column(db.String(300))
     url = db.Column(db.String(500))  # URL de destino
-    imagem = db.Column(db.String(300))  # Imagem opcional do banner
+    imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     cor_gradiente_inicio = db.Column(db.String(7), default='#667eea')  # Cor inicial do gradiente
     cor_gradiente_fim = db.Column(db.String(7), default='#764ba2')  # Cor final do gradiente
     ativo = db.Column(db.Boolean, default=True)
@@ -1535,7 +1541,8 @@ class BannerConteudo(db.Model):
     banner_id = db.Column(db.Integer, db.ForeignKey('banner.id'), nullable=False)
     titulo = db.Column(db.String(200), nullable=False)
     conteudo = db.Column(db.Text)  # Conteúdo HTML/texto
-    imagem = db.Column(db.String(300))  # Imagem opcional
+    imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
+    imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
     arquivo_pdf = db.Column(db.String(300))  # Arquivo PDF opcional
     ordem = db.Column(db.Integer, default=0)
     ativo = db.Column(db.Boolean, default=True)
@@ -6230,6 +6237,52 @@ def slider_imagem(id):
             file_name = os.path.basename(slider_image.imagem)
             try:
                 return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except:
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir imagem do slider: {e}")
+        from flask import abort
+        abort(404)
+
+@app.route('/banner-conteudo/<int:id>/imagem')
+def banner_conteudo_imagem(id):
+    """Rota para servir imagens do banner conteúdo do banco de dados (base64)"""
+    try:
+        conteudo = BannerConteudo.query.get_or_404(id)
+        
+        # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
+        imagem_base64 = getattr(conteudo, 'imagem_base64', None)
+        
+        # Se tem imagem em base64, servir ela
+        if imagem_base64:
+            # Extrair o tipo MIME do campo imagem
+            mime_type = 'image/jpeg'  # padrão
+            if conteudo.imagem and conteudo.imagem.startswith('base64:'):
+                mime_type = conteudo.imagem.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(imagem_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar imagem base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if conteudo.imagem and not (conteudo.imagem.startswith('base64:') if conteudo.imagem else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(conteudo.imagem)
+            file_name = os.path.basename(conteudo.imagem)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
             except Exception as e:
                 print(f"Erro ao servir arquivo estático: {e}")
                 from flask import abort
@@ -6822,20 +6875,42 @@ def admin_banner_conteudo_novo(banner_id):
             
             ordem = int(ordem_str) if ordem_str.isdigit() else 0
             
-            # Processar upload da imagem
+            # Processar upload da imagem - salvar como base64 no banco para persistência no Render
             imagem_path = None
+            imagem_base64_data = None
             if 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    imagem_path = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    imagem_path = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        imagem_path = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar arquivo localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_banner_conteudo_novo', banner_id=banner_id))
@@ -6864,6 +6939,7 @@ def admin_banner_conteudo_novo(banner_id):
                 titulo=titulo,
                 conteudo=conteudo if conteudo else None,
                 imagem=imagem_path,
+                imagem_base64=imagem_base64_data,
                 arquivo_pdf=pdf_path,
                 ordem=ordem,
                 ativo=ativo
@@ -6898,12 +6974,12 @@ def admin_banner_conteudo_editar(id):
             
             ordem = int(ordem_str) if ordem_str.isdigit() else conteudo.ordem
             
-            # Processar upload da imagem
+            # Processar upload da imagem - salvar como base64 no banco para persistência no Render
             if 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    # Remover imagem antiga se existir
-                    if conteudo.imagem:
+                    # Remover imagem antiga se existir (apenas arquivo local, não base64)
+                    if conteudo.imagem and not (conteudo.imagem.startswith('base64:') if conteudo.imagem else False):
                         old_filepath = os.path.join('static', conteudo.imagem)
                         if os.path.exists(old_filepath):
                             try:
@@ -6911,22 +6987,44 @@ def admin_banner_conteudo_editar(id):
                             except:
                                 pass
                     
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    conteudo.imagem = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    conteudo.imagem_base64 = imagem_base64_data
+                    conteudo.imagem = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        conteudo.imagem = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar arquivo localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_banner_conteudo_editar', id=id))
             
             # Remover imagem se solicitado
             if request.form.get('remover_imagem') == '1':
-                if conteudo.imagem:
+                if conteudo.imagem and not (conteudo.imagem.startswith('base64:') if conteudo.imagem else False):
                     old_filepath = os.path.join('static', conteudo.imagem)
                     if os.path.exists(old_filepath):
                         try:
@@ -6934,6 +7032,7 @@ def admin_banner_conteudo_editar(id):
                         except:
                             pass
                 conteudo.imagem = None
+                conteudo.imagem_base64 = None
             
             # Processar upload do PDF
             if 'arquivo_pdf' in request.files:
@@ -9279,6 +9378,31 @@ def ensure_db_initialized():
                                 conn.execute(text("ALTER TABLE apoiador ADD COLUMN logo_base64 TEXT"))
                             conn.commit()
                             print("✅ Coluna logo_base64 adicionada.")
+                
+                # Adicionar coluna imagem_base64 à tabela banner_conteudo
+                table_exists = 'banner_conteudo' in inspector.get_table_names()
+                if table_exists:
+                    is_sqlite = db_type == 'sqlite'
+                    with db.engine.connect() as conn:
+                        if is_sqlite:
+                            result = conn.execute(text("PRAGMA table_info(banner_conteudo)"))
+                            columns = [row[1] for row in result]
+                        else:
+                            result = conn.execute(text("""
+                                SELECT column_name 
+                                FROM information_schema.columns 
+                                WHERE table_name = 'banner_conteudo' AND column_name = 'imagem_base64'
+                            """))
+                            columns = [row[0] for row in result]
+                        
+                        if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                            print("📝 Adicionando coluna imagem_base64 à tabela banner_conteudo...")
+                            if is_sqlite:
+                                conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                            else:
+                                conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                            conn.commit()
+                            print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo.")
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
