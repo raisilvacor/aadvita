@@ -9512,6 +9512,67 @@ def ensure_db_initialized():
                                     print("ℹ️ Coluna banner.imagem_base64 já existe.")
                                 else:
                                     raise
+                
+                # Adicionar colunas base64 para os outros modelos
+                tables_to_migrate = [
+                    ('projeto', 'imagen_base64'),  # Projeto usa "imagen" em vez de "imagem"
+                    ('acao', 'imagem_base64'),
+                    ('evento', 'imagem_base64'),
+                    ('informativo', 'imagem_base64'),
+                    ('radio_programa', 'imagem_base64'),
+                ]
+                
+                for table_name, column_name in tables_to_migrate:
+                    table_exists = table_name in inspector.get_table_names()
+                    if table_exists:
+                        is_sqlite = db_type == 'sqlite'
+                        with db.engine.connect() as conn:
+                            column_exists = False
+                            
+                            if is_sqlite:
+                                result = conn.execute(text("PRAGMA table_info({})".format(table_name)))
+                                columns = [row[1] for row in result]
+                                column_exists = column_name in columns
+                            else:
+                                # PostgreSQL - usar EXISTS para verificação mais robusta
+                                result = conn.execute(text("""
+                                    SELECT EXISTS (
+                                        SELECT 1 
+                                        FROM information_schema.columns 
+                                        WHERE table_name = :table_name 
+                                        AND column_name = :column_name
+                                    )
+                                """), {'table_name': table_name, 'column_name': column_name})
+                                column_exists = result.scalar()
+                            
+                            if not column_exists:
+                                print(f"📝 Adicionando coluna {column_name} à tabela {table_name}...")
+                                try:
+                                    if is_sqlite:
+                                        conn.execute(text("ALTER TABLE {} ADD COLUMN {} TEXT".format(table_name, column_name)))
+                                    else:
+                                        # PostgreSQL - usar IF NOT EXISTS via DO block
+                                        sql = f"""
+                                            DO $$ 
+                                            BEGIN
+                                                IF NOT EXISTS (
+                                                    SELECT 1 FROM information_schema.columns 
+                                                    WHERE table_name = '{table_name}' 
+                                                    AND column_name = '{column_name}'
+                                                ) THEN
+                                                    EXECUTE format('ALTER TABLE %I ADD COLUMN %I TEXT', '{table_name}', '{column_name}');
+                                                END IF;
+                                            END $$;
+                                        """
+                                        conn.execute(text(sql))
+                                    conn.commit()
+                                    print(f"✅ Coluna {column_name} adicionada à tabela {table_name}.")
+                                except Exception as e:
+                                    error_str = str(e).lower()
+                                    if 'duplicate' in error_str or 'already exists' in error_str or ('column' in error_str and 'already' in error_str):
+                                        print(f"ℹ️ Coluna {table_name}.{column_name} já existe.")
+                                    else:
+                                        raise
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
@@ -9570,14 +9631,81 @@ except Exception as e:
     pass
 
 # Cache para evitar verificar migrações em todas as requisições
-_migration_cache = {'banner': False, 'banner_conteudo': False}
+# Incluir TODOS os modelos que têm colunas base64
+_migration_cache = {
+    'banner': False, 
+    'banner_conteudo': False,
+    'projeto': False,
+    'acao': False,
+    'evento': False,
+    'informativo': False,
+    'radio_programa': False
+}
 _migration_lock = False
 _migration_initialized = False
+
+def _add_base64_column(inspector, conn, table_name, column_name, is_sqlite):
+    """Função auxiliar para adicionar coluna base64 a uma tabela"""
+    try:
+        column_exists = False
+        
+        if is_sqlite:
+            result = conn.execute(text("PRAGMA table_info({})".format(table_name)))
+            columns = [row[1] for row in result]
+            column_exists = column_name in columns
+        else:
+            # PostgreSQL
+            result = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name = :table_name 
+                    AND column_name = :column_name
+                )
+            """), {'table_name': table_name, 'column_name': column_name})
+            column_exists = result.scalar()
+        
+        if not column_exists:
+            print(f"📝 Adicionando coluna {column_name} à tabela {table_name}...")
+            try:
+                if is_sqlite:
+                    conn.execute(text("ALTER TABLE {} ADD COLUMN {} TEXT".format(table_name, column_name)))
+                else:
+                    # PostgreSQL - usar IF NOT EXISTS via DO block com format dinâmico
+                    # Precisamos construir o SQL dinamicamente
+                    sql = f"""
+                        DO $$ 
+                        BEGIN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns 
+                                WHERE table_name = '{table_name}' 
+                                AND column_name = '{column_name}'
+                            ) THEN
+                                EXECUTE format('ALTER TABLE %I ADD COLUMN %I TEXT', '{table_name}', '{column_name}');
+                            END IF;
+                        END $$;
+                    """
+                    conn.execute(text(sql))
+                conn.commit()
+                print(f"✅ Coluna {column_name} adicionada à tabela {table_name}.")
+            except Exception as e:
+                # Se a coluna já existe (erro de duplicação), ignorar
+                error_str = str(e).lower()
+                if 'duplicate' in error_str or 'already exists' in error_str or ('column' in error_str and 'already' in error_str):
+                    print(f"ℹ️ Coluna {table_name}.{column_name} já existe.")
+                else:
+                    raise
+        return True
+    except Exception as e:
+        print(f"⚠️ Erro ao adicionar coluna {table_name}.{column_name}: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def ensure_base64_columns(force=False):
     """
     Garante que as colunas base64 existem antes de fazer queries.
-    Esta função é CRÍTICA e deve ser executada antes de qualquer query que use Banner ou BannerConteudo.
+    Esta função é CRÍTICA e deve ser executada antes de qualquer query que use modelos com imagens.
     """
     global _migration_cache, _migration_lock, _migration_initialized
     
@@ -9605,127 +9733,35 @@ def ensure_base64_columns(force=False):
         
         success = True
         
-        # Verificar e adicionar coluna banner.imagem_base64
-        if not _migration_cache.get('banner'):
-            try:
-                if 'banner' in inspector.get_table_names():
-                    with db.engine.connect() as conn:
-                        column_exists = False
-                        
-                        if is_sqlite:
-                            result = conn.execute(text("PRAGMA table_info(banner)"))
-                            columns = [row[1] for row in result]
-                            column_exists = 'imagem_base64' in columns
-                        else:
-                            # PostgreSQL
-                            result = conn.execute(text("""
-                                SELECT EXISTS (
-                                    SELECT 1 
-                                    FROM information_schema.columns 
-                                    WHERE table_name = 'banner' 
-                                    AND column_name = 'imagem_base64'
-                                )
-                            """))
-                            column_exists = result.scalar()
-                        
-                        if not column_exists:
-                            print("📝 Adicionando coluna imagem_base64 à tabela banner...")
-                            try:
-                                if is_sqlite:
-                                    conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
-                                else:
-                                    # PostgreSQL - usar IF NOT EXISTS via DO block
-                                    conn.execute(text("""
-                                        DO $$ 
-                                        BEGIN
-                                            IF NOT EXISTS (
-                                                SELECT 1 FROM information_schema.columns 
-                                                WHERE table_name = 'banner' 
-                                                AND column_name = 'imagem_base64'
-                                            ) THEN
-                                                ALTER TABLE banner ADD COLUMN imagem_base64 TEXT;
-                                            END IF;
-                                        END $$;
-                                    """))
-                                conn.commit()
-                                print("✅ Coluna imagem_base64 adicionada à tabela banner.")
-                            except ProgrammingError as e:
-                                # Se a coluna já existe (erro de duplicação), ignorar
-                                if 'duplicate' in str(e).lower() or 'already exists' in str(e).lower():
-                                    print("ℹ️ Coluna banner.imagem_base64 já existe.")
-                                else:
-                                    raise
-                        
-                        _migration_cache['banner'] = True
-                else:
-                    _migration_cache['banner'] = True
-            except Exception as e:
-                print(f"⚠️ Erro ao verificar/adicionar coluna banner.imagem_base64: {e}")
-                import traceback
-                traceback.print_exc()
-                success = False
-                _migration_cache['banner'] = True  # Marcar como verificado para não tentar novamente
+        # Lista de tabelas e suas colunas base64
+        tables_to_migrate = [
+            ('banner', 'imagem_base64'),
+            ('banner_conteudo', 'imagem_base64'),
+            ('projeto', 'imagen_base64'),  # Projeto usa "imagen" em vez de "imagem"
+            ('acao', 'imagem_base64'),
+            ('evento', 'imagem_base64'),
+            ('informativo', 'imagem_base64'),
+            ('radio_programa', 'imagem_base64'),
+        ]
         
-        # Verificar e adicionar coluna banner_conteudo.imagem_base64
-        if not _migration_cache.get('banner_conteudo'):
-            try:
-                if 'banner_conteudo' in inspector.get_table_names():
-                    with db.engine.connect() as conn:
-                        column_exists = False
-                        
-                        if is_sqlite:
-                            result = conn.execute(text("PRAGMA table_info(banner_conteudo)"))
-                            columns = [row[1] for row in result]
-                            column_exists = 'imagem_base64' in columns
-                        else:
-                            # PostgreSQL
-                            result = conn.execute(text("""
-                                SELECT EXISTS (
-                                    SELECT 1 
-                                    FROM information_schema.columns 
-                                    WHERE table_name = 'banner_conteudo' 
-                                    AND column_name = 'imagem_base64'
-                                )
-                            """))
-                            column_exists = result.scalar()
-                        
-                        if not column_exists:
-                            print("📝 Adicionando coluna imagem_base64 à tabela banner_conteudo...")
-                            try:
-                                if is_sqlite:
-                                    conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
-                                else:
-                                    # PostgreSQL - usar IF NOT EXISTS via DO block
-                                    conn.execute(text("""
-                                        DO $$ 
-                                        BEGIN
-                                            IF NOT EXISTS (
-                                                SELECT 1 FROM information_schema.columns 
-                                                WHERE table_name = 'banner_conteudo' 
-                                                AND column_name = 'imagem_base64'
-                                            ) THEN
-                                                ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT;
-                                            END IF;
-                                        END $$;
-                                    """))
-                                conn.commit()
-                                print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo.")
-                            except ProgrammingError as e:
-                                # Se a coluna já existe (erro de duplicação), ignorar
-                                if 'duplicate' in str(e).lower() or 'already exists' in str(e).lower():
-                                    print("ℹ️ Coluna banner_conteudo.imagem_base64 já existe.")
-                                else:
-                                    raise
-                        
-                        _migration_cache['banner_conteudo'] = True
-                else:
-                    _migration_cache['banner_conteudo'] = True
-            except Exception as e:
-                print(f"⚠️ Erro ao verificar/adicionar coluna banner_conteudo.imagem_base64: {e}")
-                import traceback
-                traceback.print_exc()
-                success = False
-                _migration_cache['banner_conteudo'] = True  # Marcar como verificado para não tentar novamente
+        for table_name, column_name in tables_to_migrate:
+            cache_key = table_name
+            if not _migration_cache.get(cache_key):
+                try:
+                    if table_name in inspector.get_table_names():
+                        with db.engine.connect() as conn:
+                            result = _add_base64_column(inspector, conn, table_name, column_name, is_sqlite)
+                            if not result:
+                                success = False
+                        _migration_cache[cache_key] = True
+                    else:
+                        _migration_cache[cache_key] = True
+                except Exception as e:
+                    print(f"⚠️ Erro ao verificar/adicionar coluna {table_name}.{column_name}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    success = False
+                    _migration_cache[cache_key] = True  # Marcar como verificado para não tentar novamente
         
         if success:
             _migration_initialized = True
