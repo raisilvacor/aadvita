@@ -1542,6 +1542,16 @@ class BannerConteudo(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class ModeloDocumento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(200), nullable=False)
+    descricao = db.Column(db.Text)
+    arquivo = db.Column(db.String(500), nullable=False)  # Caminho do arquivo Word
+    nome_arquivo_original = db.Column(db.String(300))  # Nome original do arquivo
+    tamanho_arquivo = db.Column(db.Integer)  # Tamanho em bytes
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 # Decorador para proteger rotas administrativas
 def admin_required(f):
     @wraps(f)
@@ -4475,6 +4485,112 @@ def admin_doacao_info_excluir(id):
         db.session.rollback()
         flash(f'Erro ao excluir informação: {str(e)}', 'error')
     return redirect(url_for('admin_transparencia'))
+
+# ============================================
+# CRUD - MODELOS DE DOCUMENTOS AADVITA
+# ============================================
+
+@app.route('/admin/modelos-documentos')
+@admin_required
+def admin_modelos_documentos():
+    documentos = ModeloDocumento.query.order_by(ModeloDocumento.created_at.desc()).all()
+    return render_template('admin/modelos_documentos.html', documentos=documentos)
+
+@app.route('/admin/modelos-documentos/novo', methods=['GET', 'POST'])
+@admin_required
+def admin_modelos_documentos_novo():
+    if request.method == 'POST':
+        try:
+            nome = request.form.get('nome')
+            descricao = request.form.get('descricao', '')
+            
+            if not nome:
+                flash('Nome do documento é obrigatório!', 'error')
+                return redirect(url_for('admin_modelos_documentos_novo'))
+            
+            # Upload do arquivo
+            if 'arquivo' not in request.files:
+                flash('Selecione um arquivo para upload!', 'error')
+                return redirect(url_for('admin_modelos_documentos_novo'))
+            
+            file = request.files['arquivo']
+            if file.filename == '':
+                flash('Selecione um arquivo para upload!', 'error')
+                return redirect(url_for('admin_modelos_documentos_novo'))
+            
+            # Verificar se é arquivo Word (.doc ou .docx)
+            ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+            if ext not in ['doc', 'docx']:
+                flash('Apenas arquivos Word (.doc ou .docx) são permitidos!', 'error')
+                return redirect(url_for('admin_modelos_documentos_novo'))
+            
+            # Criar diretório se não existir
+            upload_folder = 'static/documents/modelos'
+            os.makedirs(upload_folder, exist_ok=True)
+            
+            # Salvar arquivo
+            filename = secure_filename(file.filename)
+            unique_filename = f"{uuid.uuid4()}_{filename}"
+            filepath = os.path.join(upload_folder, unique_filename)
+            file.save(filepath)
+            
+            # Obter tamanho do arquivo
+            tamanho_arquivo = os.path.getsize(filepath)
+            
+            # Criar registro no banco
+            documento = ModeloDocumento(
+                nome=nome,
+                descricao=descricao,
+                arquivo=f"documents/modelos/{unique_filename}",
+                nome_arquivo_original=filename,
+                tamanho_arquivo=tamanho_arquivo
+            )
+            db.session.add(documento)
+            db.session.commit()
+            flash('Documento adicionado com sucesso!', 'success')
+            return redirect(url_for('admin_modelos_documentos'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao adicionar documento: {str(e)}', 'error')
+            import traceback
+            traceback.print_exc()
+    
+    return render_template('admin/modelos_documentos_form.html')
+
+@app.route('/admin/modelos-documentos/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_modelos_documentos_excluir(id):
+    documento = ModeloDocumento.query.get_or_404(id)
+    try:
+        # Excluir arquivo físico se existir
+        if documento.arquivo:
+            filepath = os.path.join('static', documento.arquivo)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        
+        # Excluir do banco de dados
+        db.session.delete(documento)
+        db.session.commit()
+        flash('Documento excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir documento: {str(e)}', 'error')
+        import traceback
+        traceback.print_exc()
+    return redirect(url_for('admin_modelos_documentos'))
+
+@app.route('/admin/modelos-documentos/<int:id>/download')
+@admin_required
+def admin_modelos_documentos_download(id):
+    documento = ModeloDocumento.query.get_or_404(id)
+    if documento.arquivo:
+        filepath = os.path.join('static', documento.arquivo)
+        if os.path.exists(filepath):
+            directory = os.path.dirname(filepath)
+            filename = os.path.basename(filepath)
+            return send_from_directory(directory, filename, as_attachment=True, download_name=documento.nome_arquivo_original or filename)
+    flash('Arquivo não encontrado!', 'error')
+    return redirect(url_for('admin_modelos_documentos'))
 
 # ============================================
 # CRUD - ASSOCIADOS
