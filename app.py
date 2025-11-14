@@ -9563,6 +9563,8 @@ def ensure_db_initialized():
 # Mas não falha a importação se houver problemas
 try:
     ensure_db_initialized()
+    # Garantir que as colunas base64 existem logo após a inicialização
+    ensure_base64_columns(force=True)
 except Exception as e:
     print(f"Nota: Banco será inicializado na primeira requisição: {e}")
     pass
