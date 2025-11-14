@@ -8146,6 +8146,9 @@ def radio():
 @app.route('/campanhas')
 def campanhas():
     try:
+        # Garantir que colunas base64 existem antes de fazer queries
+        ensure_base64_columns()
+        
         banner = Banner.query.filter_by(tipo='Campanhas', ativo=True).first()
         conteudos = []
         if banner:
@@ -8187,6 +8190,9 @@ def apoie():
 
 @app.route('/editais')
 def editais():
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     banner = Banner.query.filter_by(tipo='Editais', ativo=True).first()
     conteudos = []
     if banner:
@@ -9492,85 +9498,100 @@ except Exception as e:
 
 # Cache para evitar verificar migrações em todas as requisições
 _migration_cache = {'banner': False, 'banner_conteudo': False}
+_migration_lock = False
 
-# Garantir que migrações sejam executadas antes de cada requisição
-# (caso a inicialização no import tenha falhado)
-@app.before_request
-def before_request():
-    """Executa migrações antes de cada requisição se necessário (com cache)"""
-    global _migration_cache
+def ensure_base64_columns():
+    """Garante que as colunas base64 existem antes de fazer queries"""
+    global _migration_cache, _migration_lock
     
-    # Pular se já verificamos e migramos
-    if _migration_cache.get('banner') and _migration_cache.get('banner_conteudo'):
+    # Evitar execuções simultâneas
+    if _migration_lock:
         return
+    _migration_lock = True
     
     try:
-        # Verificar e adicionar colunas base64 se necessário
+        # Pular se já verificamos e migramos
+        if _migration_cache.get('banner') and _migration_cache.get('banner_conteudo'):
+            _migration_lock = False
+            return
+        
         from sqlalchemy import text, inspect
         inspector = inspect(db.engine)
         db_type = db.engine.url.drivername
         
         # Verificar banner (apenas se ainda não foi verificado)
-        if not _migration_cache.get('banner') and 'banner' in inspector.get_table_names():
-            is_sqlite = db_type == 'sqlite'
+        if not _migration_cache.get('banner'):
             try:
-                with db.engine.connect() as conn:
-                    if is_sqlite:
-                        result = conn.execute(text("PRAGMA table_info(banner)"))
-                        columns = [row[1] for row in result]
-                    else:
-                        result = conn.execute(text("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'banner' AND column_name = 'imagem_base64'
-                        """))
-                        columns = [row[0] for row in result]
-                    
-                    if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                if 'banner' in inspector.get_table_names():
+                    is_sqlite = db_type == 'sqlite'
+                    with db.engine.connect() as conn:
                         if is_sqlite:
-                            conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                            result = conn.execute(text("PRAGMA table_info(banner)"))
+                            columns = [row[1] for row in result]
                         else:
-                            conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
-                        conn.commit()
-                        print("✅ Coluna imagem_base64 adicionada à tabela banner (before_request).")
-                    _migration_cache['banner'] = True
+                            result = conn.execute(text("""
+                                SELECT column_name 
+                                FROM information_schema.columns 
+                                WHERE table_name = 'banner' AND column_name = 'imagem_base64'
+                            """))
+                            columns = [row[0] for row in result]
+                        
+                        if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                            if is_sqlite:
+                                conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                            else:
+                                conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                            conn.commit()
+                            print("✅ Coluna imagem_base64 adicionada à tabela banner.")
+                        _migration_cache['banner'] = True
             except Exception as e:
                 print(f"⚠️ Erro ao verificar/adicionar coluna banner.imagem_base64: {e}")
-                # Marcar como verificado mesmo com erro para não tentar novamente
+                import traceback
+                traceback.print_exc()
                 _migration_cache['banner'] = True
         
         # Verificar banner_conteudo (apenas se ainda não foi verificado)
-        if not _migration_cache.get('banner_conteudo') and 'banner_conteudo' in inspector.get_table_names():
-            is_sqlite = db_type == 'sqlite'
+        if not _migration_cache.get('banner_conteudo'):
             try:
-                with db.engine.connect() as conn:
-                    if is_sqlite:
-                        result = conn.execute(text("PRAGMA table_info(banner_conteudo)"))
-                        columns = [row[1] for row in result]
-                    else:
-                        result = conn.execute(text("""
-                            SELECT column_name 
-                            FROM information_schema.columns 
-                            WHERE table_name = 'banner_conteudo' AND column_name = 'imagem_base64'
-                        """))
-                        columns = [row[0] for row in result]
-                    
-                    if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                if 'banner_conteudo' in inspector.get_table_names():
+                    is_sqlite = db_type == 'sqlite'
+                    with db.engine.connect() as conn:
                         if is_sqlite:
-                            conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                            result = conn.execute(text("PRAGMA table_info(banner_conteudo)"))
+                            columns = [row[1] for row in result]
                         else:
-                            conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
-                        conn.commit()
-                        print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo (before_request).")
-                    _migration_cache['banner_conteudo'] = True
+                            result = conn.execute(text("""
+                                SELECT column_name 
+                                FROM information_schema.columns 
+                                WHERE table_name = 'banner_conteudo' AND column_name = 'imagem_base64'
+                            """))
+                            columns = [row[0] for row in result]
+                        
+                        if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                            if is_sqlite:
+                                conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                            else:
+                                conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                            conn.commit()
+                            print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo.")
+                        _migration_cache['banner_conteudo'] = True
             except Exception as e:
                 print(f"⚠️ Erro ao verificar/adicionar coluna banner_conteudo.imagem_base64: {e}")
-                # Marcar como verificado mesmo com erro para não tentar novamente
+                import traceback
+                traceback.print_exc()
                 _migration_cache['banner_conteudo'] = True
     except Exception as e:
-        # Não bloquear requisições se houver erro na migração
-        print(f"⚠️ Erro geral no before_request: {e}")
-        pass
+        print(f"⚠️ Erro geral em ensure_base64_columns: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        _migration_lock = False
+
+# Garantir que migrações sejam executadas antes de cada requisição
+@app.before_request
+def before_request():
+    """Executa migrações antes de cada requisição se necessário"""
+    ensure_base64_columns()
 
 if __name__ == '__main__':
     init_db()
