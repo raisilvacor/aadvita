@@ -7967,9 +7967,6 @@ def index():
     # Buscar apoiadores com logo
     apoiadores = Apoiador.query.filter(Apoiador.logo != None, Apoiador.logo != '').order_by(Apoiador.nome.asc()).all()
     
-    # Garantir que colunas base64 existem antes de fazer queries
-    ensure_base64_columns()
-    
     # Buscar banners ativos
     banners = Banner.query.filter_by(ativo=True).order_by(Banner.ordem.asc()).all()
     # Criar dicionário para facilitar acesso
