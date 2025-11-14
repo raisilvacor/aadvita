@@ -1,0 +1,80 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Modelos de Documentos AADVITA{% endblock %}
+
+{% block page_title %}Modelos de Documentos AADVITA{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Modelos de Documentos</h2>
+        <a href="{{ url_for('admin_modelos_documentos_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Documento
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Descrição</th>
+                    <th>Arquivo</th>
+                    <th>Tamanho</th>
+                    <th>Data de Upload</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if documentos %}
+                    {% for documento in documentos %}
+                    <tr>
+                        <td><strong>{{ documento.nome }}</strong></td>
+                        <td>{{ documento.descricao or '-' }}</td>
+                        <td>
+                            <span style="color: #6b7280; font-size: 0.875rem;">
+                                📄 {{ documento.nome_arquivo_original or 'N/A' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if documento.tamanho_arquivo %}
+                                {% set tamanho_mb = documento.tamanho_arquivo / (1024 * 1024) %}
+                                {% if tamanho_mb < 1 %}
+                                    {{ "%.2f"|format(documento.tamanho_arquivo / 1024) }} KB
+                                {% else %}
+                                    {{ "%.2f"|format(tamanho_mb) }} MB
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ documento.created_at.strftime('%d/%m/%Y %H:%M') if documento.created_at else '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_modelos_documentos_download', id=documento.id) }}" 
+                               class="btn-admin btn-admin-primary btn-admin-small"
+                               target="_blank">
+                                <span>⬇️</span> Baixar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_modelos_documentos_excluir', id=documento.id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este documento?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhum documento cadastrado. Clique em "Novo Documento" para adicionar.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Novo Modelo de Documento{% endblock %}
+
+{% block page_title %}Novo Modelo de Documento{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="nome">Nome do Documento *</label>
+            <input type="text" id="nome" name="nome" required 
+                   placeholder="Ex: Modelo de Ata de Reunião"
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            <small style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem; display: block;">
+                Nome descritivo do documento que será exibido na lista
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao">Descrição (opcional)</label>
+            <textarea id="descricao" name="descricao" rows="4" 
+                      placeholder="Descreva o propósito ou uso deste documento..."
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="arquivo">Arquivo Word *</label>
+            <input type="file" id="arquivo" name="arquivo" accept=".doc,.docx" required
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #3b82f6; border-radius: 0.5rem; font-size: 1rem; background: #eff6ff;">
+            <small style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem; display: block;">
+                Formatos aceitos: .doc ou .docx (máx. 16MB)
+            </small>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar Documento
+            </button>
+            <a href="{{ url_for('admin_modelos_documentos') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
