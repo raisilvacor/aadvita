@@ -6252,6 +6252,9 @@ def slider_imagem(id):
 def banner_conteudo_imagem(id):
     """Rota para servir imagens do banner conteúdo do banco de dados (base64)"""
     try:
+        # Garantir que colunas base64 existem antes de fazer queries
+        ensure_base64_columns()
+        
         conteudo = BannerConteudo.query.get_or_404(id)
         
         # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
