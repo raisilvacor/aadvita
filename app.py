@@ -9410,6 +9410,31 @@ def ensure_db_initialized():
                                 conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
                             conn.commit()
                             print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo.")
+                
+                # Adicionar coluna imagem_base64 à tabela banner
+                table_exists = 'banner' in inspector.get_table_names()
+                if table_exists:
+                    is_sqlite = db_type == 'sqlite'
+                    with db.engine.connect() as conn:
+                        if is_sqlite:
+                            result = conn.execute(text("PRAGMA table_info(banner)"))
+                            columns = [row[1] for row in result]
+                        else:
+                            result = conn.execute(text("""
+                                SELECT column_name 
+                                FROM information_schema.columns 
+                                WHERE table_name = 'banner' AND column_name = 'imagem_base64'
+                            """))
+                            columns = [row[0] for row in result]
+                        
+                        if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                            print("📝 Adicionando coluna imagem_base64 à tabela banner...")
+                            if is_sqlite:
+                                conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                            else:
+                                conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                            conn.commit()
+                            print("✅ Coluna imagem_base64 adicionada à tabela banner.")
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
@@ -9464,6 +9489,72 @@ try:
 except Exception as e:
     print(f"Nota: Banco será inicializado na primeira requisição: {e}")
     pass
+
+# Garantir que migrações sejam executadas antes de cada requisição
+# (caso a inicialização no import tenha falhado)
+@app.before_request
+def before_request():
+    """Executa migrações antes de cada requisição se necessário"""
+    try:
+        # Verificar e adicionar colunas base64 se necessário
+        from sqlalchemy import text, inspect
+        inspector = inspect(db.engine)
+        db_type = db.engine.url.drivername
+        
+        # Verificar banner
+        if 'banner' in inspector.get_table_names():
+            is_sqlite = db_type == 'sqlite'
+            with db.engine.connect() as conn:
+                if is_sqlite:
+                    result = conn.execute(text("PRAGMA table_info(banner)"))
+                    columns = [row[1] for row in result]
+                else:
+                    result = conn.execute(text("""
+                        SELECT column_name 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'banner' AND column_name = 'imagem_base64'
+                    """))
+                    columns = [row[0] for row in result]
+                
+                if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                    try:
+                        if is_sqlite:
+                            conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                        else:
+                            conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                        conn.commit()
+                        print("✅ Coluna imagem_base64 adicionada à tabela banner (before_request).")
+                    except Exception as e:
+                        print(f"⚠️ Erro ao adicionar coluna banner.imagem_base64: {e}")
+        
+        # Verificar banner_conteudo
+        if 'banner_conteudo' in inspector.get_table_names():
+            is_sqlite = db_type == 'sqlite'
+            with db.engine.connect() as conn:
+                if is_sqlite:
+                    result = conn.execute(text("PRAGMA table_info(banner_conteudo)"))
+                    columns = [row[1] for row in result]
+                else:
+                    result = conn.execute(text("""
+                        SELECT column_name 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'banner_conteudo' AND column_name = 'imagem_base64'
+                    """))
+                    columns = [row[0] for row in result]
+                
+                if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                    try:
+                        if is_sqlite:
+                            conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                        else:
+                            conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                        conn.commit()
+                        print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo (before_request).")
+                    except Exception as e:
+                        print(f"⚠️ Erro ao adicionar coluna banner_conteudo.imagem_base64: {e}")
+    except Exception as e:
+        # Não bloquear requisições se houver erro na migração
+        pass
 
 if __name__ == '__main__':
     init_db()
