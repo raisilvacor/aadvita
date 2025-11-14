@@ -6291,7 +6291,7 @@ def banner_conteudo_imagem(id):
         from flask import abort
         abort(404)
     except Exception as e:
-        print(f"Erro na rota slider_imagem: {e}")
+        print(f"Erro na rota banner_conteudo_imagem: {e}")
         import traceback
         traceback.print_exc()
         from flask import abort
@@ -8145,11 +8145,18 @@ def radio():
 
 @app.route('/campanhas')
 def campanhas():
-    banner = Banner.query.filter_by(tipo='Campanhas', ativo=True).first()
-    conteudos = []
-    if banner:
-        conteudos = BannerConteudo.query.filter_by(banner_id=banner.id, ativo=True).order_by(BannerConteudo.ordem.asc()).all()
-    return render_template('campanhas.html', banner=banner, conteudos=conteudos)
+    try:
+        banner = Banner.query.filter_by(tipo='Campanhas', ativo=True).first()
+        conteudos = []
+        if banner:
+            conteudos = BannerConteudo.query.filter_by(banner_id=banner.id, ativo=True).order_by(BannerConteudo.ordem.asc()).all()
+        return render_template('campanhas.html', banner=banner, conteudos=conteudos)
+    except Exception as e:
+        print(f"Erro na rota campanhas: {e}")
+        import traceback
+        traceback.print_exc()
+        # Retornar página mesmo com erro, mas sem conteudos
+        return render_template('campanhas.html', banner=None, conteudos=[])
 
 @app.route('/apoie')
 def apoie():
