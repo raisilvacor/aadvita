@@ -9737,6 +9737,7 @@ _migration_initialized = False
 
 def _add_column(inspector, conn, table_name, column_name, is_sqlite, column_type='TEXT'):
     """Função auxiliar para adicionar coluna a uma tabela"""
+    from sqlalchemy import text
     try:
         column_exists = False
         
