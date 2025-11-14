@@ -1051,7 +1051,8 @@ class Projeto(db.Model):
     consideracoes_finais = db.Column(db.Text)
     imagen = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagen_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
-    arquivo_pdf = db.Column(db.String(300))  # Caminho do arquivo PDF do projeto
+    arquivo_pdf = db.Column(db.String(300))  # Caminho do arquivo PDF ou 'base64:application/pdf'
+    arquivo_pdf_base64 = db.Column(db.Text, nullable=True)  # PDF em base64 para persistência no Render (opcional)
     estado = db.Column(db.String(50), default='Ativo')
     data_inicio = db.Column(db.Date)
     data_fim = db.Column(db.Date)
@@ -1845,21 +1846,32 @@ def admin_projetos_novo():
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_projetos_novo'))
             
-            # Processar upload do PDF
+            # Processar upload do PDF - salvar como base64 no banco para persistência no Render
             pdf_path = None
+            pdf_base64_data = None
             if 'arquivo_pdf' in request.files:
                 file = request.files['arquivo_pdf']
                 if file and file.filename != '' and allowed_pdf_file(file.filename):
-                    # Criar pasta para PDFs se não existir
-                    upload_folder_pdf = os.path.join('static', 'documents', 'projetos')
-                    os.makedirs(upload_folder_pdf, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder_pdf, unique_filename)
-                    file.save(filepath)
+                    # Converter para base64
+                    pdf_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    pdf_path = "base64:application/pdf"
                     
-                    pdf_path = f"documents/projetos/{unique_filename}"
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder_pdf = os.path.join('static', 'documents', 'projetos')
+                        os.makedirs(upload_folder_pdf, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder_pdf, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        pdf_path = f"documents/projetos/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar PDF localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido para PDF. Use apenas arquivos .pdf', 'error')
                     return redirect(url_for('admin_projetos_novo'))
@@ -1883,7 +1895,8 @@ def admin_projetos_novo():
                 data_inicio=datetime.strptime(data_inicio_str, "%Y-%m-%d").date() if data_inicio_str else None,
                 data_fim=datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None,
                 imagen=imagen_path,
-                arquivo_pdf=pdf_path
+                arquivo_pdf=pdf_path,
+                arquivo_pdf_base64=pdf_base64_data
             )
             db.session.add(projeto)
             db.session.commit()
@@ -1931,12 +1944,12 @@ def admin_projetos_editar(id):
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_projetos_editar', id=id))
             
-            # Processar upload do PDF
+            # Processar upload do PDF - salvar como base64 no banco para persistência no Render
             if 'arquivo_pdf' in request.files:
                 file = request.files['arquivo_pdf']
                 if file and file.filename != '' and allowed_pdf_file(file.filename):
-                    # Remover PDF antigo se existir
-                    if projeto.arquivo_pdf:
+                    # Remover PDF antigo se existir (apenas arquivo local, não base64)
+                    if projeto.arquivo_pdf and not (projeto.arquivo_pdf.startswith('base64:') if projeto.arquivo_pdf else False):
                         old_filepath = os.path.join('static', projeto.arquivo_pdf)
                         if os.path.exists(old_filepath):
                             try:
@@ -1944,23 +1957,34 @@ def admin_projetos_editar(id):
                             except:
                                 pass
                     
-                    # Criar pasta para PDFs se não existir
-                    upload_folder_pdf = os.path.join('static', 'documents', 'projetos')
-                    os.makedirs(upload_folder_pdf, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder_pdf, unique_filename)
-                    file.save(filepath)
+                    # Converter para base64
+                    pdf_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    projeto.arquivo_pdf_base64 = pdf_base64_data
+                    projeto.arquivo_pdf = "base64:application/pdf"
                     
-                    projeto.arquivo_pdf = f"documents/projetos/{unique_filename}"
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder_pdf = os.path.join('static', 'documents', 'projetos')
+                        os.makedirs(upload_folder_pdf, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder_pdf, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        projeto.arquivo_pdf = f"documents/projetos/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar PDF localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido para PDF. Use apenas arquivos .pdf', 'error')
                     return redirect(url_for('admin_projetos_editar', id=id))
             
             # Remover PDF se solicitado
             if request.form.get('remover_pdf') == '1':
-                if projeto.arquivo_pdf:
+                if projeto.arquivo_pdf and not (projeto.arquivo_pdf.startswith('base64:') if projeto.arquivo_pdf else False):
                     old_filepath = os.path.join('static', projeto.arquivo_pdf)
                     if os.path.exists(old_filepath):
                         try:
@@ -1968,6 +1992,7 @@ def admin_projetos_editar(id):
                         except:
                             pass
                 projeto.arquivo_pdf = None
+                projeto.arquivo_pdf_base64 = None
             
             projeto.titulo = request.form.get('titulo')
             projeto.descripcion = request.form.get('descripcion')
@@ -8169,31 +8194,56 @@ def projeto(id):
 
 @app.route('/projetos/<int:id>/download')
 def projeto_download_pdf(id):
-    """Rota para download do PDF do projeto"""
+    """Rota para download do PDF do projeto (do banco de dados base64 ou arquivo estático)"""
     projeto = Projeto.query.get_or_404(id)
     
     if not projeto.arquivo_pdf:
         from flask import abort
         abort(404)
     
-    from flask import send_from_directory
-    import os
+    # Verificar se tem PDF em base64 (prioridade para persistência no Render)
+    pdf_base64 = getattr(projeto, 'arquivo_pdf_base64', None)
     
-    file_path = os.path.dirname(projeto.arquivo_pdf)
-    file_name = os.path.basename(projeto.arquivo_pdf)
-    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+    if pdf_base64:
+        # Servir PDF do banco de dados (base64)
+        try:
+            pdf_data = base64.b64decode(pdf_base64)
+            from flask import Response
+            return Response(
+                pdf_data,
+                mimetype='application/pdf',
+                headers={
+                    'Content-Disposition': f'attachment; filename=projeto_{projeto.titulo.replace(" ", "_")}.pdf'
+                }
+            )
+        except Exception as e:
+            print(f"Erro ao decodificar PDF base64: {e}")
+            from flask import abort
+            abort(404)
     
-    try:
-        return send_from_directory(
-            os.path.join(static_dir, file_path), 
-            file_name, 
-            as_attachment=True,
-            download_name=f'projeto_{projeto.titulo.replace(" ", "_")}.pdf'
-        )
-    except Exception as e:
-        print(f"Erro ao servir PDF do projeto: {e}")
-        from flask import abort
-        abort(404)
+    # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+    if projeto.arquivo_pdf and not (projeto.arquivo_pdf.startswith('base64:') if projeto.arquivo_pdf else False):
+        from flask import send_from_directory
+        import os
+        
+        file_path = os.path.dirname(projeto.arquivo_pdf)
+        file_name = os.path.basename(projeto.arquivo_pdf)
+        static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+        
+        try:
+            return send_from_directory(
+                os.path.join(static_dir, file_path), 
+                file_name, 
+                as_attachment=True,
+                download_name=f'projeto_{projeto.titulo.replace(" ", "_")}.pdf'
+            )
+        except Exception as e:
+            print(f"Erro ao servir PDF do arquivo: {e}")
+            from flask import abort
+            abort(404)
+    
+    from flask import abort
+    abort(404)
 
 @app.route('/acoes')
 def acoes():
@@ -9603,6 +9653,7 @@ def ensure_db_initialized():
                 # Adicionar colunas base64 para os outros modelos
                 tables_to_migrate = [
                     ('projeto', 'imagen_base64'),  # Projeto usa "imagen" em vez de "imagem"
+                    ('projeto', 'arquivo_pdf_base64'),  # PDF do projeto em base64
                     ('acao', 'imagem_base64'),
                     ('evento', 'imagem_base64'),
                     ('informativo', 'imagem_base64'),
@@ -9719,15 +9770,8 @@ except Exception as e:
 
 # Cache para evitar verificar migrações em todas as requisições
 # Incluir TODOS os modelos que têm colunas base64
-_migration_cache = {
-    'banner': False, 
-    'banner_conteudo': False,
-    'projeto': False,
-    'acao': False,
-    'evento': False,
-    'informativo': False,
-    'radio_programa': False
-}
+# Usar tupla (table, column) como chave para permitir múltiplas colunas por tabela
+_migration_cache = {}
 _migration_lock = False
 _migration_initialized = False
 
@@ -9825,6 +9869,7 @@ def ensure_base64_columns(force=False):
             ('banner', 'imagem_base64'),
             ('banner_conteudo', 'imagem_base64'),
             ('projeto', 'imagen_base64'),  # Projeto usa "imagen" em vez de "imagem"
+            ('projeto', 'arquivo_pdf_base64'),  # PDF do projeto em base64
             ('acao', 'imagem_base64'),
             ('evento', 'imagem_base64'),
             ('informativo', 'imagem_base64'),
@@ -9832,7 +9877,7 @@ def ensure_base64_columns(force=False):
         ]
         
         for table_name, column_name in tables_to_migrate:
-            cache_key = table_name
+            cache_key = (table_name, column_name)  # Usar tupla como chave
             if not _migration_cache.get(cache_key):
                 try:
                     if table_name in inspector.get_table_names():
