@@ -8030,6 +8030,10 @@ def admin_financeiro_excluir_lote():
 
 @app.route('/')
 def index():
+    # CRÍTICO: Garantir que colunas base64 existem ANTES de qualquer query
+    # Isso deve ser feito PRIMEIRO, antes de qualquer query que use modelos com essas colunas
+    ensure_base64_columns()
+    
     # Buscar as reuniões presenciais ordenadas pela data mais atual primeiro
     reuniones_presenciales = ReunionPresencial.query.order_by(
         ReunionPresencial.fecha.desc()
@@ -8039,9 +8043,6 @@ def index():
     reuniones_virtuales = ReunionVirtual.query.order_by(
         ReunionVirtual.created_at.desc()
     ).limit(3).all()
-    
-    # Garantir que colunas base64 existem antes de fazer queries
-    ensure_base64_columns()
     
     projetos = Projeto.query.order_by(Projeto.created_at.desc()).limit(3).all()
     acoes = Acao.query.order_by(Acao.data.desc()).limit(3).all()
@@ -8184,11 +8185,13 @@ def agenda_virtual():
 
 @app.route('/projetos')
 def projetos():
+    ensure_base64_columns()
     projetos = Projeto.query.order_by(Projeto.data_inicio.desc(), Projeto.created_at.desc()).all()
     return render_template('projetos.html', projetos=projetos)
 
 @app.route('/projetos/<int:id>')
 def projeto(id):
+    ensure_base64_columns()
     projeto = Projeto.query.get_or_404(id)
     return render_template('projeto.html', projeto=projeto)
 
@@ -9800,10 +9803,6 @@ def ensure_base64_columns(force=False):
     """
     global _migration_cache, _migration_lock, _migration_initialized
     
-    # Se já inicializamos e não forçamos, pular
-    if _migration_initialized and not force:
-        return True
-    
     # Evitar execuções simultâneas
     if _migration_lock:
         # Aguardar um pouco e tentar novamente
@@ -9840,23 +9839,53 @@ def ensure_base64_columns(force=False):
         
         for table_name, column_name in tables_to_migrate:
             cache_key = (table_name, column_name)  # Usar tupla como chave
-            if not _migration_cache.get(cache_key):
-                try:
-                    if table_name in inspector.get_table_names():
+            
+            # SEMPRE verificar se a coluna realmente existe, não confiar apenas no cache
+            # Isso é crítico porque o cache pode estar incorreto após um deploy
+            try:
+                if table_name in inspector.get_table_names():
+                    # Verificar se a coluna realmente existe
+                    column_exists = False
+                    with db.engine.connect() as conn:
+                        if is_sqlite:
+                            result = conn.execute(text("PRAGMA table_info({})".format(table_name)))
+                            columns = [row[1] for row in result]
+                            column_exists = column_name in columns
+                        else:
+                            # PostgreSQL
+                            result = conn.execute(text("""
+                                SELECT EXISTS (
+                                    SELECT 1 
+                                    FROM information_schema.columns 
+                                    WHERE table_name = :table_name 
+                                    AND column_name = :column_name
+                                )
+                            """), {'table_name': table_name, 'column_name': column_name})
+                            column_exists = result.scalar()
+                    
+                    # Se a coluna não existe, criar agora
+                    if not column_exists:
+                        print(f"🔧 Coluna {table_name}.{column_name} não existe. Criando agora...")
                         with db.engine.connect() as conn:
-                            # Usar _add_column para todas as colunas (não apenas base64)
                             result = _add_column(inspector, conn, table_name, column_name, is_sqlite, 'TEXT')
                             if not result:
                                 success = False
-                        _migration_cache[cache_key] = True
+                                print(f"❌ Falha ao criar coluna {table_name}.{column_name}")
+                            else:
+                                print(f"✅ Coluna {table_name}.{column_name} criada com sucesso")
+                                _migration_cache[cache_key] = True
                     else:
+                        # Coluna existe, marcar no cache
                         _migration_cache[cache_key] = True
-                except Exception as e:
-                    print(f"⚠️ Erro ao verificar/adicionar coluna {table_name}.{column_name}: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    success = False
-                    _migration_cache[cache_key] = True  # Marcar como verificado para não tentar novamente
+                else:
+                    # Tabela não existe ainda, marcar no cache para não tentar novamente
+                    _migration_cache[cache_key] = True
+            except Exception as e:
+                print(f"⚠️ Erro ao verificar/adicionar coluna {table_name}.{column_name}: {e}")
+                import traceback
+                traceback.print_exc()
+                success = False
+                # NÃO marcar como verificado se houve erro - tentar novamente na próxima vez
         
         if success:
             _migration_initialized = True
