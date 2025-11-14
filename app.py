@@ -9651,8 +9651,10 @@ def ensure_db_initialized():
                                     raise
                 
                 # Adicionar colunas base64 para os outros modelos
+                # IMPORTANTE: Adicionar também colunas que não são base64 mas foram adicionadas ao modelo
                 tables_to_migrate = [
                     ('projeto', 'imagen_base64'),  # Projeto usa "imagen" em vez de "imagem"
+                    ('projeto', 'arquivo_pdf'),  # Campo arquivo_pdf (pode ser caminho ou 'base64:...')
                     ('projeto', 'arquivo_pdf_base64'),  # PDF do projeto em base64
                     ('acao', 'imagem_base64'),
                     ('evento', 'imagem_base64'),
@@ -9665,52 +9667,7 @@ def ensure_db_initialized():
                     if table_exists:
                         is_sqlite = db_type == 'sqlite'
                         with db.engine.connect() as conn:
-                            column_exists = False
-                            
-                            if is_sqlite:
-                                result = conn.execute(text("PRAGMA table_info({})".format(table_name)))
-                                columns = [row[1] for row in result]
-                                column_exists = column_name in columns
-                            else:
-                                # PostgreSQL - usar EXISTS para verificação mais robusta
-                                result = conn.execute(text("""
-                                    SELECT EXISTS (
-                                        SELECT 1 
-                                        FROM information_schema.columns 
-                                        WHERE table_name = :table_name 
-                                        AND column_name = :column_name
-                                    )
-                                """), {'table_name': table_name, 'column_name': column_name})
-                                column_exists = result.scalar()
-                            
-                            if not column_exists:
-                                print(f"📝 Adicionando coluna {column_name} à tabela {table_name}...")
-                                try:
-                                    if is_sqlite:
-                                        conn.execute(text("ALTER TABLE {} ADD COLUMN {} TEXT".format(table_name, column_name)))
-                                    else:
-                                        # PostgreSQL - usar IF NOT EXISTS via DO block
-                                        sql = f"""
-                                            DO $$ 
-                                            BEGIN
-                                                IF NOT EXISTS (
-                                                    SELECT 1 FROM information_schema.columns 
-                                                    WHERE table_name = '{table_name}' 
-                                                    AND column_name = '{column_name}'
-                                                ) THEN
-                                                    EXECUTE format('ALTER TABLE %I ADD COLUMN %I TEXT', '{table_name}', '{column_name}');
-                                                END IF;
-                                            END $$;
-                                        """
-                                        conn.execute(text(sql))
-                                    conn.commit()
-                                    print(f"✅ Coluna {column_name} adicionada à tabela {table_name}.")
-                                except Exception as e:
-                                    error_str = str(e).lower()
-                                    if 'duplicate' in error_str or 'already exists' in error_str or ('column' in error_str and 'already' in error_str):
-                                        print(f"ℹ️ Coluna {table_name}.{column_name} já existe.")
-                                    else:
-                                        raise
+                            _add_column(inspector, conn, table_name, column_name, is_sqlite, 'TEXT')
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
@@ -9865,10 +9822,12 @@ def ensure_base64_columns(force=False):
         success = True
         
         # Lista de tabelas e suas colunas base64
+        # IMPORTANTE: Adicionar também colunas que não são base64 mas foram adicionadas ao modelo
         tables_to_migrate = [
             ('banner', 'imagem_base64'),
             ('banner_conteudo', 'imagem_base64'),
             ('projeto', 'imagen_base64'),  # Projeto usa "imagen" em vez de "imagem"
+            ('projeto', 'arquivo_pdf'),  # Campo arquivo_pdf (pode ser caminho ou 'base64:...')
             ('projeto', 'arquivo_pdf_base64'),  # PDF do projeto em base64
             ('acao', 'imagem_base64'),
             ('evento', 'imagem_base64'),
@@ -9882,7 +9841,8 @@ def ensure_base64_columns(force=False):
                 try:
                     if table_name in inspector.get_table_names():
                         with db.engine.connect() as conn:
-                            result = _add_base64_column(inspector, conn, table_name, column_name, is_sqlite)
+                            # Usar _add_column para todas as colunas (não apenas base64)
+                            result = _add_column(inspector, conn, table_name, column_name, is_sqlite, 'TEXT')
                             if not result:
                                 success = False
                         _migration_cache[cache_key] = True
