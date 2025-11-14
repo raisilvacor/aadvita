@@ -7956,6 +7956,9 @@ def index():
         ReunionVirtual.created_at.desc()
     ).limit(3).all()
     
+    # Garantir que colunas base64 existem antes de fazer queries
+    ensure_base64_columns()
+    
     projetos = Projeto.query.order_by(Projeto.created_at.desc()).limit(3).all()
     acoes = Acao.query.order_by(Acao.data.desc()).limit(3).all()
     videos = Video.query.order_by(Video.ordem.desc(), Video.created_at.desc()).limit(3).all()
