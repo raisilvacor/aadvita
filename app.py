@@ -9418,50 +9418,100 @@ def ensure_db_initialized():
                 if table_exists:
                     is_sqlite = db_type == 'sqlite'
                     with db.engine.connect() as conn:
+                        column_exists = False
+                        
                         if is_sqlite:
                             result = conn.execute(text("PRAGMA table_info(banner_conteudo)"))
                             columns = [row[1] for row in result]
+                            column_exists = 'imagem_base64' in columns
                         else:
+                            # PostgreSQL - usar EXISTS para verificação mais robusta
                             result = conn.execute(text("""
-                                SELECT column_name 
-                                FROM information_schema.columns 
-                                WHERE table_name = 'banner_conteudo' AND column_name = 'imagem_base64'
+                                SELECT EXISTS (
+                                    SELECT 1 
+                                    FROM information_schema.columns 
+                                    WHERE table_name = 'banner_conteudo' 
+                                    AND column_name = 'imagem_base64'
+                                )
                             """))
-                            columns = [row[0] for row in result]
+                            column_exists = result.scalar()
                         
-                        if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                        if not column_exists:
                             print("📝 Adicionando coluna imagem_base64 à tabela banner_conteudo...")
-                            if is_sqlite:
-                                conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
-                            else:
-                                conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
-                            conn.commit()
-                            print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo.")
+                            try:
+                                if is_sqlite:
+                                    conn.execute(text("ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT"))
+                                else:
+                                    # PostgreSQL - usar IF NOT EXISTS via DO block
+                                    conn.execute(text("""
+                                        DO $$ 
+                                        BEGIN
+                                            IF NOT EXISTS (
+                                                SELECT 1 FROM information_schema.columns 
+                                                WHERE table_name = 'banner_conteudo' 
+                                                AND column_name = 'imagem_base64'
+                                            ) THEN
+                                                ALTER TABLE banner_conteudo ADD COLUMN imagem_base64 TEXT;
+                                            END IF;
+                                        END $$;
+                                    """))
+                                conn.commit()
+                                print("✅ Coluna imagem_base64 adicionada à tabela banner_conteudo.")
+                            except Exception as e:
+                                if 'duplicate' in str(e).lower() or 'already exists' in str(e).lower():
+                                    print("ℹ️ Coluna banner_conteudo.imagem_base64 já existe.")
+                                else:
+                                    raise
                 
                 # Adicionar coluna imagem_base64 à tabela banner
                 table_exists = 'banner' in inspector.get_table_names()
                 if table_exists:
                     is_sqlite = db_type == 'sqlite'
                     with db.engine.connect() as conn:
+                        column_exists = False
+                        
                         if is_sqlite:
                             result = conn.execute(text("PRAGMA table_info(banner)"))
                             columns = [row[1] for row in result]
+                            column_exists = 'imagem_base64' in columns
                         else:
+                            # PostgreSQL - usar EXISTS para verificação mais robusta
                             result = conn.execute(text("""
-                                SELECT column_name 
-                                FROM information_schema.columns 
-                                WHERE table_name = 'banner' AND column_name = 'imagem_base64'
+                                SELECT EXISTS (
+                                    SELECT 1 
+                                    FROM information_schema.columns 
+                                    WHERE table_name = 'banner' 
+                                    AND column_name = 'imagem_base64'
+                                )
                             """))
-                            columns = [row[0] for row in result]
+                            column_exists = result.scalar()
                         
-                        if (is_sqlite and 'imagem_base64' not in columns) or (not is_sqlite and len(columns) == 0):
+                        if not column_exists:
                             print("📝 Adicionando coluna imagem_base64 à tabela banner...")
-                            if is_sqlite:
-                                conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
-                            else:
-                                conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
-                            conn.commit()
-                            print("✅ Coluna imagem_base64 adicionada à tabela banner.")
+                            try:
+                                if is_sqlite:
+                                    conn.execute(text("ALTER TABLE banner ADD COLUMN imagem_base64 TEXT"))
+                                else:
+                                    # PostgreSQL - usar IF NOT EXISTS via DO block
+                                    conn.execute(text("""
+                                        DO $$ 
+                                        BEGIN
+                                            IF NOT EXISTS (
+                                                SELECT 1 FROM information_schema.columns 
+                                                WHERE table_name = 'banner' 
+                                                AND column_name = 'imagem_base64'
+                                            ) THEN
+                                                ALTER TABLE banner ADD COLUMN imagem_base64 TEXT;
+                                            END IF;
+                                        END $$;
+                                    """))
+                                conn.commit()
+                                print("✅ Coluna imagem_base64 adicionada à tabela banner.")
+                            except Exception as e:
+                                if 'duplicate' in str(e).lower() or 'already exists' in str(e).lower():
+                                    print("ℹ️ Coluna banner.imagem_base64 já existe.")
+                                else:
+                                    raise
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
