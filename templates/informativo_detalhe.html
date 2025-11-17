@@ -38,7 +38,7 @@
                 <!-- Página de Detalhes da Notícia -->
                 {% if informativo.imagem %}
                 <div style="margin-bottom: 2rem; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 100%;">
-                    <img src="{{ url_for('static', filename=informativo.imagem) }}" 
+                    <img src="{{ informativo_imagem_url(informativo) or url_for('static', filename=informativo.imagem) }}" 
                          alt="{{ informativo.titulo }}" 
                          style="width: 100%; max-width: 100%; height: auto; display: block; max-height: 500px; object-fit: cover;">
                 </div>

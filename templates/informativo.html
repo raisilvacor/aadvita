@@ -38,7 +38,7 @@
                 <article class="card informativo-card" role="listitem">
                     {% if informativo.tipo == 'Noticia' and informativo.imagem %}
                     <div class="card-image">
-                        <img src="{{ url_for('static', filename=informativo.imagem) }}" alt="{{ informativo.titulo }}">
+                        <img src="{{ informativo_imagem_url(informativo) or url_for('static', filename=informativo.imagem) }}" alt="{{ informativo.titulo }}">
                     </div>
                     {% endif %}
                     

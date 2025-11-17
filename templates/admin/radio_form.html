@@ -79,7 +79,7 @@
             </label>
             {% if programa and programa.imagem %}
             <div style="margin-bottom: 1rem;">
-                <img src="{{ url_for('static', filename=programa.imagem) }}" 
+                <img src="{{ radio_programa_imagem_url(programa) or url_for('static', filename=programa.imagem) }}" 
                      alt="Imagem atual" 
                      style="max-width: 300px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db;">
                 <p style="color: var(--text-light); font-size: 0.875rem; margin-top: 0.5rem;">

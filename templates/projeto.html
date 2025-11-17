@@ -38,7 +38,7 @@
         <div style="max-width: 900px; margin: 0 auto;">
             {% if projeto.imagen %}
             <div style="margin-bottom: 2rem; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 600px; margin-left: auto; margin-right: auto;">
-                <img src="{{ url_for('static', filename=projeto.imagen) }}" 
+                <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" 
                      alt="{{ projeto.titulo }}" 
                      style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: cover;">
             </div>

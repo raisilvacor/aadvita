@@ -70,7 +70,7 @@
             </label>
             {% if informativo and informativo.imagem %}
             <div style="margin-bottom: 1rem;">
-                <img src="{{ url_for('static', filename=informativo.imagem) }}" 
+                <img src="{{ informativo_imagem_url(informativo) or url_for('static', filename=informativo.imagem) }}" 
                      alt="Imagem atual" 
                      style="max-width: 300px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db;">
                 <p style="color: var(--text-light); font-size: 0.875rem; margin-top: 0.5rem;">

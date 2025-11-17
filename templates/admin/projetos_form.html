@@ -161,7 +161,7 @@
             </label>
             {% if projeto and projeto.imagen %}
                 <div style="margin-bottom: 1rem;">
-                    <img src="{{ url_for('static', filename=projeto.imagen) }}" 
+                    <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" 
                          alt="{{ projeto.titulo }}" 
                          style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 0.5rem; border: 2px solid #d1d5db;">
                     <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">

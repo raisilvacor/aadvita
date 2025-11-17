@@ -1828,20 +1828,43 @@ def admin_projetos_novo():
             data_inicio_str = request.form.get('data_inicio')
             data_fim_str = request.form.get('data_fim')
             
-            # Processar upload da foto
+            # Processar upload da foto - salvar como base64 no banco para persistência no Render
             imagen_path = None
+            imagen_base64_data = None
             if 'imagen' in request.files:
                 file = request.files['imagen']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    imagen_path = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagen_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    imagen_path = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        imagen_path = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_projetos_novo'))
@@ -1895,6 +1918,7 @@ def admin_projetos_novo():
                 data_inicio=datetime.strptime(data_inicio_str, "%Y-%m-%d").date() if data_inicio_str else None,
                 data_fim=datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None,
                 imagen=imagen_path,
+                imagen_base64=imagen_base64_data,
                 arquivo_pdf=pdf_path,
                 arquivo_pdf_base64=pdf_base64_data
             )
@@ -1918,12 +1942,12 @@ def admin_projetos_editar(id):
             data_inicio_str = request.form.get('data_inicio')
             data_fim_str = request.form.get('data_fim')
             
-            # Processar upload da foto (se uma nova foi enviada)
+            # Processar upload da foto (se uma nova foi enviada) - salvar como base64 no banco para persistência no Render
             if 'imagen' in request.files:
                 file = request.files['imagen']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    # Remover foto antiga se existir
-                    if projeto.imagen:
+                    # Remover foto antiga se existir (apenas arquivo local, não base64)
+                    if projeto.imagen and not (projeto.imagen.startswith('base64:') if projeto.imagen else False):
                         old_filepath = os.path.join('static', projeto.imagen)
                         if os.path.exists(old_filepath):
                             try:
@@ -1931,15 +1955,38 @@ def admin_projetos_editar(id):
                             except:
                                 pass
                     
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    projeto.imagen = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagen_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    projeto.imagen_base64 = imagen_base64_data
+                    projeto.imagen = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        projeto.imagen = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_projetos_editar', id=id))
@@ -2295,20 +2342,43 @@ def admin_acoes_novo():
         try:
             data_str = request.form.get('data')
             
-            # Processar upload da foto
+            # Processar upload da foto - salvar como base64 no banco para persistência no Render
             imagem_path = None
+            imagem_base64_data = None
             if 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    imagem_path = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    imagem_path = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        imagem_path = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_acoes_novo'))
@@ -2318,7 +2388,8 @@ def admin_acoes_novo():
                 descricao=request.form.get('descricao'),
                 data=datetime.strptime(data_str, "%Y-%m-%d").date(),
                 categoria=request.form.get('categoria'),
-                imagem=imagem_path
+                imagem=imagem_path,
+                imagem_base64=imagem_base64_data
             )
             db.session.add(acao)
             db.session.commit()
@@ -2340,12 +2411,12 @@ def admin_acoes_editar(id):
         try:
             data_str = request.form.get('data')
             
-            # Processar upload da foto (se uma nova foi enviada)
+            # Processar upload da foto (se uma nova foi enviada) - salvar como base64 no banco para persistência no Render
             if 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    # Remover foto antiga se existir
-                    if acao.imagem:
+                    # Remover foto antiga se existir (apenas arquivo local, não base64)
+                    if acao.imagem and not (acao.imagem.startswith('base64:') if acao.imagem else False):
                         old_filepath = os.path.join('static', acao.imagem)
                         if os.path.exists(old_filepath):
                             try:
@@ -2353,15 +2424,38 @@ def admin_acoes_editar(id):
                             except:
                                 pass
                     
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    acao.imagem = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    acao.imagem_base64 = imagem_base64_data
+                    acao.imagem = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        acao.imagem = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_acoes_editar', id=id))
@@ -6332,6 +6426,202 @@ def slider_imagem(id):
         from flask import abort
         abort(404)
 
+@app.route('/projeto/<int:id>/imagem')
+def projeto_imagem(id):
+    """Rota para servir imagens de projetos do banco de dados (base64)"""
+    try:
+        projeto = Projeto.query.get_or_404(id)
+        
+        # Verificar se tem imagen_base64 (usando getattr para evitar erro se coluna não existir)
+        imagen_base64 = getattr(projeto, 'imagen_base64', None)
+        
+        # Se tem imagem em base64, servir ela
+        if imagen_base64:
+            # Extrair o tipo MIME do campo imagen
+            mime_type = 'image/jpeg'  # padrão
+            if projeto.imagen and projeto.imagen.startswith('base64:'):
+                mime_type = projeto.imagen.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(imagen_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar imagem base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if projeto.imagen and not (projeto.imagen.startswith('base64:') if projeto.imagen else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(projeto.imagen)
+            file_name = os.path.basename(projeto.imagen)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except Exception as e:
+                print(f"Erro ao servir arquivo estático: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir imagem do projeto: {e}")
+        import traceback
+        traceback.print_exc()
+        from flask import abort
+        abort(404)
+
+@app.route('/radio-programa/<int:id>/imagem')
+def radio_programa_imagem(id):
+    """Rota para servir imagens de programas de rádio do banco de dados (base64)"""
+    try:
+        programa = RadioPrograma.query.get_or_404(id)
+        
+        # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
+        imagem_base64 = getattr(programa, 'imagem_base64', None)
+        
+        # Se tem imagem em base64, servir ela
+        if imagem_base64:
+            # Extrair o tipo MIME do campo imagem
+            mime_type = 'image/jpeg'  # padrão
+            if programa.imagem and programa.imagem.startswith('base64:'):
+                mime_type = programa.imagem.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(imagem_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar imagem base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if programa.imagem and not (programa.imagem.startswith('base64:') if programa.imagem else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(programa.imagem)
+            file_name = os.path.basename(programa.imagem)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except Exception as e:
+                print(f"Erro ao servir arquivo estático: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir imagem do programa de rádio: {e}")
+        import traceback
+        traceback.print_exc()
+        from flask import abort
+        abort(404)
+
+@app.route('/acao/<int:id>/imagem')
+def acao_imagem(id):
+    """Rota para servir imagens de ações do banco de dados (base64)"""
+    try:
+        acao = Acao.query.get_or_404(id)
+        
+        # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
+        imagem_base64 = getattr(acao, 'imagem_base64', None)
+        
+        # Se tem imagem em base64, servir ela
+        if imagem_base64:
+            # Extrair o tipo MIME do campo imagem
+            mime_type = 'image/jpeg'  # padrão
+            if acao.imagem and acao.imagem.startswith('base64:'):
+                mime_type = acao.imagem.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(imagem_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar imagem base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if acao.imagem and not (acao.imagem.startswith('base64:') if acao.imagem else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(acao.imagem)
+            file_name = os.path.basename(acao.imagem)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except Exception as e:
+                print(f"Erro ao servir arquivo estático: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir imagem da ação: {e}")
+        import traceback
+        traceback.print_exc()
+        from flask import abort
+        abort(404)
+
+@app.route('/informativo/<int:id>/imagem')
+def informativo_imagem(id):
+    """Rota para servir imagens de informativos do banco de dados (base64)"""
+    try:
+        informativo = Informativo.query.get_or_404(id)
+        
+        # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
+        imagem_base64 = getattr(informativo, 'imagem_base64', None)
+        
+        # Se tem imagem em base64, servir ela
+        if imagem_base64:
+            # Extrair o tipo MIME do campo imagem
+            mime_type = 'image/jpeg'  # padrão
+            if informativo.imagem and informativo.imagem.startswith('base64:'):
+                mime_type = informativo.imagem.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(imagem_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar imagem base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if informativo.imagem and not (informativo.imagem.startswith('base64:') if informativo.imagem else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(informativo.imagem)
+            file_name = os.path.basename(informativo.imagem)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except Exception as e:
+                print(f"Erro ao servir arquivo estático: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir imagem do informativo: {e}")
+        import traceback
+        traceback.print_exc()
+        from flask import abort
+        abort(404)
+
 @app.route('/banner-conteudo/<int:id>/imagem')
 def banner_conteudo_imagem(id):
     """Rota para servir imagens do banner conteúdo do banco de dados (base64)"""
@@ -6453,20 +6743,43 @@ def admin_informativos_novo():
             # Processar data de publicação
             data_publicacao = datetime.strptime(data_publicacao_str, "%Y-%m-%d").date() if data_publicacao_str else date.today()
             
-            # Processar upload da imagem (apenas para notícias)
+            # Processar upload da imagem (apenas para notícias) - salvar como base64 no banco para persistência no Render
             imagem_path = None
+            imagem_base64_data = None
             if tipo == 'Noticia' and 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    imagem_path = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    imagem_path = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        imagem_path = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_informativos_novo'))
@@ -6478,6 +6791,7 @@ def admin_informativos_novo():
                 conteudo=conteudo if tipo == 'Noticia' else None,
                 url_soundcloud=url_soundcloud if tipo == 'Podcast' else None,
                 imagem=imagem_path,
+                imagem_base64=imagem_base64_data,
                 data_publicacao=data_publicacao
             )
             db.session.add(informativo)
@@ -6524,12 +6838,12 @@ def admin_informativos_editar(id):
             # Processar data de publicação
             data_publicacao = datetime.strptime(data_publicacao_str, "%Y-%m-%d").date() if data_publicacao_str else informativo.data_publicacao
             
-            # Processar upload da imagem (apenas para notícias)
+            # Processar upload da imagem (apenas para notícias) - salvar como base64 no banco para persistência no Render
             if tipo == 'Noticia' and 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    # Remover imagem antiga se existir
-                    if informativo.imagem:
+                    # Remover imagem antiga se existir (apenas arquivo local, não base64)
+                    if informativo.imagem and not (informativo.imagem.startswith('base64:') if informativo.imagem else False):
                         old_filepath = os.path.join('static', informativo.imagem)
                         if os.path.exists(old_filepath):
                             try:
@@ -6537,27 +6851,52 @@ def admin_informativos_editar(id):
                             except:
                                 pass
                     
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    informativo.imagem = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    informativo.imagem_base64 = imagem_base64_data
+                    informativo.imagem = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        informativo.imagem = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_informativos_editar', id=id))
             elif tipo == 'Podcast' and informativo.imagem:
                 # Remover imagem se mudou de Noticia para Podcast
-                old_filepath = os.path.join('static', informativo.imagem)
-                if os.path.exists(old_filepath):
-                    try:
-                        os.remove(old_filepath)
-                    except:
-                        pass
+                if not (informativo.imagem.startswith('base64:') if informativo.imagem else False):
+                    old_filepath = os.path.join('static', informativo.imagem)
+                    if os.path.exists(old_filepath):
+                        try:
+                            os.remove(old_filepath)
+                        except:
+                            pass
                 informativo.imagem = None
+                informativo.imagem_base64 = None
             
             informativo.tipo = tipo
             informativo.titulo = titulo
@@ -6647,20 +6986,43 @@ def admin_radio_novo():
             
             ordem = int(ordem_str) if ordem_str.isdigit() else 0
             
-            # Processar upload da imagem
+            # Processar upload da imagem - salvar como base64 no banco para persistência no Render
             imagem_path = None
+            imagem_base64_data = None
             if 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    imagem_path = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    imagem_path = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        imagem_path = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_radio_novo'))
@@ -6673,6 +7035,7 @@ def admin_radio_novo():
                 url_streaming=url_streaming if url_streaming else None,
                 url_arquivo=url_arquivo if url_arquivo else None,
                 imagem=imagem_path,
+                imagem_base64=imagem_base64_data,
                 ativo=ativo,
                 ordem=ordem
             )
@@ -6709,12 +7072,12 @@ def admin_radio_editar(id):
             
             ordem = int(ordem_str) if ordem_str.isdigit() else programa.ordem
             
-            # Processar upload da imagem
+            # Processar upload da imagem - salvar como base64 no banco para persistência no Render
             if 'imagem' in request.files:
                 file = request.files['imagem']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    # Remover imagem antiga se existir
-                    if programa.imagem:
+                    # Remover imagem antiga se existir (apenas arquivo local, não base64)
+                    if programa.imagem and not (programa.imagem.startswith('base64:') if programa.imagem else False):
                         old_filepath = os.path.join('static', programa.imagem)
                         if os.path.exists(old_filepath):
                             try:
@@ -6722,15 +7085,38 @@ def admin_radio_editar(id):
                             except:
                                 pass
                     
-                    upload_folder = app.config['UPLOAD_FOLDER']
-                    os.makedirs(upload_folder, exist_ok=True)
+                    # Ler o arquivo e converter para base64
+                    file_data = file.read()
+                    file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
                     
-                    filename = secure_filename(file.filename)
-                    unique_filename = f"{uuid.uuid4()}_{filename}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                    # Determinar o tipo MIME
+                    mime_types = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp'
+                    }
+                    mime_type = mime_types.get(file_ext, 'image/jpeg')
                     
-                    programa.imagem = f"images/uploads/{unique_filename}"
+                    # Converter para base64
+                    imagem_base64_data = base64.b64encode(file_data).decode('utf-8')
+                    programa.imagem_base64 = imagem_base64_data
+                    programa.imagem = f"base64:{mime_type}"
+                    
+                    # Também salvar localmente para desenvolvimento local (opcional)
+                    try:
+                        upload_folder = app.config['UPLOAD_FOLDER']
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.seek(0)  # Reset file pointer after reading for base64
+                        file.save(filepath)
+                        programa.imagem = f"images/uploads/{unique_filename}"
+                    except Exception as e:
+                        print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
                 elif file and file.filename != '':
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_radio_editar', id=id))
@@ -8975,6 +9361,170 @@ def inject_conf():
                 pass
             return None
     
+    def projeto_imagem_url(projeto):
+        """Helper function para obter URL da imagem do projeto de forma segura"""
+        if not projeto:
+            return None
+        try:
+            # Verificar se tem imagen_base64 usando getattr (seguro se coluna não existir)
+            imagen_base64 = None
+            try:
+                imagen_base64 = getattr(projeto, 'imagen_base64', None)
+            except (AttributeError, KeyError):
+                pass
+            
+            if imagen_base64:
+                return f"/projeto/{projeto.id}/imagem"
+            
+            # Verificar se imagen começa com base64:
+            try:
+                if projeto.imagen and 'base64:' in str(projeto.imagen):
+                    return f"/projeto/{projeto.id}/imagem"
+            except (AttributeError, KeyError):
+                pass
+            
+            # Fallback para arquivo estático
+            try:
+                if projeto.imagen:
+                    from flask import url_for
+                    return url_for('static', filename=projeto.imagen)
+            except (AttributeError, KeyError, Exception):
+                pass
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL da imagem do projeto: {e}")
+            try:
+                if hasattr(projeto, 'imagen') and projeto.imagen:
+                    from flask import url_for
+                    return url_for('static', filename=projeto.imagen)
+            except:
+                pass
+            return None
+    
+    def radio_programa_imagem_url(programa):
+        """Helper function para obter URL da imagem do programa de rádio de forma segura"""
+        if not programa:
+            return None
+        try:
+            # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
+            imagem_base64 = None
+            try:
+                imagem_base64 = getattr(programa, 'imagem_base64', None)
+            except (AttributeError, KeyError):
+                pass
+            
+            if imagem_base64:
+                return f"/radio-programa/{programa.id}/imagem"
+            
+            # Verificar se imagem começa com base64:
+            try:
+                if programa.imagem and 'base64:' in str(programa.imagem):
+                    return f"/radio-programa/{programa.id}/imagem"
+            except (AttributeError, KeyError):
+                pass
+            
+            # Fallback para arquivo estático
+            try:
+                if programa.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=programa.imagem)
+            except (AttributeError, KeyError, Exception):
+                pass
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL da imagem do programa de rádio: {e}")
+            try:
+                if hasattr(programa, 'imagem') and programa.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=programa.imagem)
+            except:
+                pass
+            return None
+    
+    def acao_imagem_url(acao):
+        """Helper function para obter URL da imagem da ação de forma segura"""
+        if not acao:
+            return None
+        try:
+            # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
+            imagem_base64 = None
+            try:
+                imagem_base64 = getattr(acao, 'imagem_base64', None)
+            except (AttributeError, KeyError):
+                pass
+            
+            if imagem_base64:
+                return f"/acao/{acao.id}/imagem"
+            
+            # Verificar se imagem começa com base64:
+            try:
+                if acao.imagem and 'base64:' in str(acao.imagem):
+                    return f"/acao/{acao.id}/imagem"
+            except (AttributeError, KeyError):
+                pass
+            
+            # Fallback para arquivo estático
+            try:
+                if acao.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=acao.imagem)
+            except (AttributeError, KeyError, Exception):
+                pass
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL da imagem da ação: {e}")
+            try:
+                if hasattr(acao, 'imagem') and acao.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=acao.imagem)
+            except:
+                pass
+            return None
+    
+    def informativo_imagem_url(informativo):
+        """Helper function para obter URL da imagem do informativo de forma segura"""
+        if not informativo:
+            return None
+        try:
+            # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
+            imagem_base64 = None
+            try:
+                imagem_base64 = getattr(informativo, 'imagem_base64', None)
+            except (AttributeError, KeyError):
+                pass
+            
+            if imagem_base64:
+                return f"/informativo/{informativo.id}/imagem"
+            
+            # Verificar se imagem começa com base64:
+            try:
+                if informativo.imagem and 'base64:' in str(informativo.imagem):
+                    return f"/informativo/{informativo.id}/imagem"
+            except (AttributeError, KeyError):
+                pass
+            
+            # Fallback para arquivo estático
+            try:
+                if informativo.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=informativo.imagem)
+            except (AttributeError, KeyError, Exception):
+                pass
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL da imagem do informativo: {e}")
+            try:
+                if hasattr(informativo, 'imagem') and informativo.imagem:
+                    from flask import url_for
+                    return url_for('static', filename=informativo.imagem)
+            except:
+                pass
+            return None
+    
     def qrcode_url():
         """Helper function para obter URL do QR code de forma segura"""
         try:
@@ -9020,6 +9570,10 @@ def inject_conf():
     return dict(
         slider_imagem_url=slider_imagem_url,
         apoiador_logo_url=apoiador_logo_url,
+        projeto_imagem_url=projeto_imagem_url,
+        radio_programa_imagem_url=radio_programa_imagem_url,
+        acao_imagem_url=acao_imagem_url,
+        informativo_imagem_url=informativo_imagem_url,
         qrcode_url=qrcode_url,
         current_user=session.get('admin_username'),
         current_language=session.get('language', 'pt'),
