@@ -3,7 +3,7 @@
 {% block title %}AADVITA - {{ _('Início') }}{% endblock %}
 
 {% block content %}
-<!-- Slider Principal -->
+<!-- Slider Principal - HTML5/CSS3/JS Puro - SEM Flash -->
 {% if slider_images %}
 <section class="hero-slider" aria-label="Slider Principal">
     <div class="slider-container">
@@ -741,9 +741,10 @@
     </div>
 </section>
 
-<!-- JavaScript do Slider -->
+<!-- JavaScript do Slider - HTML5/CSS3/JS Puro - SEM Flash -->
 {% if slider_images and slider_images|length > 1 %}
 <script>
+// Slider HTML5 - Garantir que primeiro slide seja exibido corretamente
 document.addEventListener('DOMContentLoaded', function() {
     const sliderTrack = document.getElementById('slider-track');
     const slides = document.querySelectorAll('.slider-slide');
@@ -948,8 +949,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Inicializar o slider - mostrar primeiro slide
+    // Inicializar o slider - garantir que primeiro slide seja exibido imediatamente
     if (slides.length > 0) {
+        // Forçar exibição do primeiro slide imediatamente para evitar tela preta
+        const firstSlide = slides[0];
+        if (firstSlide) {
+            firstSlide.classList.add('active');
+            firstSlide.style.opacity = '1';
+            firstSlide.style.zIndex = '2';
+            firstSlide.style.pointerEvents = 'auto';
+        }
         showSlide(0);
     }
     

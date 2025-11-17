@@ -700,7 +700,7 @@ textarea:focus {
 }
 
 /* Hero Section */
-/* Hero Slider */
+/* Hero Slider - HTML5/CSS3/JS Puro - SEM Flash */
 .hero-slider {
     position: relative;
     width: 100%;
@@ -711,6 +711,8 @@ textarea:focus {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
     will-change: contents;
+    /* Garantir que não há background preto ou overlay bloqueando */
+    background-color: transparent !important;
 }
 
 .slider-container {
@@ -731,6 +733,7 @@ textarea:focus {
     position: relative;
 }
 
+/* Slider HTML5/CSS3 - SEM Flash - Garantir primeiro slide visível */
 .slider-slide {
     position: absolute;
     top: 0;
@@ -740,13 +743,18 @@ textarea:focus {
     opacity: 0;
     z-index: 1;
     pointer-events: none;
+    /* Garantir que não há background preto */
+    background: transparent;
 }
 
+/* Primeiro slide deve ser visível desde o início */
 .slider-slide.active {
     opacity: 1;
     z-index: 2;
     pointer-events: auto;
     transition: opacity 0.5s ease-in-out;
+    /* Garantir que não há overlay ou background bloqueando */
+    background: transparent;
 }
 
 /* Slides inativos com transição mais rápida */

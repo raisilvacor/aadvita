@@ -41,11 +41,17 @@
                 
                 <!-- Player Customizado -->
                 <div class="custom-radio-player" style="background: rgba(255, 255, 255, 0.95); border-radius: 1rem; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px);">
+                    <!-- Player HTML5 Audio - Compatível com streaming MP3/AAC - SEM Flash -->
                     <audio id="radio-player" autoplay loop preload="auto" style="display: none;" crossorigin="anonymous">
+                        <!-- Streaming MP3/AAC - HTML5 nativo, sem dependência de Flash -->
                         <source src="{{ radio_config.url_streaming_principal }}" type="audio/mpeg">
-                        <source src="{{ radio_config.url_streaming_principal }}" type="audio/ogg">
                         <source src="{{ radio_config.url_streaming_principal }}" type="audio/aac">
                         <source src="{{ radio_config.url_streaming_principal }}" type="audio/mp3">
+                        <source src="{{ radio_config.url_streaming_principal }}" type="audio/ogg">
+                        <!-- Fallback para navegadores antigos -->
+                        <p style="color: #ef4444; padding: 1rem; background: #fee2e2; border-radius: 0.5rem; margin-top: 1rem;">
+                            {{ _('Seu navegador não suporta o elemento de áudio HTML5. Por favor, atualize seu navegador para a versão mais recente.') }}
+                        </p>
                     </audio>
                     
                     <!-- Controles do Player -->
@@ -131,10 +137,13 @@
                             <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-color); margin-bottom: 0.5rem;">
                                 {{ _('Ao Vivo') }}
                             </h3>
+                            <!-- Player HTML5 para streaming - SEM Flash -->
                             <audio controls style="width: 100%;" preload="none">
                                 <source src="{{ programa.url_streaming }}" type="audio/mpeg">
+                                <source src="{{ programa.url_streaming }}" type="audio/aac">
+                                <source src="{{ programa.url_streaming }}" type="audio/mp3">
                                 <source src="{{ programa.url_streaming }}" type="audio/ogg">
-                                {{ _('Seu navegador não suporta o elemento de áudio.') }}
+                                {{ _('Seu navegador não suporta o elemento de áudio HTML5.') }}
                             </audio>
                             <p style="font-size: 0.875rem; color: var(--text-light); margin-top: 0.5rem;">
                                 {{ _('Clique em play para ouvir ao vivo') }}
@@ -147,10 +156,13 @@
                             <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-color); margin-bottom: 0.5rem;">
                                 {{ _('Episódio') }}
                             </h3>
+                            <!-- Player HTML5 para episódios - SEM Flash -->
                             <audio controls style="width: 100%;" preload="none">
                                 <source src="{{ programa.url_arquivo }}" type="audio/mpeg">
+                                <source src="{{ programa.url_arquivo }}" type="audio/aac">
+                                <source src="{{ programa.url_arquivo }}" type="audio/mp3">
                                 <source src="{{ programa.url_arquivo }}" type="audio/ogg">
-                                {{ _('Seu navegador não suporta o elemento de áudio.') }}
+                                {{ _('Seu navegador não suporta o elemento de áudio HTML5.') }}
                             </audio>
                             <p style="font-size: 0.875rem; color: var(--text-light); margin-top: 0.5rem;">
                                 {{ _('Ouça o episódio completo') }}
