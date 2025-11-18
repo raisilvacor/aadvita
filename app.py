@@ -1756,7 +1756,6 @@ def admin_dashboard():
     except Exception:
         stats['sos_novos'] = 0
         stats['sos_total'] = 0
-    }
     return render_template('admin/dashboard.html', stats=stats)
 
 
