@@ -117,8 +117,11 @@
             <button type="submit" class="btn-admin btn-admin-primary">
                 <span>💾</span> Salvar
             </button>
+            <a href="{{ url_for('admin_voluntarios') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Voltar para Voluntários
+            </a>
             <a href="{{ url_for('admin_agendamentos_voluntarios') }}" class="btn-admin btn-admin-secondary">
-                <span>↩️</span> Cancelar
+                <span>✖️</span> Cancelar
             </a>
         </div>
     </form>

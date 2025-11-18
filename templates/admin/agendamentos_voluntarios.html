@@ -8,9 +8,14 @@
 <div class="admin-card">
     <div class="admin-card-header">
         <h2 class="admin-card-title">Agendamentos de Voluntários</h2>
-        <a href="{{ url_for('admin_agendamentos_voluntarios_novo') }}" class="btn-admin btn-admin-primary">
-            <span>➕</span> Novo Agendamento
-        </a>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+            <a href="{{ url_for('admin_voluntarios') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Voltar
+            </a>
+            <a href="{{ url_for('admin_agendamentos_voluntarios_novo') }}" class="btn-admin btn-admin-primary">
+                <span>➕</span> Novo Agendamento
+            </a>
+        </div>
     </div>
     
     <!-- Filtros por Status -->
