@@ -12,9 +12,16 @@
         <div class="info-card">
             {% if associado.foto %}
             <div style="text-align: center; margin-bottom: 1rem;">
-                <img src="{{ url_for('static', filename=associado.foto) }}" 
-                     alt="{{ associado.nome_completo }}" 
-                     style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #2563eb; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                {% if associado.foto.startswith('base64:') and associado.foto_base64 %}
+                    {% set mime = associado.foto.split(':', 1)[1] %}
+                    <img src="data:{{ mime }};base64,{{ associado.foto_base64 }}" 
+                         alt="{{ associado.nome_completo }}" 
+                         style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #2563eb; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                {% else %}
+                    <img src="{{ url_for('static', filename=associado.foto) }}" 
+                         alt="{{ associado.nome_completo }}" 
+                         style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #2563eb; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                {% endif %}
             </div>
             {% else %}
             <div class="info-icon">👤</div>
@@ -47,6 +54,12 @@
     <div class="associado-actions">
         <a href="{{ url_for('associado_perfil') }}" class="btn-admin btn-admin-primary">
             <span>✏️</span> Editar Perfil
+        </a>
+        <a href="{{ url_for('sos_novo') }}" class="btn-admin" style="background:#ef4444; color:white; margin-left:0.5rem;">
+            <span>🚨</span> Enviar SOS
+        </a>
+        <a href="{{ url_for('associado_sos') }}" class="btn-admin btn-admin-secondary" style="margin-left:0.5rem;">
+            <span>📨</span> Meus Pedidos SOS
         </a>
         <a href="{{ url_for('agenda_presencial') }}" class="btn-admin btn-admin-secondary">
             <span>📅</span> Ver Agenda Presencial
