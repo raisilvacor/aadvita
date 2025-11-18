@@ -55,6 +55,58 @@ app.config['ALLOWED_DOCUMENT_EXTENSIONS'] = {'pdf', 'doc', 'docx', 'xls', 'xlsx'
 
 db = SQLAlchemy(app)
 
+# Safety-net startup migration: ensure certain Postgres columns exist even when
+# the process is started directly with `gunicorn app:app` (some hosts ignore
+# the Procfile start wrapper). This tries to run the existing migration module
+# and — as a fallback — issues an `ALTER TABLE ... IF NOT EXISTS` using the
+# SQLAlchemy engine. It runs here before model classes are defined.
+def _ensure_associado_foto_base64():
+    try:
+        # Only attempt for Postgres-like DBs
+        uri = app.config.get('SQLALCHEMY_DATABASE_URI', '') or ''
+        if uri.startswith('sqlite') or uri == '':
+            return
+
+        # First, try to reuse the existing migration script if available
+        try:
+            import migrate_postgres_associado as _mig_ass
+            try:
+                print('Startup: running migrate_postgres_associado.migrate()')
+                _mig_ass.migrate()
+            except Exception as e:
+                print('Startup: migrate_postgres_associado.migrate() failed:', e)
+        except Exception:
+            # migration module not present or import failed — fall back
+            pass
+
+        # Reflect columns and add the column if it is missing
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        if 'associado' in tables:
+            cols = [c['name'] for c in inspector.get_columns('associado')]
+            if 'foto_base64' not in cols:
+                print('Startup: foto_base64 column missing — issuing ALTER TABLE')
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE associado ADD COLUMN IF NOT EXISTS foto_base64 TEXT'))
+                    # commit if using transactional DDL
+                    try:
+                        conn.commit()
+                    except Exception:
+                        pass
+                print('Startup: foto_base64 column ensured')
+    except Exception as e:
+        print('Startup: error while ensuring associado.foto_base64:', e)
+
+
+# Run safety-net migration now (before model classes are declared)
+try:
+    with app.app_context():
+        _ensure_associado_foto_base64()
+except Exception as _:
+    # Swallow errors to avoid preventing app import — errors logged above
+    pass
+
 # Dicionário de traduções
 TRANSLATIONS = {
     'pt': {
