@@ -8,6 +8,20 @@
     <p>Descreva sua necessidade e anexe documentos (receita médica, orçamentos etc.).</p>
 
     <form method="POST" enctype="multipart/form-data" class="associate-form">
+        {% if not session.get('associado_logged_in') %}
+        <div class="form-group">
+            <label for="contato_nome">Seu nome (opcional)</label>
+            <input type="text" id="contato_nome" name="contato_nome" placeholder="Nome completo">
+        </div>
+        <div class="form-group">
+            <label for="contato_telefone">Telefone / WhatsApp (opcional)</label>
+            <input type="text" id="contato_telefone" name="contato_telefone" placeholder="(00) 00000-0000">
+        </div>
+        <div class="form-group">
+            <label for="contato_email">Email (opcional)</label>
+            <input type="email" id="contato_email" name="contato_email" placeholder="seu@exemplo.com">
+        </div>
+        {% endif %}
         <div class="form-group">
             <label for="descricao">Descrição *</label>
             <textarea id="descricao" name="descricao" rows="6" required></textarea>
@@ -21,7 +35,11 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Enviar pedido de ajuda</button>
+            {% if session.get('associado_logged_in') %}
             <a href="{{ url_for('associado_dashboard') }}" class="btn btn-secondary">Cancelar</a>
+            {% else %}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+            {% endif %}
         </div>
     </form>
 </div>

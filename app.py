@@ -1597,14 +1597,19 @@ class AgendamentoVoluntario(db.Model):
 class SosPedido(db.Model):
     __tablename__ = 'sos_pedido'
     id = db.Column(db.Integer, primary_key=True)
-    associado_id = db.Column(db.Integer, db.ForeignKey('associado.id'), nullable=False)
+    # tornar associacao opcional para permitir envios anônimos
+    associado_id = db.Column(db.Integer, db.ForeignKey('associado.id'), nullable=True)
     descricao = db.Column(db.Text, nullable=False)
     anexos = db.Column(db.Text)  # caminhos separados por vírgula
+    # contatos opcionais para quem enviar sem estar logado
+    contato_nome = db.Column(db.String(200), nullable=True)
+    contato_telefone = db.Column(db.String(100), nullable=True)
+    contato_email = db.Column(db.String(200), nullable=True)
     status = db.Column(db.String(50), default='novo')  # novo, em_andamento, concluido, cancelado
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # relacionamento com associado
+    # relacionamento com associado (se houver)
     associado = db.relationship('Associado', backref='sos_pedidos')
 
 class Banner(db.Model):
@@ -1763,16 +1768,21 @@ def admin_dashboard():
 def sos_novo():
     # Formulário público para associados criarem pedidos de ajuda (SOS)
     if request.method == 'POST':
-        if not session.get('associado_logged_in'):
-            flash('Você precisa estar logado como associado para enviar um pedido de ajuda.', 'error')
-            return redirect(url_for('login'))
-
+        # permitir envios anônimos — coletar contato opcional se usuário não estiver logado
         associado_id = session.get('associado_id')
-        associado = Associado.query.get(associado_id)
+        associado = None
+        if associado_id:
+            associado = Associado.query.get(associado_id)
+
         descricao = request.form.get('descricao')
         if not descricao:
             flash('Descreva sua necessidade antes de enviar.', 'error')
             return redirect(url_for('sos_novo'))
+
+        # campos de contato opcionais (usados quando não logado)
+        contato_nome = request.form.get('contato_nome')
+        contato_telefone = request.form.get('contato_telefone')
+        contato_email = request.form.get('contato_email')
 
         anexos_list = []
         # aceitar múltiplos arquivos com name='anexos'
@@ -1800,15 +1810,21 @@ def sos_novo():
 
         try:
             pedido = SosPedido(
-                associado_id=associado.id,
+                associado_id=associado.id if associado else None,
                 descricao=descricao,
                 anexos=anexos_txt,
+                contato_nome=contato_nome,
+                contato_telefone=contato_telefone,
+                contato_email=contato_email,
                 status='novo'
             )
             db.session.add(pedido)
             db.session.commit()
-            flash('Pedido de ajuda enviado com sucesso. Acompanhe pela sua área de associado.', 'success')
-            return redirect(url_for('associado_sos'))
+            flash('Pedido de ajuda enviado com sucesso. Entraremos em contato em breve.', 'success')
+            # se usuário estiver logado, levá-lo à lista de seus pedidos; senão permanecer na página
+            if associado:
+                return redirect(url_for('associado_sos'))
+            return redirect(url_for('sos_novo'))
         except Exception as e:
             db.session.rollback()
             print('Erro ao salvar SOS pedido:', e)

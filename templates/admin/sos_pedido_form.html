@@ -23,6 +23,12 @@
                 -
             {% endif %}
         </p>
+        <p><strong>Contato do remetente:</strong><br>
+            {% if pedido.contato_nome %}<div><strong>Nome:</strong> {{ pedido.contato_nome }}</div>{% endif %}
+            {% if pedido.contato_telefone %}<div><strong>Telefone:</strong> {{ pedido.contato_telefone }}</div>{% endif %}
+            {% if pedido.contato_email %}<div><strong>Email:</strong> {{ pedido.contato_email }}</div>{% endif %}
+            {% if not pedido.contato_nome and not pedido.contato_telefone and not pedido.contato_email %}-{% endif %}
+        </p>
         <form method="POST">
             <div class="form-group">
                 <label for="status">Status</label>

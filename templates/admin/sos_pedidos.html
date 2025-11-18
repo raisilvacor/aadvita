@@ -17,6 +17,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Associado</th>
+                    <th>Contato</th>
                     <th>Descrição</th>
                     <th>Anexos</th>
                     <th>Status</th>
@@ -31,6 +32,20 @@
                         <td>{{ p.id }}</td>
                         <td>
                             <a href="{{ url_for('admin_associados_detalhe', id=p.associado.id) }}">{{ p.associado.nome_completo }}</a>
+                        </td>
+                        <td>
+                            {% if p.contato_nome %}
+                                <div><strong>{{ p.contato_nome }}</strong></div>
+                            {% endif %}
+                            {% if p.contato_telefone %}
+                                <div>{{ p.contato_telefone }}</div>
+                            {% endif %}
+                            {% if p.contato_email %}
+                                <div>{{ p.contato_email }}</div>
+                            {% endif %}
+                            {% if not p.contato_nome and not p.contato_telefone and not p.contato_email %}
+                                -
+                            {% endif %}
                         </td>
                         <td>{{ p.descricao[:120] }}{% if p.descricao|length > 120 %}...{% endif %}</td>
                         <td>
