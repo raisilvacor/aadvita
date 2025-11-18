@@ -47,10 +47,27 @@ def migrate(retries: int = 8, delay: float = 3.0) -> int:
                     descricao TEXT NOT NULL,
                     anexos TEXT,
                     status VARCHAR(50) DEFAULT 'novo',
+                    contato_nome VARCHAR(200),
+                    contato_telefone VARCHAR(100),
+                    contato_email VARCHAR(200),
+                    contato_endereco VARCHAR(400),
                     created_at TIMESTAMP,
                     updated_at TIMESTAMP
                 );
             ''')
+
+            # Garantir colunas adicionais caso a tabela já exista em versões antigas
+            alters = [
+                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_nome VARCHAR(200);",
+                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_telefone VARCHAR(100);",
+                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_email VARCHAR(200);",
+                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_endereco VARCHAR(400);",
+            ]
+            for stmt in alters:
+                try:
+                    cur.execute(stmt)
+                except Exception as e:
+                    print('Aviso ao aplicar ALTER TABLE:', e)
 
             print('Migração SOS executada com sucesso (Postgres).')
             cur.close()

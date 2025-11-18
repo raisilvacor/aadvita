@@ -43,7 +43,10 @@
                             {% if p.contato_email %}
                                 <div>{{ p.contato_email }}</div>
                             {% endif %}
-                            {% if not p.contato_nome and not p.contato_telefone and not p.contato_email %}
+                            {% if p.contato_endereco %}
+                                <div>{{ p.contato_endereco }}</div>
+                            {% endif %}
+                            {% if not p.contato_nome and not p.contato_telefone and not p.contato_email and not p.contato_endereco %}
                                 -
                             {% endif %}
                         </td>

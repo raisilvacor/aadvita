@@ -1605,6 +1605,7 @@ class SosPedido(db.Model):
     contato_nome = db.Column(db.String(200), nullable=True)
     contato_telefone = db.Column(db.String(100), nullable=True)
     contato_email = db.Column(db.String(200), nullable=True)
+    contato_endereco = db.Column(db.String(400), nullable=True)
     status = db.Column(db.String(50), default='novo')  # novo, em_andamento, concluido, cancelado
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -1783,6 +1784,13 @@ def sos_novo():
         contato_nome = request.form.get('contato_nome')
         contato_telefone = request.form.get('contato_telefone')
         contato_email = request.form.get('contato_email')
+        contato_endereco = request.form.get('contato_endereco')
+
+        # validar obrigatoriedade para envios anônimos
+        if not associado:
+            if not contato_nome or not contato_telefone:
+                flash('Por favor informe seu nome completo e telefone/WhatsApp.', 'error')
+                return redirect(url_for('sos_novo'))
 
         anexos_list = []
         # aceitar múltiplos arquivos com name='anexos'
@@ -1816,6 +1824,7 @@ def sos_novo():
                 contato_nome=contato_nome,
                 contato_telefone=contato_telefone,
                 contato_email=contato_email,
+                contato_endereco=contato_endereco,
                 status='novo'
             )
             db.session.add(pedido)
