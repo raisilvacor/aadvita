@@ -418,6 +418,36 @@ textarea:focus {
     color: white !important;
 }
 
+/* Floating WhatsApp button */
+.whatsapp-float {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    width: 56px;
+    height: 56px;
+    background: #25D366; /* WhatsApp green */
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
+    z-index: 1200;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.whatsapp-float:hover,
+.whatsapp-float:focus {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.22);
+}
+
+.whatsapp-float svg { width: 22px; height: 22px; }
+
+@media (max-width: 480px) {
+    .whatsapp-float { right: 0.75rem; bottom: 0.75rem; width: 50px; height: 50px; }
+}
+
 .btn-login:active {
     transform: translateY(0);
     box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
