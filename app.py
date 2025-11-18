@@ -9536,30 +9536,60 @@ def login():
             else:
                 flash('CPF ou senha incorretos', 'error')
         elif tipo == 'voluntario':
-            # Voluntário faz login com email + CPF (CPF sem formatação)
-            email = request.form.get('email')
+            # Voluntário faz login com CPF + senha (mesmo fluxo do associado)
             cpf = request.form.get('cpf')
+            senha = request.form.get('senha')
             cpf_limpo = cpf.replace('.', '').replace('-', '') if cpf else None
+
             voluntario = None
-            if email and cpf_limpo:
-                voluntario = Voluntario.query.filter_by(email=email, cpf=cpf_limpo).first()
+            if cpf_limpo:
+                voluntario = Voluntario.query.filter_by(cpf=cpf_limpo).first()
 
+            # Se houver um voluntário cadastrado, tentar autenticar usando password_hash (se existir)
             if voluntario:
-                if voluntario.status != 'aprovado':
-                    flash('Seu cadastro de voluntário ainda não foi aprovado.', 'warning')
-                    return redirect(url_for('login'))
-                if not voluntario.ativo:
-                    flash('Sua conta de voluntário está inativa. Entre em contato com a administração.', 'error')
-                    return redirect(url_for('login'))
+                # Se o modelo Voluntario tiver password_hash, compare
+                pw_hash = getattr(voluntario, 'password_hash', None)
+                if pw_hash:
+                    if check_password_hash(pw_hash, senha):
+                        if voluntario.status != 'aprovado':
+                            flash('Seu cadastro de voluntário ainda não foi aprovado.', 'warning')
+                            return redirect(url_for('login'))
+                        if not voluntario.ativo:
+                            flash('Sua conta de voluntário está inativa. Entre em contato com a administração.', 'error')
+                            return redirect(url_for('login'))
 
-                # Autenticar voluntário (sem senha usando combinação email+cpf)
-                session['voluntario_logged_in'] = True
-                session['voluntario_id'] = voluntario.id
-                session['voluntario_nome'] = voluntario.nome_completo
-                flash('Login de voluntário realizado com sucesso!', 'success')
-                return redirect(url_for('voluntario_dashboard'))
+                        session['voluntario_logged_in'] = True
+                        session['voluntario_id'] = voluntario.id
+                        session['voluntario_nome'] = voluntario.nome_completo
+                        flash('Login de voluntário realizado com sucesso!', 'success')
+                        return redirect(url_for('voluntario_dashboard'))
+                    else:
+                        flash('CPF ou senha de voluntário incorretos', 'error')
+                        return redirect(url_for('login'))
+                else:
+                    # Fallback: se não há senha no modelo Voluntario, tentar autenticar contra Associado (se existir)
+                    associado = Associado.query.filter_by(cpf=cpf_limpo).first()
+                    if associado and associado.check_password(senha):
+                        # permitir acesso à área de voluntário se o associado estiver com login válido
+                        session['voluntario_logged_in'] = True
+                        session['voluntario_id'] = voluntario.id
+                        session['voluntario_nome'] = voluntario.nome_completo
+                        flash('Login de voluntário realizado via credenciais de associado!', 'success')
+                        return redirect(url_for('voluntario_dashboard'))
+                    else:
+                        flash('Voluntário não possui senha. Peça ao administrador para definir uma senha, ou use as credenciais de associado.', 'error')
+                        return redirect(url_for('login'))
             else:
-                flash('Email ou CPF de voluntário inválidos', 'error')
+                # Se não existir voluntário, tentar autenticar como associado e negar acesso se não for voluntário
+                associado = Associado.query.filter_by(cpf=cpf_limpo).first()
+                if associado and associado.check_password(senha):
+                    # Se existe um associado com esse CPF e senha, permitir acesso à área de voluntário
+                    session['voluntario_logged_in'] = True
+                    session['voluntario_id'] = None
+                    session['voluntario_nome'] = associado.nome_completo
+                    flash('Login de voluntário realizado com sucesso (via associado)!', 'success')
+                    return redirect(url_for('voluntario_dashboard'))
+                flash('CPF ou senha incorretos', 'error')
         else:
             # Redireciona para login do admin
             return redirect(url_for('admin_login'))
