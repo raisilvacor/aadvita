@@ -1661,6 +1661,16 @@ def associado_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def voluntario_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('voluntario_logged_in'):
+            flash('Você precisa fazer login como voluntário para acessar esta página', 'error')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # ============================================
 # ROTAS ADMINISTRATIVAS
 # ============================================
@@ -9525,6 +9535,31 @@ def login():
                     return redirect(url_for('associado_dashboard'))
             else:
                 flash('CPF ou senha incorretos', 'error')
+        elif tipo == 'voluntario':
+            # Voluntário faz login com email + CPF (CPF sem formatação)
+            email = request.form.get('email')
+            cpf = request.form.get('cpf')
+            cpf_limpo = cpf.replace('.', '').replace('-', '') if cpf else None
+            voluntario = None
+            if email and cpf_limpo:
+                voluntario = Voluntario.query.filter_by(email=email, cpf=cpf_limpo).first()
+
+            if voluntario:
+                if voluntario.status != 'aprovado':
+                    flash('Seu cadastro de voluntário ainda não foi aprovado.', 'warning')
+                    return redirect(url_for('login'))
+                if not voluntario.ativo:
+                    flash('Sua conta de voluntário está inativa. Entre em contato com a administração.', 'error')
+                    return redirect(url_for('login'))
+
+                # Autenticar voluntário (sem senha usando combinação email+cpf)
+                session['voluntario_logged_in'] = True
+                session['voluntario_id'] = voluntario.id
+                session['voluntario_nome'] = voluntario.nome_completo
+                flash('Login de voluntário realizado com sucesso!', 'success')
+                return redirect(url_for('voluntario_dashboard'))
+            else:
+                flash('Email ou CPF de voluntário inválidos', 'error')
         else:
             # Redireciona para login do admin
             return redirect(url_for('admin_login'))
@@ -9539,6 +9574,22 @@ def associado_logout():
     session.pop('associado_cpf', None)
     flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('index'))
+
+
+@app.route('/voluntario/logout')
+def voluntario_logout():
+    session.pop('voluntario_logged_in', None)
+    session.pop('voluntario_id', None)
+    session.pop('voluntario_nome', None)
+    flash('Logout realizado com sucesso!', 'success')
+    return redirect(url_for('index'))
+
+
+@app.route('/voluntario')
+@voluntario_required
+def voluntario_dashboard():
+    voluntario = Voluntario.query.get_or_404(session.get('voluntario_id'))
+    return render_template('voluntario/dashboard.html', voluntario=voluntario)
 
 @app.route('/associado')
 @associado_required

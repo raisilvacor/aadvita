@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}AADVITA - Voluntário{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="section-title">{{ _('Área do Voluntário') }}</h1>
+        <p>{{ _('Olá,') }} {{ voluntario.nome_completo }}!</p>
+        <p>{{ _('Bem-vindo à sua área de voluntário. Aqui você pode ver suas informações e consultar agendamentos.') }}</p>
+
+        <div style="margin-top: 1.5rem;">
+            <a href="{{ url_for('voluntario_logout') }}" class="btn btn-secondary">{{ _('Sair') }}</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
