@@ -36,7 +36,7 @@ def start_gunicorn():
 
 
 if __name__ == '__main__':
-    # Small delay to let DB service become available in some environments
-    time.sleep(1)
+    # Allow more time for DB service to become available; migration script will also retry
+    time.sleep(5)
     run_migration()
     start_gunicorn()

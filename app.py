@@ -9679,8 +9679,34 @@ def voluntario_logout():
 @app.route('/voluntario')
 @voluntario_required
 def voluntario_dashboard():
-    voluntario = Voluntario.query.get_or_404(session.get('voluntario_id'))
-    return render_template('voluntario/dashboard.html', voluntario=voluntario)
+    # Tentar obter o id do voluntário da sessão
+    voluntario_id = session.get('voluntario_id')
+    voluntario = None
+
+    if voluntario_id:
+        voluntario = Voluntario.query.get(voluntario_id)
+    else:
+        # Caso o login tenha sido feito via associado (fallback), tentar localizar voluntario pelo CPF em sessão
+        associado_cpf = session.get('associado_cpf')
+        if associado_cpf:
+            voluntario = Voluntario.query.filter_by(cpf=associado_cpf).first()
+
+    # Se ainda não houver voluntario, criar um objeto mínimo para template (apenas nome)
+    if not voluntario:
+        class Dummy:
+            nome_completo = session.get('voluntario_nome') or session.get('associado_nome') or 'Voluntário'
+            id = None
+
+        voluntario = Dummy()
+
+    # Buscar ofertas e agendamentos atribuídos a este voluntário (se houver id)
+    ofertas = []
+    agendamentos = []
+    if getattr(voluntario, 'id', None):
+        ofertas = OfertaHoras.query.filter_by(voluntario_id=voluntario.id).order_by(OfertaHoras.data_inicio.desc()).all()
+        agendamentos = AgendamentoVoluntario.query.filter_by(voluntario_id=voluntario.id).order_by(AgendamentoVoluntario.data_agendamento.desc()).all()
+
+    return render_template('voluntario/dashboard.html', voluntario=voluntario, ofertas=ofertas, agendamentos=agendamentos)
 
 @app.route('/associado')
 @associado_required

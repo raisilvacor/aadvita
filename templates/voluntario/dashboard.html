@@ -9,9 +9,61 @@
         <p>{{ _('Olá,') }} {{ voluntario.nome_completo }}!</p>
         <p>{{ _('Bem-vindo à sua área de voluntário. Aqui você pode ver suas informações e consultar agendamentos.') }}</p>
 
-        <div style="margin-top: 1.5rem;">
+        <div style="margin-top: 1.5rem; display:flex; gap:1rem; flex-wrap:wrap;">
             <a href="{{ url_for('voluntario_logout') }}" class="btn btn-secondary">{{ _('Sair') }}</a>
+            <a href="#ofertas" class="btn btn-primary">{{ _('Minhas Ofertas de Horas') }}</a>
+            <a href="#agendamentos" class="btn btn-primary">{{ _('Meus Agendamentos') }}</a>
         </div>
+
+        <section id="ofertas" style="margin-top:2rem;">
+            <h2>{{ _('Minhas Ofertas de Horas') }}</h2>
+            {% if ofertas and ofertas|length > 0 %}
+                <div class="card-grid">
+                {% for oferta in ofertas %}
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">{{ oferta.area_atividade or _('Oferta de Horas') }}</div>
+                                <div class="card-date">{{ oferta.data_inicio }}{% if oferta.data_fim %} — {{ oferta.data_fim }}{% endif %}</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ oferta.descricao or _('Sem descrição') }}</p>
+                            <p><strong>{{ _('Horas') }}:</strong> {{ oferta.horas_totais or _('Não informado') }}</p>
+                            <p><strong>{{ _('Status') }}:</strong> {{ oferta.status }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p>{{ _('Você ainda não tem ofertas de horas cadastradas.') }}</p>
+            {% endif %}
+        </section>
+
+        <section id="agendamentos" style="margin-top:2rem;">
+            <h2>{{ _('Meus Agendamentos') }}</h2>
+            {% if agendamentos and agendamentos|length > 0 %}
+                <div class="card-grid">
+                {% for ag in agendamentos %}
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">{{ ag.atividade or _('Agendamento') }}</div>
+                                <div class="card-date">{{ ag.data_agendamento }} — {{ ag.hora_inicio }} a {{ ag.hora_fim }}</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ ag.descricao or '' }}</p>
+                            <p><strong>{{ _('Responsável') }}:</strong> {{ ag.responsavel or _('Não informado') }}</p>
+                            <p><strong>{{ _('Status') }}:</strong> {{ ag.status }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p>{{ _('Nenhum agendamento encontrado.') }}</p>
+            {% endif %}
+        </section>
     </div>
 </section>
 {% endblock %}
