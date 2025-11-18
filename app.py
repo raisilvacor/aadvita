@@ -1526,6 +1526,7 @@ class Voluntario(db.Model):
     email = db.Column(db.String(200), nullable=False)
     telefone = db.Column(db.String(50))
     cpf = db.Column(db.String(20))
+    password_hash = db.Column(db.String(255), nullable=True)
     endereco = db.Column(db.Text)
     cidade = db.Column(db.String(100))
     estado = db.Column(db.String(50))
@@ -1544,6 +1545,18 @@ class Voluntario(db.Model):
     # Relacionamentos
     ofertas_horas = db.relationship('OfertaHoras', backref='voluntario', lazy=True, cascade='all, delete-orphan')
     agendamentos = db.relationship('AgendamentoVoluntario', backref='voluntario', lazy=True, cascade='all, delete-orphan')
+
+    def set_password(self, password):
+        try:
+            self.password_hash = generate_password_hash(password)
+        except Exception:
+            # If DB column doesn't exist, set attribute anyway; commit will fail and should be handled by caller
+            self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        if not getattr(self, 'password_hash', None):
+            return False
+        return check_password_hash(self.password_hash, password)
 
 class OfertaHoras(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -7081,6 +7094,23 @@ def admin_voluntarios_editar(id):
             voluntario.observacoes = request.form.get('observacoes')
             voluntario.status = request.form.get('status', 'pendente')
             voluntario.ativo = request.form.get('ativo') == 'on'
+
+            # Senha opcional definida pelo admin
+            senha = request.form.get('senha')
+            senha_confirm = request.form.get('senha_confirm')
+            if senha or senha_confirm:
+                if senha != senha_confirm:
+                    flash('As senhas não coincidem.', 'error')
+                    return redirect(url_for('admin_voluntarios_editar', id=id))
+                if len(senha) < 6:
+                    flash('A senha precisa ter pelo menos 6 caracteres.', 'error')
+                    return redirect(url_for('admin_voluntarios_editar', id=id))
+                try:
+                    voluntario.set_password(senha)
+                except Exception as e:
+                    db.session.rollback()
+                    flash('Não foi possível definir a senha: verifique o esquema do banco.', 'error')
+                    return redirect(url_for('admin_voluntarios_editar', id=id))
             
             db.session.commit()
             flash('Voluntário atualizado com sucesso!', 'success')
@@ -9476,11 +9506,15 @@ def voluntario_cadastro():
                 except:
                     pass
             
+            # Limpar CPF (remover pontuação)
+            cpf_raw = request.form.get('cpf')
+            cpf_clean = cpf_raw.replace('.', '').replace('-', '') if cpf_raw else None
+
             voluntario = Voluntario(
                 nome_completo=request.form.get('nome_completo'),
                 email=email,
                 telefone=request.form.get('telefone'),
-                cpf=request.form.get('cpf'),
+                cpf=cpf_clean,
                 endereco=request.form.get('endereco'),
                 cidade=request.form.get('cidade'),
                 estado=request.form.get('estado'),
@@ -9494,8 +9528,35 @@ def voluntario_cadastro():
                 status='pendente',
                 ativo=True
             )
+            # Validação de senha: exigir senha e confirmação
+            senha = request.form.get('senha')
+            senha_confirm = request.form.get('senha_confirm')
+            if not senha or not senha_confirm:
+                flash('Senha e confirmação são obrigatórias para cadastro de voluntário.', 'error')
+                return redirect(url_for('voluntario_cadastro'))
+            if senha != senha_confirm:
+                flash('As senhas não coincidem.', 'error')
+                return redirect(url_for('voluntario_cadastro'))
+            if len(senha) < 6:
+                flash('A senha precisa ter pelo menos 6 caracteres.', 'error')
+                return redirect(url_for('voluntario_cadastro'))
+
+            # Adicionar voluntário e salvar senha (hash)
             db.session.add(voluntario)
-            db.session.commit()
+            try:
+                voluntario.set_password(senha)
+            except Exception:
+                # Se não for possível definir a senha (coluna ausente), avisar e abortar
+                db.session.rollback()
+                flash('Não foi possível salvar a senha: execute a migração para adicionar a coluna password_hash.', 'error')
+                return redirect(url_for('voluntario_cadastro'))
+
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao realizar cadastro: {str(e)}', 'error')
+                return redirect(url_for('voluntario_cadastro'))
             flash('Cadastro de voluntário enviado com sucesso! Entraremos em contato em breve.', 'success')
             return redirect(url_for('index'))
         except Exception as e:

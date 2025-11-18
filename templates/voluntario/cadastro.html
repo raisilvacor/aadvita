@@ -48,6 +48,21 @@
                         <input type="date" id="data_nascimento" name="data_nascimento">
                     </div>
                 </div>
+
+                <!-- Campos de senha solicitados pelo usuário -->
+                <h2 style="margin-top: 2rem; margin-bottom: 1rem; color: #1f2937;">{{ _('Credenciais de Acesso') }}</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="senha">{{ _('Senha') }} *</label>
+                        <input type="password" id="senha" name="senha" placeholder="{{ _('Digite uma senha') }}">
+                        <small class="form-help">{{ _('Escolha uma senha segura (mínimo 6 caracteres).') }}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="senha_confirm">{{ _('Confirme a senha') }} *</label>
+                        <input type="password" id="senha_confirm" name="senha_confirm" placeholder="{{ _('Confirme sua senha') }}">
+                    </div>
+                </div>
                 
                 <div class="form-group">
                     <label for="endereco">{{ _('Endereço') }}</label>
