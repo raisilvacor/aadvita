@@ -26,7 +26,9 @@ def migrate(retries: int = 8, delay: float = 3.0) -> int:
     database_url = normalize_url(database_url)
 
     try:
-        import psycopg
+        # Import optional Postgres driver (psycopg v3). Use type ignore so static
+        # analyzers don't raise import errors in environments without the package.
+        import psycopg  # type: ignore
     except Exception as e:
         print('Erro ao importar psycopg:', e)
         return 2
