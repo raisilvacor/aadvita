@@ -52,8 +52,14 @@
                 <p style="margin: 0 0 0.5rem 0; color: #374151; font-weight: 500;">
                     <span>📷</span> Foto atual:
                 </p>
-                <img src="{{ url_for('static', filename=associado.foto) }}" alt="Foto do associado" 
-                     style="max-width: 200px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db; display: block; margin-top: 0.5rem;">
+                {% if associado.foto.startswith('base64:') and associado.foto_base64 %}
+                    {% set mime = associado.foto.split(':', 1)[1] %}
+                    <img src="data:{{ mime }};base64,{{ associado.foto_base64 }}" alt="Foto do associado"
+                         style="max-width: 200px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db; display: block; margin-top: 0.5rem;">
+                {% else %}
+                    <img src="{{ url_for('static', filename=associado.foto) }}" alt="Foto do associado" 
+                         style="max-width: 200px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db; display: block; margin-top: 0.5rem;">
+                {% endif %}
                 <small style="color: #6b7280; display: block; margin-top: 0.5rem;">Faça upload de uma nova foto para substituir a atual</small>
             </div>
             {% endif %}
