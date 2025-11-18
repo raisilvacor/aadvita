@@ -1593,6 +1593,20 @@ class AgendamentoVoluntario(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
+class SosPedido(db.Model):
+    __tablename__ = 'sos_pedido'
+    id = db.Column(db.Integer, primary_key=True)
+    associado_id = db.Column(db.Integer, db.ForeignKey('associado.id'), nullable=False)
+    descricao = db.Column(db.Text, nullable=False)
+    anexos = db.Column(db.Text)  # caminhos separados por vírgula
+    status = db.Column(db.String(50), default='novo')  # novo, em_andamento, concluido, cancelado
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # relacionamento com associado
+    associado = db.relationship('Associado', backref='sos_pedidos')
+
 class Banner(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50), nullable=False, unique=True)  # 'Campanhas', 'Apoie-nos', 'Editais'
@@ -1733,9 +1747,122 @@ def admin_dashboard():
         'voluntarios': Voluntario.query.count(),
         'voluntarios_pendentes': Voluntario.query.filter_by(status='pendente').count(),
         'ofertas_horas': OfertaHoras.query.count(),
-        'agendamentos': AgendamentoVoluntario.query.count()
+        'agendamentos': AgendamentoVoluntario.query.count(),
+    }
+    # Tentar obter contagem de SOS (se a tabela existir)
+    try:
+        stats['sos_novos'] = SosPedido.query.filter_by(status='novo').count()
+        stats['sos_total'] = SosPedido.query.count()
+    except Exception:
+        stats['sos_novos'] = 0
+        stats['sos_total'] = 0
     }
     return render_template('admin/dashboard.html', stats=stats)
+
+
+@app.route('/sos/novo', methods=['GET', 'POST'])
+def sos_novo():
+    # Formulário público para associados criarem pedidos de ajuda (SOS)
+    if request.method == 'POST':
+        if not session.get('associado_logged_in'):
+            flash('Você precisa estar logado como associado para enviar um pedido de ajuda.', 'error')
+            return redirect(url_for('login'))
+
+        associado_id = session.get('associado_id')
+        associado = Associado.query.get(associado_id)
+        descricao = request.form.get('descricao')
+        if not descricao:
+            flash('Descreva sua necessidade antes de enviar.', 'error')
+            return redirect(url_for('sos_novo'))
+
+        anexos_list = []
+        # aceitar múltiplos arquivos com name='anexos'
+        if 'anexos' in request.files:
+            files = request.files.getlist('anexos')
+            for file in files:
+                if file and file.filename:
+                    if not allowed_document_file(file.filename):
+                        flash('Tipo de arquivo não permitido. Use PDF/DOC/IMG etc.', 'error')
+                        return redirect(url_for('sos_novo'))
+                    upload_dir = os.path.join('static', 'documents', 'sos')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    filename = secure_filename(file.filename)
+                    unique_name = f"{uuid.uuid4()}_{filename}"
+                    filepath = os.path.join(upload_dir, unique_name)
+                    try:
+                        file.save(filepath)
+                        anexos_list.append(f"documents/sos/{unique_name}")
+                    except Exception as e:
+                        print('Erro ao salvar anexo SOS:', e)
+                        flash('Erro ao salvar arquivo enviado.', 'error')
+                        return redirect(url_for('sos_novo'))
+
+        anexos_txt = ','.join(anexos_list) if anexos_list else None
+
+        try:
+            pedido = SosPedido(
+                associado_id=associado.id,
+                descricao=descricao,
+                anexos=anexos_txt,
+                status='novo'
+            )
+            db.session.add(pedido)
+            db.session.commit()
+            flash('Pedido de ajuda enviado com sucesso. Acompanhe pela sua área de associado.', 'success')
+            return redirect(url_for('associado_sos'))
+        except Exception as e:
+            db.session.rollback()
+            print('Erro ao salvar SOS pedido:', e)
+            flash('Erro ao enviar pedido. Tente novamente mais tarde.', 'error')
+            return redirect(url_for('sos_novo'))
+
+    return render_template('sos/novo.html')
+
+
+@app.route('/associado/sos')
+@associado_required
+def associado_sos():
+    associado_id = session.get('associado_id')
+    pedidos = SosPedido.query.filter_by(associado_id=associado_id).order_by(SosPedido.created_at.desc()).all()
+    return render_template('associado/sos.html', pedidos=pedidos)
+
+
+@app.route('/admin/sos_pedidos')
+@admin_required
+def admin_sos_pedidos():
+    pedidos = SosPedido.query.order_by(SosPedido.created_at.desc()).all()
+    return render_template('admin/sos_pedidos.html', pedidos=pedidos)
+
+
+@app.route('/admin/sos_pedidos/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_sos_pedidos_editar(id):
+    pedido = SosPedido.query.get_or_404(id)
+    if request.method == 'POST':
+        status = request.form.get('status')
+        pedido.status = status or pedido.status
+        try:
+            db.session.commit()
+            flash('Pedido atualizado com sucesso.', 'success')
+            return redirect(url_for('admin_sos_pedidos'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar pedido: {e}', 'error')
+    return render_template('admin/sos_pedido_form.html', pedido=pedido)
+
+
+@app.route('/admin/sos_pedidos/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_sos_pedidos_excluir(id):
+    pedido = SosPedido.query.get_or_404(id)
+    try:
+        db.session.delete(pedido)
+        db.session.commit()
+        flash('Pedido excluído com sucesso.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir pedido: {e}', 'error')
+    return redirect(url_for('admin_sos_pedidos'))
 
 # ============================================
 # CRUD - REUNIÕES PRESENCIAIS

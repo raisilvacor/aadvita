@@ -24,6 +24,18 @@ def run_migration():
         print('Erro ao executar migração:', e)
         # Continuar startup mesmo se a migração falhar — admin pode executar manualmente
 
+    # Tentar executar migração para tabela SOS
+    try:
+        import migrate_postgres_sos as mig_sos
+        print('Executando migração SOS (se aplicável)...')
+        code2 = mig_sos.migrate()
+        if code2 != 0:
+            print(f'Migração SOS retornou código {code2} (continuando startup).')
+        else:
+            print('Migração SOS finalizada com sucesso.')
+    except Exception as e:
+        print('Não foi possível importar/rodar migrate_postgres_sos:', e)
+        # continuar
     return 0
 
 

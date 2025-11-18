@@ -1,0 +1,47 @@
+{% extends "associado/base.html" %}
+
+{% block title %}Meus Pedidos SOS{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px; margin:2rem auto;">
+    <h1 class="section-title">Meus Pedidos de Ajuda (SOS)</h1>
+    <a href="{{ url_for('sos_novo') }}" class="btn btn-primary" style="margin-bottom:1rem; background:#ef4444; border-color:#ef4444;">Enviar novo pedido</a>
+
+    {% if pedidos %}
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descrição</th>
+                    <th>Anexos</th>
+                    <th>Status</th>
+                    <th>Enviado em</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pedidos %}
+                <tr>
+                    <td>{{ p.id }}</td>
+                    <td>{{ p.descricao[:120] }}{% if p.descricao|length > 120 %}...{% endif %}</td>
+                    <td>
+                        {% if p.anexos %}
+                            {% for a in p.anexos.split(',') %}
+                                <a href="{{ url_for('static', filename=a) }}" target="_blank">Anexo</a>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ p.status }}</td>
+                    <td>{{ p.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>Nenhum pedido encontrado.</p>
+    {% endif %}
+</div>
+{% endblock %}
