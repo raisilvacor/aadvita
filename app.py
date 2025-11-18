@@ -1264,6 +1264,7 @@ class Associado(db.Model):
     ativo = db.Column(db.Boolean, default=True)  # Controla se gera mensalidades automaticamente
     carteira_pdf = db.Column(db.String(300))  # Caminho do PDF da carteira de associado
     foto = db.Column(db.String(300))  # Caminho da foto do associado
+    foto_base64 = db.Column(db.Text, nullable=True)  # salvar imagem em base64 para persistência no Render
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     
     def set_password(self, password):
@@ -5064,14 +5065,39 @@ def admin_associados_novo():
                 file = request.files['foto']
                 if file.filename != '':
                     if file and allowed_file(file.filename):
-                        upload_folder = 'static/images/associados'
-                        os.makedirs(upload_folder, exist_ok=True)
-                        
-                        filename = secure_filename(file.filename)
-                        unique_filename = f"{uuid.uuid4()}_{filename}"
-                        filepath = os.path.join(upload_folder, unique_filename)
-                        file.save(filepath)
-                        foto_path = f"images/associados/{unique_filename}"
+                        # Ler bytes e salvar também em base64 para persistência no DB (Render)
+                        file_data = file.read()
+                        file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
+                        mime_types = {
+                            'jpg': 'image/jpeg',
+                            'jpeg': 'image/jpeg',
+                            'png': 'image/png',
+                            'gif': 'image/gif',
+                            'webp': 'image/webp'
+                        }
+                        mime_type = mime_types.get(file_ext, 'image/jpeg')
+                        try:
+                            foto_base64_data = base64.b64encode(file_data).decode('utf-8')
+                        except Exception:
+                            foto_base64_data = None
+
+                        # salvar localmente também para ambiente de desenvolvimento
+                        try:
+                            upload_folder = 'static/images/associados'
+                            os.makedirs(upload_folder, exist_ok=True)
+                            filename = secure_filename(file.filename)
+                            unique_filename = f"{uuid.uuid4()}_{filename}"
+                            filepath = os.path.join(upload_folder, unique_filename)
+                            file.seek(0)
+                            file.save(filepath)
+                            foto_path = f"images/associados/{unique_filename}"
+                        except Exception as e:
+                            print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
+                            foto_path = None
+                        # marcar path as base64 reference if we have base64 data
+                        if foto_base64_data:
+                            foto_path = f"base64:{mime_type}"
+                        # atribuir valores no objeto associado abaixo
                     else:
                         flash('Formato de arquivo não permitido. Use JPG, PNG ou GIF.', 'error')
                         return redirect(url_for('admin_associados_novo'))
@@ -5085,6 +5111,7 @@ def admin_associados_novo():
                 valor_mensalidade=float(valor_mensalidade) if valor_mensalidade else 0.0,
                 status='aprovado',  # Cadastro pelo admin é aprovado automaticamente
                 foto=foto_path,
+                foto_base64=(foto_base64_data if 'foto_base64_data' in locals() else None),
                 created_at=datetime.now()
             )
             associado.set_password(senha)
@@ -5140,14 +5167,39 @@ def admin_associados_editar(id):
                                 except Exception as e:
                                     print(f"Erro ao deletar foto antiga: {str(e)}")
                         
-                        upload_folder = 'static/images/associados'
-                        os.makedirs(upload_folder, exist_ok=True)
-                        
-                        filename = secure_filename(file.filename)
-                        unique_filename = f"{uuid.uuid4()}_{filename}"
-                        filepath = os.path.join(upload_folder, unique_filename)
-                        file.save(filepath)
-                        associado.foto = f"images/associados/{unique_filename}"
+                        # Ler bytes e salvar também em base64 para persistência no DB (Render)
+                        file_data = file.read()
+                        file_ext = os.path.splitext(file.filename)[1].lower().replace('.', '')
+                        mime_types = {
+                            'jpg': 'image/jpeg',
+                            'jpeg': 'image/jpeg',
+                            'png': 'image/png',
+                            'gif': 'image/gif',
+                            'webp': 'image/webp'
+                        }
+                        mime_type = mime_types.get(file_ext, 'image/jpeg')
+                        try:
+                            foto_base64_data = base64.b64encode(file_data).decode('utf-8')
+                        except Exception:
+                            foto_base64_data = None
+
+                        # salvar localmente também para ambiente de desenvolvimento
+                        try:
+                            upload_folder = 'static/images/associados'
+                            os.makedirs(upload_folder, exist_ok=True)
+                            filename = secure_filename(file.filename)
+                            unique_filename = f"{uuid.uuid4()}_{filename}"
+                            filepath = os.path.join(upload_folder, unique_filename)
+                            file.seek(0)
+                            file.save(filepath)
+                            associado.foto = f"images/associados/{unique_filename}"
+                        except Exception as e:
+                            print(f"[AVISO] Não foi possível salvar imagem localmente: {e}")
+                            associado.foto = None
+                        # marcar path como base64 reference if we have base64 data
+                        if foto_base64_data:
+                            associado.foto = f"base64:{mime_type}"
+                        associado.foto_base64 = (foto_base64_data if foto_base64_data else None)
                     else:
                         flash('Formato de arquivo não permitido. Use JPG, PNG ou GIF.', 'error')
                         return redirect(url_for('admin_associados_editar', id=id))

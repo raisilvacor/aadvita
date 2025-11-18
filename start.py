@@ -36,6 +36,18 @@ def run_migration():
     except Exception as e:
         print('Não foi possível importar/rodar migrate_postgres_sos:', e)
         # continuar
+    # Tentar executar migração para associado (coluna foto_base64)
+    try:
+        import migrate_postgres_associado as mig_ass
+        print('Executando migração associado (se aplicável)...')
+        code3 = mig_ass.migrate()
+        if code3 != 0:
+            print(f'Migração associado retornou código {code3} (continuando startup).')
+        else:
+            print('Migração associado finalizada com sucesso.')
+    except Exception as e:
+        print('Não foi possível importar/rodar migrate_postgres_associado:', e)
+        # continuar
     return 0
 
 
