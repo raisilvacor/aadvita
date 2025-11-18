@@ -1,0 +1,99 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if oferta %}Editar{% else %}Nova{% endif %} Oferta de Horas{% endblock %}
+
+{% block page_title %}{% if oferta %}Editar{% else %}Nova{% endif %} Oferta de Horas{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="voluntario_id">Voluntário *</label>
+            <select id="voluntario_id" name="voluntario_id" required>
+                <option value="">Selecione um voluntário</option>
+                {% for voluntario in voluntarios %}
+                <option value="{{ voluntario.id }}" 
+                        {% if (oferta and oferta.voluntario_id == voluntario.id) or (not oferta and voluntario_id|int == voluntario.id) %}selected{% endif %}>
+                    {{ voluntario.nome_completo }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="area_atividade">Área de Atividade</label>
+            <input type="text" id="area_atividade" name="area_atividade" 
+                   value="{% if oferta %}{{ oferta.area_atividade or '' }}{% endif %}" 
+                   placeholder="Ex: Educação, Eventos, Atendimento">
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="data_inicio">Data de Início *</label>
+                <input type="date" id="data_inicio" name="data_inicio" 
+                       value="{% if oferta and oferta.data_inicio %}{{ oferta.data_inicio.strftime('%Y-%m-%d') }}{% endif %}" 
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="data_fim">Data de Fim</label>
+                <input type="date" id="data_fim" name="data_fim" 
+                       value="{% if oferta and oferta.data_fim %}{{ oferta.data_fim.strftime('%Y-%m-%d') }}{% endif %}">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="hora_inicio">Hora de Início</label>
+                <input type="time" id="hora_inicio" name="hora_inicio" 
+                       value="{% if oferta %}{{ oferta.hora_inicio or '' }}{% endif %}">
+            </div>
+            
+            <div class="form-group">
+                <label for="hora_fim">Hora de Fim</label>
+                <input type="time" id="hora_fim" name="hora_fim" 
+                       value="{% if oferta %}{{ oferta.hora_fim or '' }}{% endif %}">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="dias_semana">Dias da Semana</label>
+            <input type="text" id="dias_semana" name="dias_semana" 
+                   value="{% if oferta %}{{ oferta.dias_semana or '' }}{% endif %}" 
+                   placeholder="Ex: Segunda, Quarta, Sexta ou Todos os dias">
+        </div>
+        
+        <div class="form-group">
+            <label for="horas_totais">Total de Horas</label>
+            <input type="number" id="horas_totais" name="horas_totais" 
+                   value="{% if oferta and oferta.horas_totais %}{{ oferta.horas_totais }}{% endif %}" 
+                   step="0.5" min="0" placeholder="Ex: 8.5">
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao">Descrição</label>
+            <textarea id="descricao" name="descricao" rows="4">{% if oferta %}{{ oferta.descricao or '' }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" required>
+                <option value="disponivel" {% if oferta and oferta.status == 'disponivel' %}selected{% endif %}>✅ Disponível</option>
+                <option value="agendada" {% if oferta and oferta.status == 'agendada' %}selected{% endif %}>📅 Agendada</option>
+                <option value="concluida" {% if oferta and oferta.status == 'concluida' %}selected{% endif %}>✓ Concluída</option>
+                <option value="cancelada" {% if oferta and oferta.status == 'cancelada' %}selected{% endif %}>❌ Cancelada</option>
+            </select>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_ofertas_horas') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

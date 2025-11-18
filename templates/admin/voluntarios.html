@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Voluntários{% endblock %}
+
+{% block page_title %}Gerenciar Voluntários{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Voluntários</h2>
+    </div>
+    
+    <!-- Filtros por Status -->
+    <div class="status-filters" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-light); border-radius: 0.5rem;">
+        <a href="{{ url_for('admin_voluntarios', status='todos') }}" 
+           class="status-filter-btn {% if status_filter == 'todos' %}active{% endif %}">
+            Todos
+        </a>
+        <a href="{{ url_for('admin_voluntarios', status='pendentes') }}" 
+           class="status-filter-btn {% if status_filter == 'pendentes' %}active{% endif %}" 
+           style="background: #f59e0b; color: white;">
+            ⏳ Pendentes
+        </a>
+        <a href="{{ url_for('admin_voluntarios', status='aprovados') }}" 
+           class="status-filter-btn {% if status_filter == 'aprovados' %}active{% endif %}" 
+           style="background: #10b981; color: white;">
+            ✅ Aprovados
+        </a>
+        <a href="{{ url_for('admin_voluntarios', status='inativos') }}" 
+           class="status-filter-btn {% if status_filter == 'inativos' %}active{% endif %}" 
+           style="background: #6b7280; color: white;">
+            ⚫ Inativos
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nome Completo</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th>Área de Interesse</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if voluntarios %}
+                    {% for voluntario in voluntarios %}
+                    <tr>
+                        <td>{{ voluntario.nome_completo }}</td>
+                        <td>{{ voluntario.email }}</td>
+                        <td>{{ voluntario.telefone or '-' }}</td>
+                        <td>{{ voluntario.area_interesse or '-' }}</td>
+                        <td>
+                            {% if voluntario.status == 'pendente' %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⏳ Pendente
+                                </span>
+                            {% elif voluntario.status == 'aprovado' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Aprovado
+                                </span>
+                            {% elif voluntario.status == 'inativo' %}
+                                <span class="status-badge" style="background: #6b7280; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⚫ Inativo
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_voluntarios_detalhe', id=voluntario.id) }}" 
+                               class="btn-admin btn-admin-secondary btn-admin-small">
+                                <span>👁️</span> Ver Detalhes
+                            </a>
+                            <a href="{{ url_for('admin_voluntarios_editar', id=voluntario.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small" 
+                               style="margin-left: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_voluntarios_excluir', id=voluntario.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este voluntário?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem;">
+                            Nenhum voluntário encontrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

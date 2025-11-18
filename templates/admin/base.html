@@ -80,6 +80,9 @@
             <a href="{{ url_for('admin_modelos_documentos') }}" class="nav-item {% if 'modelos_documentos' in request.endpoint %}active{% endif %}">
                 <span>📄</span> Modelos de Documentos
             </a>
+            <a href="{{ url_for('admin_voluntarios') }}" class="nav-item {% if 'voluntarios' in request.endpoint or 'ofertas_horas' in request.endpoint or 'agendamentos_voluntarios' in request.endpoint %}active{% endif %}">
+                <span>🤲</span> Voluntários
+            </a>
             <a href="{{ url_for('index') }}" class="nav-item" target="_blank">
                 <span>🌐</span> Ver Site
             </a>

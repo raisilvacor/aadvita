@@ -1,0 +1,127 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if agendamento %}Editar{% else %}Novo{% endif %} Agendamento{% endblock %}
+
+{% block page_title %}{% if agendamento %}Editar{% else %}Novo{% endif %} Agendamento de Voluntário{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label for="voluntario_id">Voluntário *</label>
+            <select id="voluntario_id" name="voluntario_id" required>
+                <option value="">Selecione um voluntário</option>
+                {% for voluntario in voluntarios %}
+                <option value="{{ voluntario.id }}" 
+                        {% if (agendamento and agendamento.voluntario_id == voluntario.id) or (not agendamento and voluntario_id|int == voluntario.id) %}selected{% endif %}>
+                    {{ voluntario.nome_completo }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="oferta_horas_id">Oferta de Horas (Opcional)</label>
+            <select id="oferta_horas_id" name="oferta_horas_id">
+                <option value="">Nenhuma (agendamento direto)</option>
+                {% for oferta in ofertas %}
+                <option value="{{ oferta.id }}" 
+                        {% if agendamento and agendamento.oferta_horas_id == oferta.id %}selected{% endif %}
+                        {% if not agendamento and oferta_id|int == oferta.id %}selected{% endif %}>
+                    {{ oferta.voluntario.nome_completo }} - {{ oferta.area_atividade or 'Sem área' }} 
+                    ({{ oferta.data_inicio.strftime('%d/%m/%Y') if oferta.data_inicio else '' }})
+                </option>
+                {% endfor %}
+            </select>
+            <small style="color: var(--text-light);">Selecione uma oferta de horas para vincular ao agendamento</small>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="data_agendamento">Data do Agendamento *</label>
+                <input type="date" id="data_agendamento" name="data_agendamento" 
+                       value="{% if agendamento and agendamento.data_agendamento %}{{ agendamento.data_agendamento.strftime('%Y-%m-%d') }}{% endif %}" 
+                       required>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="hora_inicio">Hora de Início *</label>
+                <input type="time" id="hora_inicio" name="hora_inicio" 
+                       value="{% if agendamento %}{{ agendamento.hora_inicio or '' }}{% endif %}" 
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="hora_fim">Hora de Fim *</label>
+                <input type="time" id="hora_fim" name="hora_fim" 
+                       value="{% if agendamento %}{{ agendamento.hora_fim or '' }}{% endif %}" 
+                       required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="atividade">Atividade/Tipo de Ajuda *</label>
+            <input type="text" id="atividade" name="atividade" 
+                   value="{% if agendamento %}{{ agendamento.atividade }}{% endif %}" 
+                   placeholder="Ex: Apoio em evento, Atendimento, Organização" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="descricao">Descrição</label>
+            <textarea id="descricao" name="descricao" rows="4" 
+                      placeholder="Descreva detalhadamente o que será feito">{% if agendamento %}{{ agendamento.descricao or '' }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="responsavel">Responsável</label>
+                <input type="text" id="responsavel" name="responsavel" 
+                       value="{% if agendamento %}{{ agendamento.responsavel or '' }}{% endif %}" 
+                       placeholder="Nome da pessoa que está agendando">
+            </div>
+            
+            <div class="form-group">
+                <label for="contato_responsavel">Contato do Responsável</label>
+                <input type="text" id="contato_responsavel" name="contato_responsavel" 
+                       value="{% if agendamento %}{{ agendamento.contato_responsavel or '' }}{% endif %}" 
+                       placeholder="Telefone ou e-mail">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="local">Local</label>
+            <input type="text" id="local" name="local" 
+                   value="{% if agendamento %}{{ agendamento.local or '' }}{% endif %}" 
+                   placeholder="Onde será realizada a atividade">
+        </div>
+        
+        <div class="form-group">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" name="observacoes" rows="3">{% if agendamento %}{{ agendamento.observacoes or '' }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" required>
+                <option value="agendado" {% if agendamento and agendamento.status == 'agendado' %}selected{% endif %}>📅 Agendado</option>
+                <option value="confirmado" {% if agendamento and agendamento.status == 'confirmado' %}selected{% endif %}>✅ Confirmado</option>
+                <option value="em_andamento" {% if agendamento and agendamento.status == 'em_andamento' %}selected{% endif %}>🔄 Em Andamento</option>
+                <option value="concluido" {% if agendamento and agendamento.status == 'concluido' %}selected{% endif %}>✓ Concluído</option>
+                <option value="cancelado" {% if agendamento and agendamento.status == 'cancelado' %}selected{% endif %}>❌ Cancelado</option>
+            </select>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_agendamentos_voluntarios') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

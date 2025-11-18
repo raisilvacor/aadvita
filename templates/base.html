@@ -56,6 +56,7 @@
                         <li role="none"><a href="{{ url_for('videos') }}" role="menuitem" aria-current="{% if request.endpoint == 'videos' %}page{% endif %}">{{ _('Vídeos') }}</a></li>
                         <li role="none"><a href="{{ url_for('galeria') }}" role="menuitem" aria-current="{% if request.endpoint == 'galeria' %}page{% endif %}">{{ _('Galeria') }}</a></li>
                         <li role="none"><a href="{{ url_for('apoiadores') }}" role="menuitem" aria-current="{% if request.endpoint == 'apoiadores' %}page{% endif %}">{{ _('Apoiadores') }}</a></li>
+                        <li role="none"><a href="{{ url_for('voluntario_cadastro') }}" role="menuitem" aria-current="{% if request.endpoint == 'voluntario_cadastro' %}page{% endif %}">{{ _('Seja Voluntário') }}</a></li>
                         <li role="none" class="language-selector">
                             <div class="lang-btn" id="selected-lang" role="button" tabindex="0" aria-label="{{ _('Selecionar idioma') }}" aria-expanded="false" aria-haspopup="true">
                                 {% if current_language == 'pt' %}
@@ -149,6 +150,7 @@
                                 <li><a href="{{ url_for('projetos') }}">{{ _('Projetos') }}</a></li>
                                 <li><a href="{{ url_for('acoes') }}">{{ _('Ações') }}</a></li>
                                 <li><a href="{{ url_for('videos') }}">{{ _('Vídeos') }}</a></li>
+                                <li><a href="{{ url_for('voluntario_cadastro') }}">{{ _('Seja Voluntário') }}</a></li>
                             </ul>
                         </div>
                         <div class="footer-donations-column">

@@ -1520,6 +1520,66 @@ class RadioConfig(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class Voluntario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome_completo = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(200), nullable=False)
+    telefone = db.Column(db.String(50))
+    cpf = db.Column(db.String(20))
+    endereco = db.Column(db.Text)
+    cidade = db.Column(db.String(100))
+    estado = db.Column(db.String(50))
+    cep = db.Column(db.String(20))
+    data_nascimento = db.Column(db.Date)
+    profissao = db.Column(db.String(200))
+    habilidades = db.Column(db.Text)  # Habilidades e competências do voluntário
+    disponibilidade = db.Column(db.Text)  # Dias e horários disponíveis
+    area_interesse = db.Column(db.String(200))  # Área de interesse para voluntariado
+    observacoes = db.Column(db.Text)
+    status = db.Column(db.String(50), default='pendente')  # pendente, aprovado, inativo
+    ativo = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamentos
+    ofertas_horas = db.relationship('OfertaHoras', backref='voluntario', lazy=True, cascade='all, delete-orphan')
+    agendamentos = db.relationship('AgendamentoVoluntario', backref='voluntario', lazy=True, cascade='all, delete-orphan')
+
+class OfertaHoras(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    voluntario_id = db.Column(db.Integer, db.ForeignKey('voluntario.id'), nullable=False)
+    data_inicio = db.Column(db.Date, nullable=False)
+    data_fim = db.Column(db.Date)  # Opcional, se for um período
+    hora_inicio = db.Column(db.String(10))  # Ex: "08:00"
+    hora_fim = db.Column(db.String(10))  # Ex: "12:00"
+    dias_semana = db.Column(db.String(100))  # Ex: "Segunda, Quarta, Sexta" ou "Todos os dias"
+    horas_totais = db.Column(db.Float)  # Total de horas oferecidas
+    descricao = db.Column(db.Text)  # Descrição da oferta
+    area_atividade = db.Column(db.String(200))  # Área de atividade oferecida
+    status = db.Column(db.String(50), default='disponivel')  # disponivel, agendada, concluida, cancelada
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamento com agendamentos
+    agendamentos = db.relationship('AgendamentoVoluntario', backref='oferta_horas', lazy=True, cascade='all, delete-orphan')
+
+class AgendamentoVoluntario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    voluntario_id = db.Column(db.Integer, db.ForeignKey('voluntario.id'), nullable=False)
+    oferta_horas_id = db.Column(db.Integer, db.ForeignKey('oferta_horas.id'), nullable=True)  # Opcional, pode agendar sem oferta específica
+    data_agendamento = db.Column(db.Date, nullable=False)
+    hora_inicio = db.Column(db.String(10), nullable=False)
+    hora_fim = db.Column(db.String(10), nullable=False)
+    atividade = db.Column(db.String(200), nullable=False)  # Tipo de atividade/ajuda
+    descricao = db.Column(db.Text)  # Descrição detalhada do que será feito
+    responsavel = db.Column(db.String(200))  # Nome da pessoa que está agendando
+    contato_responsavel = db.Column(db.String(100))  # Telefone/email do responsável
+    local = db.Column(db.String(300))  # Local onde será a atividade
+    observacoes = db.Column(db.Text)
+    status = db.Column(db.String(50), default='agendado')  # agendado, confirmado, em_andamento, concluido, cancelado
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class Banner(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50), nullable=False, unique=True)  # 'Campanhas', 'Apoie-nos', 'Editais'
@@ -1646,7 +1706,11 @@ def admin_dashboard():
         'imagens': Imagem.query.count(),
         'videos': Video.query.count(),
         'associados': Associado.query.count(),
-        'associados_pendentes': Associado.query.filter_by(status='pendente').count()
+        'associados_pendentes': Associado.query.filter_by(status='pendente').count(),
+        'voluntarios': Voluntario.query.count(),
+        'voluntarios_pendentes': Voluntario.query.filter_by(status='pendente').count(),
+        'ofertas_horas': OfertaHoras.query.count(),
+        'agendamentos': AgendamentoVoluntario.query.count()
     }
     return render_template('admin/dashboard.html', stats=stats)
 
@@ -6950,6 +7014,326 @@ def admin_informativos_excluir(id):
     return redirect(url_for('admin_informativos'))
 
 # ============================================
+# CRUD - VOLUNTÁRIOS
+# ============================================
+
+@app.route('/admin/voluntarios')
+@admin_required
+def admin_voluntarios():
+    status_filter = request.args.get('status', 'todos')
+    voluntarios = Voluntario.query
+    
+    if status_filter == 'pendentes':
+        voluntarios = voluntarios.filter_by(status='pendente')
+    elif status_filter == 'aprovados':
+        voluntarios = voluntarios.filter_by(status='aprovado')
+    elif status_filter == 'inativos':
+        voluntarios = voluntarios.filter_by(status='inativo')
+    
+    voluntarios = voluntarios.order_by(Voluntario.created_at.desc()).all()
+    return render_template('admin/voluntarios.html', voluntarios=voluntarios, status_filter=status_filter)
+
+@app.route('/admin/voluntarios/<int:id>')
+@admin_required
+def admin_voluntarios_detalhe(id):
+    voluntario = Voluntario.query.get_or_404(id)
+    ofertas = OfertaHoras.query.filter_by(voluntario_id=id).order_by(OfertaHoras.data_inicio.desc()).all()
+    agendamentos = AgendamentoVoluntario.query.filter_by(voluntario_id=id).order_by(AgendamentoVoluntario.data_agendamento.desc()).all()
+    return render_template('admin/voluntarios_detalhe.html', voluntario=voluntario, ofertas=ofertas, agendamentos=agendamentos)
+
+@app.route('/admin/voluntarios/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_voluntarios_editar(id):
+    voluntario = Voluntario.query.get_or_404(id)
+    if request.method == 'POST':
+        try:
+            data_nascimento_str = request.form.get('data_nascimento')
+            data_nascimento = None
+            if data_nascimento_str:
+                try:
+                    data_nascimento = datetime.strptime(data_nascimento_str, "%Y-%m-%d").date()
+                except:
+                    pass
+            
+            voluntario.nome_completo = request.form.get('nome_completo')
+            voluntario.email = request.form.get('email')
+            voluntario.telefone = request.form.get('telefone')
+            voluntario.cpf = request.form.get('cpf')
+            voluntario.endereco = request.form.get('endereco')
+            voluntario.cidade = request.form.get('cidade')
+            voluntario.estado = request.form.get('estado')
+            voluntario.cep = request.form.get('cep')
+            voluntario.data_nascimento = data_nascimento
+            voluntario.profissao = request.form.get('profissao')
+            voluntario.habilidades = request.form.get('habilidades')
+            voluntario.disponibilidade = request.form.get('disponibilidade')
+            voluntario.area_interesse = request.form.get('area_interesse')
+            voluntario.observacoes = request.form.get('observacoes')
+            voluntario.status = request.form.get('status', 'pendente')
+            voluntario.ativo = request.form.get('ativo') == 'on'
+            
+            db.session.commit()
+            flash('Voluntário atualizado com sucesso!', 'success')
+            return redirect(url_for('admin_voluntarios_detalhe', id=id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar voluntário: {str(e)}', 'error')
+    
+    return render_template('admin/voluntarios_form.html', voluntario=voluntario)
+
+@app.route('/admin/voluntarios/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_voluntarios_excluir(id):
+    voluntario = Voluntario.query.get_or_404(id)
+    try:
+        db.session.delete(voluntario)
+        db.session.commit()
+        flash('Voluntário excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir voluntário: {str(e)}', 'error')
+    return redirect(url_for('admin_voluntarios'))
+
+# ============================================
+# CRUD - OFERTAS DE HORAS
+# ============================================
+
+@app.route('/admin/ofertas-horas')
+@admin_required
+def admin_ofertas_horas():
+    status_filter = request.args.get('status', 'todos')
+    ofertas = OfertaHoras.query
+    
+    if status_filter == 'disponiveis':
+        ofertas = ofertas.filter_by(status='disponivel')
+    elif status_filter == 'agendadas':
+        ofertas = ofertas.filter_by(status='agendada')
+    elif status_filter == 'concluidas':
+        ofertas = ofertas.filter_by(status='concluida')
+    
+    ofertas = ofertas.order_by(OfertaHoras.data_inicio.desc()).all()
+    return render_template('admin/ofertas_horas.html', ofertas=ofertas, status_filter=status_filter)
+
+@app.route('/admin/ofertas-horas/novo', methods=['GET', 'POST'])
+@admin_required
+def admin_ofertas_horas_novo():
+    voluntario_id = request.args.get('voluntario_id')
+    voluntarios = Voluntario.query.filter_by(status='aprovado', ativo=True).order_by(Voluntario.nome_completo).all()
+    
+    if request.method == 'POST':
+        try:
+            data_inicio_str = request.form.get('data_inicio')
+            data_fim_str = request.form.get('data_fim')
+            
+            data_inicio = datetime.strptime(data_inicio_str, "%Y-%m-%d").date() if data_inicio_str else None
+            data_fim = datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None
+            
+            horas_totais = None
+            if request.form.get('horas_totais'):
+                try:
+                    horas_totais = float(request.form.get('horas_totais'))
+                except:
+                    pass
+            
+            oferta = OfertaHoras(
+                voluntario_id=request.form.get('voluntario_id'),
+                data_inicio=data_inicio,
+                data_fim=data_fim,
+                hora_inicio=request.form.get('hora_inicio'),
+                hora_fim=request.form.get('hora_fim'),
+                dias_semana=request.form.get('dias_semana'),
+                horas_totais=horas_totais,
+                descricao=request.form.get('descricao'),
+                area_atividade=request.form.get('area_atividade'),
+                status=request.form.get('status', 'disponivel')
+            )
+            db.session.add(oferta)
+            db.session.commit()
+            flash('Oferta de horas criada com sucesso!', 'success')
+            return redirect(url_for('admin_ofertas_horas'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao criar oferta: {str(e)}', 'error')
+    
+    return render_template('admin/ofertas_horas_form.html', oferta=None, voluntarios=voluntarios, voluntario_id=voluntario_id)
+
+@app.route('/admin/ofertas-horas/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_ofertas_horas_editar(id):
+    oferta = OfertaHoras.query.get_or_404(id)
+    voluntarios = Voluntario.query.filter_by(status='aprovado', ativo=True).order_by(Voluntario.nome_completo).all()
+    
+    if request.method == 'POST':
+        try:
+            data_inicio_str = request.form.get('data_inicio')
+            data_fim_str = request.form.get('data_fim')
+            
+            oferta.data_inicio = datetime.strptime(data_inicio_str, "%Y-%m-%d").date() if data_inicio_str else None
+            oferta.data_fim = datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None
+            oferta.hora_inicio = request.form.get('hora_inicio')
+            oferta.hora_fim = request.form.get('hora_fim')
+            oferta.dias_semana = request.form.get('dias_semana')
+            oferta.area_atividade = request.form.get('area_atividade')
+            oferta.descricao = request.form.get('descricao')
+            oferta.status = request.form.get('status', 'disponivel')
+            
+            horas_totais = None
+            if request.form.get('horas_totais'):
+                try:
+                    horas_totais = float(request.form.get('horas_totais'))
+                except:
+                    pass
+            oferta.horas_totais = horas_totais
+            
+            db.session.commit()
+            flash('Oferta de horas atualizada com sucesso!', 'success')
+            return redirect(url_for('admin_ofertas_horas'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar oferta: {str(e)}', 'error')
+    
+    return render_template('admin/ofertas_horas_form.html', oferta=oferta, voluntarios=voluntarios)
+
+@app.route('/admin/ofertas-horas/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_ofertas_horas_excluir(id):
+    oferta = OfertaHoras.query.get_or_404(id)
+    try:
+        db.session.delete(oferta)
+        db.session.commit()
+        flash('Oferta de horas excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir oferta: {str(e)}', 'error')
+    return redirect(url_for('admin_ofertas_horas'))
+
+# ============================================
+# CRUD - AGENDAMENTOS DE VOLUNTÁRIOS
+# ============================================
+
+@app.route('/admin/agendamentos-voluntarios')
+@admin_required
+def admin_agendamentos_voluntarios():
+    status_filter = request.args.get('status', 'todos')
+    agendamentos = AgendamentoVoluntario.query
+    
+    if status_filter == 'agendados':
+        agendamentos = agendamentos.filter_by(status='agendado')
+    elif status_filter == 'confirmados':
+        agendamentos = agendamentos.filter_by(status='confirmado')
+    elif status_filter == 'em_andamento':
+        agendamentos = agendamentos.filter_by(status='em_andamento')
+    elif status_filter == 'concluidos':
+        agendamentos = agendamentos.filter_by(status='concluido')
+    elif status_filter == 'cancelados':
+        agendamentos = agendamentos.filter_by(status='cancelado')
+    
+    agendamentos = agendamentos.order_by(AgendamentoVoluntario.data_agendamento.desc()).all()
+    return render_template('admin/agendamentos_voluntarios.html', agendamentos=agendamentos, status_filter=status_filter)
+
+@app.route('/admin/agendamentos-voluntarios/novo', methods=['GET', 'POST'])
+@admin_required
+def admin_agendamentos_voluntarios_novo():
+    voluntario_id = request.args.get('voluntario_id')
+    oferta_id = request.args.get('oferta_id')
+    voluntarios = Voluntario.query.filter_by(status='aprovado', ativo=True).order_by(Voluntario.nome_completo).all()
+    ofertas = OfertaHoras.query.filter_by(status='disponivel').order_by(OfertaHoras.data_inicio.desc()).all() if not oferta_id else []
+    
+    if request.method == 'POST':
+        try:
+            data_agendamento_str = request.form.get('data_agendamento')
+            data_agendamento = datetime.strptime(data_agendamento_str, "%Y-%m-%d").date() if data_agendamento_str else None
+            
+            oferta_horas_id = request.form.get('oferta_horas_id')
+            if oferta_horas_id == '':
+                oferta_horas_id = None
+            
+            agendamento = AgendamentoVoluntario(
+                voluntario_id=request.form.get('voluntario_id'),
+                oferta_horas_id=oferta_horas_id,
+                data_agendamento=data_agendamento,
+                hora_inicio=request.form.get('hora_inicio'),
+                hora_fim=request.form.get('hora_fim'),
+                atividade=request.form.get('atividade'),
+                descricao=request.form.get('descricao'),
+                responsavel=request.form.get('responsavel'),
+                contato_responsavel=request.form.get('contato_responsavel'),
+                local=request.form.get('local'),
+                observacoes=request.form.get('observacoes'),
+                status=request.form.get('status', 'agendado')
+            )
+            db.session.add(agendamento)
+            
+            # Atualizar status da oferta se foi vinculada
+            if oferta_horas_id:
+                oferta = OfertaHoras.query.get(oferta_horas_id)
+                if oferta:
+                    oferta.status = 'agendada'
+            
+            db.session.commit()
+            flash('Agendamento criado com sucesso!', 'success')
+            return redirect(url_for('admin_agendamentos_voluntarios'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao criar agendamento: {str(e)}', 'error')
+    
+    return render_template('admin/agendamentos_voluntarios_form.html', agendamento=None, voluntarios=voluntarios, ofertas=ofertas, voluntario_id=voluntario_id, oferta_id=oferta_id)
+
+@app.route('/admin/agendamentos-voluntarios/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_agendamentos_voluntarios_editar(id):
+    agendamento = AgendamentoVoluntario.query.get_or_404(id)
+    voluntarios = Voluntario.query.filter_by(status='aprovado', ativo=True).order_by(Voluntario.nome_completo).all()
+    ofertas = OfertaHoras.query.order_by(OfertaHoras.data_inicio.desc()).all()
+    
+    if request.method == 'POST':
+        try:
+            data_agendamento_str = request.form.get('data_agendamento')
+            agendamento.data_agendamento = datetime.strptime(data_agendamento_str, "%Y-%m-%d").date() if data_agendamento_str else None
+            agendamento.hora_inicio = request.form.get('hora_inicio')
+            agendamento.hora_fim = request.form.get('hora_fim')
+            agendamento.atividade = request.form.get('atividade')
+            agendamento.descricao = request.form.get('descricao')
+            agendamento.responsavel = request.form.get('responsavel')
+            agendamento.contato_responsavel = request.form.get('contato_responsavel')
+            agendamento.local = request.form.get('local')
+            agendamento.observacoes = request.form.get('observacoes')
+            agendamento.status = request.form.get('status', 'agendado')
+            
+            oferta_horas_id = request.form.get('oferta_horas_id')
+            if oferta_horas_id == '':
+                oferta_horas_id = None
+            agendamento.oferta_horas_id = oferta_horas_id
+            
+            db.session.commit()
+            flash('Agendamento atualizado com sucesso!', 'success')
+            return redirect(url_for('admin_agendamentos_voluntarios'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar agendamento: {str(e)}', 'error')
+    
+    return render_template('admin/agendamentos_voluntarios_form.html', agendamento=agendamento, voluntarios=voluntarios, ofertas=ofertas)
+
+@app.route('/admin/agendamentos-voluntarios/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_agendamentos_voluntarios_excluir(id):
+    agendamento = AgendamentoVoluntario.query.get_or_404(id)
+    try:
+        # Liberar oferta se estava vinculada
+        if agendamento.oferta_horas_id:
+            oferta = OfertaHoras.query.get(agendamento.oferta_horas_id)
+            if oferta and oferta.status == 'agendada':
+                oferta.status = 'disponivel'
+        
+        db.session.delete(agendamento)
+        db.session.commit()
+        flash('Agendamento excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir agendamento: {str(e)}', 'error')
+    return redirect(url_for('admin_agendamentos_voluntarios'))
+
+# ============================================
 # CRUD - RÁDIO AADVITA
 # ============================================
 
@@ -9057,6 +9441,58 @@ def associe_se():
             flash(f'Erro ao realizar cadastro: {str(e)}', 'error')
     
     return render_template('associe_se.html')
+
+# ============================================
+# ROTAS PÚBLICAS - VOLUNTÁRIOS
+# ============================================
+
+@app.route('/voluntario/cadastro', methods=['GET', 'POST'])
+def voluntario_cadastro():
+    """Página pública para cadastro de voluntários"""
+    if request.method == 'POST':
+        try:
+            # Verificar se email já existe
+            email = request.form.get('email')
+            voluntario_existente = Voluntario.query.filter_by(email=email).first()
+            if voluntario_existente:
+                flash('Este email já está cadastrado. Entre em contato conosco se precisar de ajuda.', 'error')
+                return redirect(url_for('voluntario_cadastro'))
+            
+            data_nascimento_str = request.form.get('data_nascimento')
+            data_nascimento = None
+            if data_nascimento_str:
+                try:
+                    data_nascimento = datetime.strptime(data_nascimento_str, "%Y-%m-%d").date()
+                except:
+                    pass
+            
+            voluntario = Voluntario(
+                nome_completo=request.form.get('nome_completo'),
+                email=email,
+                telefone=request.form.get('telefone'),
+                cpf=request.form.get('cpf'),
+                endereco=request.form.get('endereco'),
+                cidade=request.form.get('cidade'),
+                estado=request.form.get('estado'),
+                cep=request.form.get('cep'),
+                data_nascimento=data_nascimento,
+                profissao=request.form.get('profissao'),
+                habilidades=request.form.get('habilidades'),
+                disponibilidade=request.form.get('disponibilidade'),
+                area_interesse=request.form.get('area_interesse'),
+                observacoes=request.form.get('observacoes'),
+                status='pendente',
+                ativo=True
+            )
+            db.session.add(voluntario)
+            db.session.commit()
+            flash('Cadastro de voluntário enviado com sucesso! Entraremos em contato em breve.', 'success')
+            return redirect(url_for('index'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao realizar cadastro: {str(e)}', 'error')
+    
+    return render_template('voluntario/cadastro.html')
 
 @app.route('/entrar', methods=['GET', 'POST'])
 def login():

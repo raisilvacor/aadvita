@@ -1,0 +1,133 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Detalhes do Voluntário{% endblock %}
+
+{% block page_title %}Detalhes do Voluntário{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">{{ voluntario.nome_completo }}</h2>
+        <div>
+            <a href="{{ url_for('admin_voluntarios_editar', id=voluntario.id) }}" class="btn-admin btn-admin-edit">
+                <span>✏️</span> Editar
+            </a>
+            <a href="{{ url_for('admin_voluntarios') }}" class="btn-admin btn-admin-secondary">
+                <span>↩️</span> Voltar
+            </a>
+        </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div>
+            <h3 style="color: #1f2937; margin-bottom: 1rem;">Dados Pessoais</h3>
+            <p><strong>E-mail:</strong> {{ voluntario.email }}</p>
+            <p><strong>Telefone:</strong> {{ voluntario.telefone or '-' }}</p>
+            <p><strong>CPF:</strong> {{ voluntario.cpf or '-' }}</p>
+            <p><strong>Data de Nascimento:</strong> {% if voluntario.data_nascimento %}{{ voluntario.data_nascimento.strftime('%d/%m/%Y') }}{% else %}-{% endif %}</p>
+            <p><strong>Endereço:</strong> {{ voluntario.endereco or '-' }}</p>
+            <p><strong>Cidade/Estado:</strong> {{ voluntario.cidade or '' }}{% if voluntario.cidade and voluntario.estado %}, {% endif %}{{ voluntario.estado or '' }}</p>
+            <p><strong>CEP:</strong> {{ voluntario.cep or '-' }}</p>
+        </div>
+        
+        <div>
+            <h3 style="color: #1f2937; margin-bottom: 1rem;">Informações Profissionais</h3>
+            <p><strong>Profissão:</strong> {{ voluntario.profissao or '-' }}</p>
+            <p><strong>Habilidades:</strong> {{ voluntario.habilidades or '-' }}</p>
+            <p><strong>Área de Interesse:</strong> {{ voluntario.area_interesse or '-' }}</p>
+            <p><strong>Disponibilidade:</strong> {{ voluntario.disponibilidade or '-' }}</p>
+            <p><strong>Status:</strong> 
+                {% if voluntario.status == 'pendente' %}
+                    <span style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem;">⏳ Pendente</span>
+                {% elif voluntario.status == 'aprovado' %}
+                    <span style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem;">✅ Aprovado</span>
+                {% elif voluntario.status == 'inativo' %}
+                    <span style="background: #6b7280; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem;">⚫ Inativo</span>
+                {% endif %}
+            </p>
+            <p><strong>Ativo:</strong> {% if voluntario.ativo %}Sim{% else %}Não{% endif %}</p>
+        </div>
+    </div>
+    
+    {% if voluntario.observacoes %}
+    <div style="margin-bottom: 2rem; padding: 1rem; background: #f3f4f6; border-radius: 0.5rem;">
+        <h3 style="color: #1f2937; margin-bottom: 0.5rem;">Observações</h3>
+        <p style="color: #4b5563;">{{ voluntario.observacoes }}</p>
+    </div>
+    {% endif %}
+    
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+        <a href="{{ url_for('admin_ofertas_horas_novo', voluntario_id=voluntario.id) }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Oferta de Horas
+        </a>
+        <a href="{{ url_for('admin_agendamentos_voluntarios_novo', voluntario_id=voluntario.id) }}" class="btn-admin btn-admin-primary">
+            <span>📅</span> Novo Agendamento
+        </a>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+        <div>
+            <h3 style="color: #1f2937; margin-bottom: 1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem;">Ofertas de Horas</h3>
+            {% if ofertas %}
+                {% for oferta in ofertas %}
+                <div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem; margin-bottom: 1rem; border-left: 4px solid #667eea;">
+                    <p><strong>{{ oferta.area_atividade or 'Sem área definida' }}</strong></p>
+                    <p style="font-size: 0.875rem; color: #6b7280;">
+                        {% if oferta.data_inicio %}{{ oferta.data_inicio.strftime('%d/%m/%Y') }}{% endif %}
+                        {% if oferta.data_fim %} - {{ oferta.data_fim.strftime('%d/%m/%Y') }}{% endif %}
+                        {% if oferta.hora_inicio and oferta.hora_fim %} | {{ oferta.hora_inicio }} às {{ oferta.hora_fim }}{% endif %}
+                    </p>
+                    <p style="font-size: 0.875rem; color: #6b7280;">{{ oferta.dias_semana or '' }}</p>
+                    <p style="font-size: 0.875rem; color: #6b7280;">
+                        Status: 
+                        {% if oferta.status == 'disponivel' %}
+                            <span style="color: #10b981;">Disponível</span>
+                        {% elif oferta.status == 'agendada' %}
+                            <span style="color: #f59e0b;">Agendada</span>
+                        {% elif oferta.status == 'concluida' %}
+                            <span style="color: #6b7280;">Concluída</span>
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('admin_ofertas_horas_editar', id=oferta.id) }}" class="btn-admin btn-admin-edit btn-admin-small" style="margin-top: 0.5rem;">
+                        <span>✏️</span> Editar
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #6b7280;">Nenhuma oferta de horas cadastrada.</p>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h3 style="color: #1f2937; margin-bottom: 1rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem;">Agendamentos</h3>
+            {% if agendamentos %}
+                {% for agendamento in agendamentos %}
+                <div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem; margin-bottom: 1rem; border-left: 4px solid #10b981;">
+                    <p><strong>{{ agendamento.atividade }}</strong></p>
+                    <p style="font-size: 0.875rem; color: #6b7280;">
+                        {{ agendamento.data_agendamento.strftime('%d/%m/%Y') }} | {{ agendamento.hora_inicio }} às {{ agendamento.hora_fim }}
+                    </p>
+                    <p style="font-size: 0.875rem; color: #6b7280;">Responsável: {{ agendamento.responsavel or '-' }}</p>
+                    <p style="font-size: 0.875rem; color: #6b7280;">
+                        Status: 
+                        {% if agendamento.status == 'agendado' %}
+                            <span style="color: #f59e0b;">Agendado</span>
+                        {% elif agendamento.status == 'confirmado' %}
+                            <span style="color: #10b981;">Confirmado</span>
+                        {% elif agendamento.status == 'concluido' %}
+                            <span style="color: #6b7280;">Concluído</span>
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('admin_agendamentos_voluntarios_editar', id=agendamento.id) }}" class="btn-admin btn-admin-edit btn-admin-small" style="margin-top: 0.5rem;">
+                        <span>✏️</span> Editar
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #6b7280;">Nenhum agendamento cadastrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

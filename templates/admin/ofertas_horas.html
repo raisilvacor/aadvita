@@ -1,0 +1,121 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Ofertas de Horas{% endblock %}
+
+{% block page_title %}Gerenciar Ofertas de Horas{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Ofertas de Horas</h2>
+        <a href="{{ url_for('admin_ofertas_horas_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Nova Oferta
+        </a>
+    </div>
+    
+    <!-- Filtros por Status -->
+    <div class="status-filters" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-light); border-radius: 0.5rem;">
+        <a href="{{ url_for('admin_ofertas_horas', status='todos') }}" 
+           class="status-filter-btn {% if status_filter == 'todos' %}active{% endif %}">
+            Todos
+        </a>
+        <a href="{{ url_for('admin_ofertas_horas', status='disponiveis') }}" 
+           class="status-filter-btn {% if status_filter == 'disponiveis' %}active{% endif %}" 
+           style="background: #10b981; color: white;">
+            ✅ Disponíveis
+        </a>
+        <a href="{{ url_for('admin_ofertas_horas', status='agendadas') }}" 
+           class="status-filter-btn {% if status_filter == 'agendadas' %}active{% endif %}" 
+           style="background: #f59e0b; color: white;">
+            📅 Agendadas
+        </a>
+        <a href="{{ url_for('admin_ofertas_horas', status='concluidas') }}" 
+           class="status-filter-btn {% if status_filter == 'concluidas' %}active{% endif %}" 
+           style="background: #6b7280; color: white;">
+            ✓ Concluídas
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Voluntário</th>
+                    <th>Área de Atividade</th>
+                    <th>Período</th>
+                    <th>Horários</th>
+                    <th>Horas Totais</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if ofertas %}
+                    {% for oferta in ofertas %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('admin_voluntarios_detalhe', id=oferta.voluntario_id) }}" style="color: #667eea;">
+                                {{ oferta.voluntario.nome_completo }}
+                            </a>
+                        </td>
+                        <td>{{ oferta.area_atividade or '-' }}</td>
+                        <td>
+                            {% if oferta.data_inicio %}
+                                {{ oferta.data_inicio.strftime('%d/%m/%Y') }}
+                                {% if oferta.data_fim %} - {{ oferta.data_fim.strftime('%d/%m/%Y') }}{% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if oferta.hora_inicio and oferta.hora_fim %}
+                                {{ oferta.hora_inicio }} às {{ oferta.hora_fim }}
+                            {% else %}
+                                -
+                            {% endif %}
+                            {% if oferta.dias_semana %}<br><small>{{ oferta.dias_semana }}</small>{% endif %}
+                        </td>
+                        <td>{{ oferta.horas_totais or '-' }}</td>
+                        <td>
+                            {% if oferta.status == 'disponivel' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Disponível
+                                </span>
+                            {% elif oferta.status == 'agendada' %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    📅 Agendada
+                                </span>
+                            {% elif oferta.status == 'concluida' %}
+                                <span class="status-badge" style="background: #6b7280; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✓ Concluída
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_ofertas_horas_editar', id=oferta.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_ofertas_horas_excluir', id=oferta.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir esta oferta?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            Nenhuma oferta de horas encontrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

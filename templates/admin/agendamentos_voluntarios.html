@@ -1,0 +1,128 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Agendamentos de Voluntários{% endblock %}
+
+{% block page_title %}Gerenciar Agendamentos de Voluntários{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Agendamentos de Voluntários</h2>
+        <a href="{{ url_for('admin_agendamentos_voluntarios_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Agendamento
+        </a>
+    </div>
+    
+    <!-- Filtros por Status -->
+    <div class="status-filters" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-light); border-radius: 0.5rem;">
+        <a href="{{ url_for('admin_agendamentos_voluntarios', status='todos') }}" 
+           class="status-filter-btn {% if status_filter == 'todos' %}active{% endif %}">
+            Todos
+        </a>
+        <a href="{{ url_for('admin_agendamentos_voluntarios', status='agendados') }}" 
+           class="status-filter-btn {% if status_filter == 'agendados' %}active{% endif %}" 
+           style="background: #f59e0b; color: white;">
+            📅 Agendados
+        </a>
+        <a href="{{ url_for('admin_agendamentos_voluntarios', status='confirmados') }}" 
+           class="status-filter-btn {% if status_filter == 'confirmados' %}active{% endif %}" 
+           style="background: #3b82f6; color: white;">
+            ✅ Confirmados
+        </a>
+        <a href="{{ url_for('admin_agendamentos_voluntarios', status='em_andamento') }}" 
+           class="status-filter-btn {% if status_filter == 'em_andamento' %}active{% endif %}" 
+           style="background: #8b5cf6; color: white;">
+            🔄 Em Andamento
+        </a>
+        <a href="{{ url_for('admin_agendamentos_voluntarios', status='concluidos') }}" 
+           class="status-filter-btn {% if status_filter == 'concluidos' %}active{% endif %}" 
+           style="background: #10b981; color: white;">
+            ✓ Concluídos
+        </a>
+        <a href="{{ url_for('admin_agendamentos_voluntarios', status='cancelados') }}" 
+           class="status-filter-btn {% if status_filter == 'cancelados' %}active{% endif %}" 
+           style="background: #ef4444; color: white;">
+            ❌ Cancelados
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Voluntário</th>
+                    <th>Atividade</th>
+                    <th>Data e Horário</th>
+                    <th>Responsável</th>
+                    <th>Local</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if agendamentos %}
+                    {% for agendamento in agendamentos %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('admin_voluntarios_detalhe', id=agendamento.voluntario_id) }}" style="color: #667eea;">
+                                {{ agendamento.voluntario.nome_completo }}
+                            </a>
+                        </td>
+                        <td>{{ agendamento.atividade }}</td>
+                        <td>
+                            {{ agendamento.data_agendamento.strftime('%d/%m/%Y') }}<br>
+                            <small>{{ agendamento.hora_inicio }} às {{ agendamento.hora_fim }}</small>
+                        </td>
+                        <td>{{ agendamento.responsavel or '-' }}</td>
+                        <td>{{ agendamento.local or '-' }}</td>
+                        <td>
+                            {% if agendamento.status == 'agendado' %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    📅 Agendado
+                                </span>
+                            {% elif agendamento.status == 'confirmado' %}
+                                <span class="status-badge" style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Confirmado
+                                </span>
+                            {% elif agendamento.status == 'em_andamento' %}
+                                <span class="status-badge" style="background: #8b5cf6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    🔄 Em Andamento
+                                </span>
+                            {% elif agendamento.status == 'concluido' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✓ Concluído
+                                </span>
+                            {% elif agendamento.status == 'cancelado' %}
+                                <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ❌ Cancelado
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_agendamentos_voluntarios_editar', id=agendamento.id) }}" 
+                               class="btn-admin btn-admin-edit btn-admin-small">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_agendamentos_voluntarios_excluir', id=agendamento.id) }}" 
+                                  style="display: inline; margin-left: 0.5rem;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este agendamento?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            Nenhum agendamento encontrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
