@@ -59,17 +59,39 @@ def migrate(retries: int = 8, delay: float = 3.0) -> int:
             ''')
 
             # Garantir colunas adicionais caso a tabela já exista em versões antigas
-            alters = [
-                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_nome VARCHAR(200);",
-                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_telefone VARCHAR(100);",
-                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_email VARCHAR(200);",
-                "ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_endereco VARCHAR(400);",
-            ]
-            for stmt in alters:
-                try:
-                    cur.execute(stmt)
-                except Exception as e:
-                    print('Aviso ao aplicar ALTER TABLE:', e)
+            # Verificar quais colunas já existem
+            cur.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'sos_pedido'
+            """)
+            existing_columns = [row[0] for row in cur.fetchall()]
+            print(f'Colunas existentes na tabela sos_pedido: {existing_columns}')
+            
+            # Colunas que devem existir
+            required_columns = {
+                'contato_nome': 'VARCHAR(200)',
+                'contato_telefone': 'VARCHAR(100)',
+                'contato_email': 'VARCHAR(200)',
+                'contato_endereco': 'VARCHAR(400)'
+            }
+            
+            # Adicionar colunas que não existem
+            for col_name, col_type in required_columns.items():
+                if col_name not in existing_columns:
+                    print(f'Adicionando coluna {col_name}...')
+                    try:
+                        cur.execute(f'ALTER TABLE sos_pedido ADD COLUMN {col_name} {col_type}')
+                        print(f'Coluna {col_name} adicionada com sucesso')
+                    except Exception as e:
+                        error_str = str(e).lower()
+                        if 'duplicate' in error_str or 'already exists' in error_str:
+                            print(f'Coluna {col_name} já existe (ignorando)')
+                        else:
+                            print(f'Erro ao adicionar coluna {col_name}: {e}')
+                            raise
+                else:
+                    print(f'Coluna {col_name} já existe')
 
             print('Migração SOS executada com sucesso (Postgres).')
             cur.close()

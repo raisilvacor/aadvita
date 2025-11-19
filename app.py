@@ -1873,28 +1873,73 @@ def sos_novo():
         print(f'[SOS] Associado ID: {associado_id}, Descrição length: {len(descricao) if descricao else 0}')
 
         try:
-            # Garantir que a tabela existe e tem todas as colunas
+            # Garantir que a tabela existe e tem todas as colunas necessárias
             try:
                 db.create_all()
-                # Verificar e adicionar coluna contato_endereco se não existir
+                # Verificar e adicionar TODAS as colunas de contato se não existirem
                 from sqlalchemy import inspect, text
                 inspector = inspect(db.engine)
                 if 'sos_pedido' in inspector.get_table_names():
                     columns = [col['name'] for col in inspector.get_columns('sos_pedido')]
-                    if 'contato_endereco' not in columns:
-                        print('[SOS] Adicionando coluna contato_endereco à tabela sos_pedido...')
-                        is_sqlite = db.engine.url.drivername == 'sqlite'
+                    print(f'[SOS] Colunas existentes na tabela: {columns}')
+                    
+                    # Colunas que devem existir
+                    required_columns = {
+                        'contato_nome': 'VARCHAR(200)',
+                        'contato_telefone': 'VARCHAR(100)',
+                        'contato_email': 'VARCHAR(200)',
+                        'contato_endereco': 'VARCHAR(400)'
+                    }
+                    
+                    is_sqlite = db.engine.url.drivername == 'sqlite'
+                    columns_added = []
+                    missing_columns = [col for col in required_columns.keys() if col not in columns]
+                    
+                    if missing_columns:
+                        print(f'[SOS] Colunas faltando: {missing_columns}')
+                        # Tentar executar migração primeiro
+                        try:
+                            import migrate_postgres_sos as mig_sos
+                            print('[SOS] Executando migração SOS...')
+                            mig_sos.migrate()
+                            print('[SOS] Migração executada')
+                            # Verificar novamente após migração
+                            inspector = inspect(db.engine)
+                            columns = [col['name'] for col in inspector.get_columns('sos_pedido')]
+                            print(f'[SOS] Colunas após migração: {columns}')
+                        except Exception as mig_error:
+                            print(f'[SOS] Erro ao executar migração: {mig_error}')
+                        
+                        # Adicionar colunas manualmente se ainda faltarem
                         with db.engine.connect() as conn:
-                            if is_sqlite:
-                                conn.execute(text('ALTER TABLE sos_pedido ADD COLUMN contato_endereco VARCHAR(400)'))
-                            else:
-                                conn.execute(text('ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_endereco VARCHAR(400)'))
-                            conn.commit()
-                        print('[SOS] Coluna contato_endereco adicionada com sucesso')
+                            for col_name, col_type in required_columns.items():
+                                if col_name not in columns:
+                                    print(f'[SOS] Adicionando coluna {col_name} à tabela sos_pedido...')
+                                    try:
+                                        if is_sqlite:
+                                            conn.execute(text(f'ALTER TABLE sos_pedido ADD COLUMN {col_name} {col_type}'))
+                                        else:
+                                            conn.execute(text(f'ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS {col_name} {col_type}'))
+                                        conn.commit()
+                                        columns_added.append(col_name)
+                                        print(f'[SOS] Coluna {col_name} adicionada com sucesso')
+                                    except Exception as col_error:
+                                        error_str = str(col_error).lower()
+                                        if 'duplicate' in error_str or 'already exists' in error_str:
+                                            print(f'[SOS] Coluna {col_name} já existe')
+                                        else:
+                                            print(f'[SOS] Erro ao adicionar coluna {col_name}: {col_error}')
+                                            raise
+                    
+                    if columns_added:
+                        print(f'[SOS] Colunas adicionadas: {columns_added}')
+                    else:
+                        print('[SOS] Todas as colunas necessárias já existem')
             except Exception as create_error:
-                print(f'[SOS] Aviso ao criar/verificar tabelas: {create_error}')
+                print(f'[SOS] ERRO ao criar/verificar tabelas: {create_error}')
                 import traceback
                 traceback.print_exc()
+                # Continuar mesmo com erro - tentar inserir de qualquer forma
 
             pedido = SosPedido(
                 associado_id=associado_id if associado_id else None,
