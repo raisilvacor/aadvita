@@ -11170,6 +11170,47 @@ def ensure_db_initialized():
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
+            # Executar migração SOS para garantir que todas as colunas de contato existam
+            try:
+                import migrate_postgres_sos as mig_sos
+                print('Executando migração SOS (startup)...')
+                mig_sos.migrate()
+                print('Migração SOS executada com sucesso (startup)')
+            except Exception as e:
+                print(f'⚠️ Aviso: Não foi possível executar migração SOS no startup: {e}')
+                # Tentar adicionar colunas manualmente se a migração falhar
+                try:
+                    from sqlalchemy import inspect, text
+                    inspector = inspect(db.engine)
+                    if 'sos_pedido' in inspector.get_table_names():
+                        columns = [col['name'] for col in inspector.get_columns('sos_pedido')]
+                        required_columns = {
+                            'contato_nome': 'VARCHAR(200)',
+                            'contato_telefone': 'VARCHAR(100)',
+                            'contato_email': 'VARCHAR(200)',
+                            'contato_endereco': 'VARCHAR(400)'
+                        }
+                        is_sqlite = db_type == 'sqlite'
+                        with db.engine.connect() as conn:
+                            for col_name, col_type in required_columns.items():
+                                if col_name not in columns:
+                                    print(f'Adicionando coluna {col_name} à tabela sos_pedido...')
+                                    try:
+                                        if is_sqlite:
+                                            conn.execute(text(f'ALTER TABLE sos_pedido ADD COLUMN {col_name} {col_type}'))
+                                        else:
+                                            conn.execute(text(f'ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS {col_name} {col_type}'))
+                                        conn.commit()
+                                        print(f'Coluna {col_name} adicionada com sucesso')
+                                    except Exception as col_error:
+                                        error_str = str(col_error).lower()
+                                        if 'duplicate' in error_str or 'already exists' in error_str:
+                                            print(f'Coluna {col_name} já existe')
+                                        else:
+                                            print(f'Erro ao adicionar coluna {col_name}: {col_error}')
+                except Exception as manual_error:
+                    print(f'⚠️ Erro ao adicionar colunas SOS manualmente: {manual_error}')
+            
             # Criar todas as tabelas (idempotente - não recria se já existirem)
             db.create_all()
             print("✅ Tabelas do banco de dados verificadas/criadas")
