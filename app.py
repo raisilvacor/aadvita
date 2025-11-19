@@ -1850,6 +1850,63 @@ def problema_acessibilidade_registrar():
         anexos_txt = ','.join(anexos_list) if anexos_list else None
 
         try:
+            # Garantir que a tabela existe antes de inserir
+            try:
+                db.create_all()
+                # Verificar se a tabela existe
+                from sqlalchemy import inspect
+                inspector = inspect(db.engine)
+                if 'problema_acessibilidade' not in inspector.get_table_names():
+                    print('[PROBLEMA_ACESSIBILIDADE] Tabela não existe, executando migração...')
+                    try:
+                        import migrate_postgres_problema_acessibilidade as mig_problema
+                        mig_problema.migrate()
+                        print('[PROBLEMA_ACESSIBILIDADE] Migração executada')
+                    except Exception as mig_error:
+                        print(f'[PROBLEMA_ACESSIBILIDADE] Erro na migração: {mig_error}')
+                        # Tentar criar manualmente
+                        from sqlalchemy import text
+                        is_sqlite = db.engine.url.drivername == 'sqlite'
+                        with db.engine.connect() as conn:
+                            if is_sqlite:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS problema_acessibilidade (
+                                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                        tipo_problema VARCHAR(100) NOT NULL,
+                                        descricao TEXT NOT NULL,
+                                        localizacao VARCHAR(500) NOT NULL,
+                                        nome_denunciante VARCHAR(200) NOT NULL,
+                                        telefone VARCHAR(100) NOT NULL,
+                                        email VARCHAR(200),
+                                        anexos TEXT,
+                                        status VARCHAR(50) DEFAULT 'novo',
+                                        observacoes_admin TEXT,
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            else:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS problema_acessibilidade (
+                                        id SERIAL PRIMARY KEY,
+                                        tipo_problema VARCHAR(100) NOT NULL,
+                                        descricao TEXT NOT NULL,
+                                        localizacao VARCHAR(500) NOT NULL,
+                                        nome_denunciante VARCHAR(200) NOT NULL,
+                                        telefone VARCHAR(100) NOT NULL,
+                                        email VARCHAR(200),
+                                        anexos TEXT,
+                                        status VARCHAR(50) DEFAULT 'novo',
+                                        observacoes_admin TEXT,
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            conn.commit()
+                        print('[PROBLEMA_ACESSIBILIDADE] Tabela criada manualmente')
+            except Exception as create_error:
+                print(f'[PROBLEMA_ACESSIBILIDADE] Aviso ao verificar/criar tabela: {create_error}')
+
             problema = ProblemaAcessibilidade(
                 tipo_problema=tipo_problema,
                 descricao=descricao,
@@ -11063,6 +11120,10 @@ def ensure_db_initialized():
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
+            # Criar todas as tabelas (idempotente - não recria se já existirem)
+            db.create_all()
+            print("✅ Tabelas do banco de dados verificadas/criadas")
+            
             # Executar migração problema_acessibilidade para garantir que a tabela exista
             try:
                 import migrate_postgres_problema_acessibilidade as mig_problema
@@ -11071,10 +11132,52 @@ def ensure_db_initialized():
                 print('Migração problema_acessibilidade executada com sucesso (startup)')
             except Exception as e:
                 print(f'⚠️ Aviso: Não foi possível executar migração problema_acessibilidade no startup: {e}')
-
-            # Criar todas as tabelas (idempotente - não recria se já existirem)
-            db.create_all()
-            print("✅ Tabelas do banco de dados verificadas/criadas")
+                # Tentar criar a tabela manualmente se a migração falhar
+                try:
+                    from sqlalchemy import inspect, text
+                    inspector = inspect(db.engine)
+                    if 'problema_acessibilidade' not in inspector.get_table_names():
+                        print('Criando tabela problema_acessibilidade manualmente...')
+                        is_sqlite = db_type == 'sqlite'
+                        with db.engine.connect() as conn:
+                            if is_sqlite:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS problema_acessibilidade (
+                                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                        tipo_problema VARCHAR(100) NOT NULL,
+                                        descricao TEXT NOT NULL,
+                                        localizacao VARCHAR(500) NOT NULL,
+                                        nome_denunciante VARCHAR(200) NOT NULL,
+                                        telefone VARCHAR(100) NOT NULL,
+                                        email VARCHAR(200),
+                                        anexos TEXT,
+                                        status VARCHAR(50) DEFAULT 'novo',
+                                        observacoes_admin TEXT,
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            else:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS problema_acessibilidade (
+                                        id SERIAL PRIMARY KEY,
+                                        tipo_problema VARCHAR(100) NOT NULL,
+                                        descricao TEXT NOT NULL,
+                                        localizacao VARCHAR(500) NOT NULL,
+                                        nome_denunciante VARCHAR(200) NOT NULL,
+                                        telefone VARCHAR(100) NOT NULL,
+                                        email VARCHAR(200),
+                                        anexos TEXT,
+                                        status VARCHAR(50) DEFAULT 'novo',
+                                        observacoes_admin TEXT,
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            conn.commit()
+                        print('✅ Tabela problema_acessibilidade criada manualmente')
+                except Exception as manual_error:
+                    print(f'⚠️ Erro ao criar tabela manualmente: {manual_error}')
             
             # Verificar se há usuários, se não houver, inicializar dados
             try:
