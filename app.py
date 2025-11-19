@@ -1868,7 +1868,34 @@ def sos_novo():
 
         anexos_txt = ','.join(anexos_list) if anexos_list else None
 
+        # Log dos dados recebidos para debug
+        print(f'[SOS] Dados recebidos - Nome: {contato_nome[:20]}..., Telefone: {contato_telefone[:15]}..., Endereço: {contato_endereco[:30]}...')
+        print(f'[SOS] Associado ID: {associado_id}, Descrição length: {len(descricao) if descricao else 0}')
+
         try:
+            # Garantir que a tabela existe e tem todas as colunas
+            try:
+                db.create_all()
+                # Verificar e adicionar coluna contato_endereco se não existir
+                from sqlalchemy import inspect, text
+                inspector = inspect(db.engine)
+                if 'sos_pedido' in inspector.get_table_names():
+                    columns = [col['name'] for col in inspector.get_columns('sos_pedido')]
+                    if 'contato_endereco' not in columns:
+                        print('[SOS] Adicionando coluna contato_endereco à tabela sos_pedido...')
+                        is_sqlite = db.engine.url.drivername == 'sqlite'
+                        with db.engine.connect() as conn:
+                            if is_sqlite:
+                                conn.execute(text('ALTER TABLE sos_pedido ADD COLUMN contato_endereco VARCHAR(400)'))
+                            else:
+                                conn.execute(text('ALTER TABLE sos_pedido ADD COLUMN IF NOT EXISTS contato_endereco VARCHAR(400)'))
+                            conn.commit()
+                        print('[SOS] Coluna contato_endereco adicionada com sucesso')
+            except Exception as create_error:
+                print(f'[SOS] Aviso ao criar/verificar tabelas: {create_error}')
+                import traceback
+                traceback.print_exc()
+
             pedido = SosPedido(
                 associado_id=associado_id if associado_id else None,
                 descricao=descricao,
@@ -1879,8 +1906,11 @@ def sos_novo():
                 contato_endereco=contato_endereco,
                 status='novo'
             )
+            print('[SOS] Objeto SosPedido criado com sucesso')
             db.session.add(pedido)
+            print('[SOS] Objeto adicionado à sessão')
             db.session.commit()
+            print('[SOS] Commit realizado com sucesso')
             flash('Pedido de ajuda enviado com sucesso. Entraremos em contato em breve.', 'success')
             # se usuário estiver logado, levá-lo à lista de seus pedidos; senão permanecer na página
             if associado:
@@ -1890,8 +1920,14 @@ def sos_novo():
             db.session.rollback()
             import traceback
             error_details = traceback.format_exc()
-            print('Erro ao salvar SOS pedido:', e)
-            print('Detalhes do erro:', error_details)
+            print('=' * 50)
+            print('ERRO AO SALVAR SOS PEDIDO')
+            print('=' * 50)
+            print(f'Tipo do erro: {type(e).__name__}')
+            print(f'Mensagem do erro: {str(e)}')
+            print('Traceback completo:')
+            print(error_details)
+            print('=' * 50)
             flash('Erro ao enviar pedido. Tente novamente mais tarde.', 'error')
             return redirect(url_for('sos_novo'))
 
