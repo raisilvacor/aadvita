@@ -8,26 +8,26 @@
     <p>Descreva sua necessidade e anexe documentos (receita médica, orçamentos etc.).</p>
 
     <form method="POST" enctype="multipart/form-data" class="associate-form">
-        {% if not session.get('associado_logged_in') %}
         <div class="form-group">
-            <label for="contato_nome">Seu nome completo <span style="color:#b91c1c">*</span></label>
+            <label for="contato_nome">Nome Completo <span style="color:#b91c1c">*</span></label>
             <input type="text" id="contato_nome" name="contato_nome" placeholder="Nome completo" required>
         </div>
         <div class="form-group">
-            <label for="contato_telefone">Telefone / WhatsApp <span style="color:#b91c1c">*</span></label>
+            <label for="contato_telefone">Telefone/WhatsApp <span style="color:#b91c1c">*</span></label>
             <input type="text" id="contato_telefone" name="contato_telefone" placeholder="(00) 00000-0000" required>
         </div>
+        <div class="form-group">
+            <label for="contato_endereco">Endereço <span style="color:#b91c1c">*</span></label>
+            <input type="text" id="contato_endereco" name="contato_endereco" placeholder="Rua, número, bairro, cidade" required>
+        </div>
+        {% if not session.get('associado_logged_in') %}
         <div class="form-group">
             <label for="contato_email">Email (opcional)</label>
             <input type="email" id="contato_email" name="contato_email" placeholder="seu@exemplo.com">
         </div>
-        <div class="form-group">
-            <label for="contato_endereco">Endereço (opcional)</label>
-            <input type="text" id="contato_endereco" name="contato_endereco" placeholder="Rua, número, bairro, cidade">
-        </div>
         {% endif %}
         <div class="form-group">
-            <label for="descricao">Descrição *</label>
+            <label for="descricao">Descrição <span style="color:#b91c1c">*</span></label>
             <textarea id="descricao" name="descricao" rows="6" required></textarea>
         </div>
 

@@ -1833,17 +1833,16 @@ def sos_novo():
             flash('Descreva sua necessidade antes de enviar.', 'error')
             return redirect(url_for('sos_novo'))
 
-        # campos de contato opcionais (usados quando não logado)
+        # campos de contato (obrigatórios)
         contato_nome = request.form.get('contato_nome')
         contato_telefone = request.form.get('contato_telefone')
         contato_email = request.form.get('contato_email')
         contato_endereco = request.form.get('contato_endereco')
 
-        # validar obrigatoriedade para envios anônimos
-        if not associado:
-            if not contato_nome or not contato_telefone:
-                flash('Por favor informe seu nome completo e telefone/WhatsApp.', 'error')
-                return redirect(url_for('sos_novo'))
+        # validar obrigatoriedade dos campos
+        if not contato_nome or not contato_telefone or not contato_endereco:
+            flash('Por favor informe seu nome completo, telefone/WhatsApp e endereço.', 'error')
+            return redirect(url_for('sos_novo'))
 
         anexos_list = []
         # aceitar múltiplos arquivos com name='anexos'
