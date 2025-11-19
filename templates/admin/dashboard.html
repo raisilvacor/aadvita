@@ -64,6 +64,21 @@
 </div>
 {% endif %}
 
+{% if stats.problemas_acessibilidade_novos and stats.problemas_acessibilidade_novos > 0 %}
+<div class="admin-card" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 4px solid #7f1d1d; margin-top: 1rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title" style="color: #7f1d1d;">
+            🚨 Novos Problemas de Acessibilidade
+        </h2>
+    </div>
+    <p style="margin-bottom: 1rem; color: #7f1d1d;">
+        Você tem <strong style="color: #b91c1c;">{{ stats.problemas_acessibilidade_novos }}</strong> problema(s) de acessibilidade novo(s) registrado(s).
+    </p>
+    <a href="{{ url_for('admin_problemas_acessibilidade') }}" class="btn-admin btn-admin-primary" style="background: #7f1d1d; color: white;">
+        <span>🔴</span> Ver Problemas
+    </a>
+</div>
+{% endif %}
 
 <div class="admin-card">
     <div class="admin-card-header">
@@ -123,6 +138,9 @@
         </a>
         <a href="{{ url_for('admin_voluntarios') }}" class="btn-admin btn-admin-primary">
             <span>🤲</span> Gerenciar Voluntários
+        </a>
+        <a href="{{ url_for('admin_problemas_acessibilidade') }}" class="btn-admin btn-admin-primary" style="background: #7f1d1d; color: white;">
+            <span>🚨</span> Radar de Acessibilidade
         </a>
     </div>
 </div>

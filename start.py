@@ -36,6 +36,19 @@ def run_migration():
     except Exception as e:
         print('Não foi possível importar/rodar migrate_postgres_associado:', e)
         # continuar
+    
+    # Tentar executar migração para problema_acessibilidade
+    try:
+        import migrate_postgres_problema_acessibilidade as mig_problema
+        print('Executando migração problema_acessibilidade (se aplicável)...')
+        code4 = mig_problema.migrate()
+        if code4 != 0:
+            print(f'Migração problema_acessibilidade retornou código {code4} (continuando startup).')
+        else:
+            print('Migração problema_acessibilidade finalizada com sucesso.')
+    except Exception as e:
+        print('Não foi possível importar/rodar migrate_postgres_problema_acessibilidade:', e)
+        # continuar
     return 0
 
 

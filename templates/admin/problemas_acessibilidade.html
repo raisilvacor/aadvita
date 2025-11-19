@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Problemas de Acessibilidade{% endblock %}
+
+{% block page_title %}Gerenciar Problemas de Acessibilidade{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Radar de Acessibilidade</h2>
+        <a href="{{ url_for('admin_problemas_acessibilidade') }}" class="btn-admin btn-admin-primary">Atualizar</a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Localização</th>
+                    <th>Denunciante</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if problemas %}
+                    {% for problema in problemas %}
+                    <tr>
+                        <td>{{ problema.created_at.strftime('%d/%m/%Y %H:%M') if problema.created_at else '-' }}</td>
+                        <td>
+                            <strong>{{ problema.tipo_problema }}</strong>
+                        </td>
+                        <td>
+                            {{ problema.localizacao[:50] }}{% if problema.localizacao|length > 50 %}...{% endif %}
+                        </td>
+                        <td>{{ problema.nome_denunciante }}</td>
+                        <td>
+                            {% if problema.status == 'novo' %}
+                                <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    🆕 Novo
+                                </span>
+                            {% elif problema.status == 'em_analise' %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    🔍 Em Análise
+                                </span>
+                            {% elif problema.status == 'encaminhado' %}
+                                <span class="status-badge" style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    📤 Encaminhado
+                                </span>
+                            {% elif problema.status == 'resolvido' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Resolvido
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_problemas_acessibilidade_editar', id=problema.id) }}" class="btn-admin btn-admin-edit btn-admin-small">✏️ Editar</a>
+                            <form method="POST" action="{{ url_for('admin_problemas_acessibilidade_excluir', id=problema.id) }}" style="display:inline; margin-left:0.5rem;" onsubmit="return confirm('Excluir este problema?');">
+                                <button type="submit" class="btn-admin btn-admin-delete btn-admin-small">🗑️ Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">
+                            Nenhum problema registrado ainda.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

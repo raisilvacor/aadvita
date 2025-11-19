@@ -1647,6 +1647,21 @@ class AgendamentoVoluntario(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ProblemaAcessibilidade(db.Model):
+    __tablename__ = 'problema_acessibilidade'
+    id = db.Column(db.Integer, primary_key=True)
+    tipo_problema = db.Column(db.String(100), nullable=False)  # Ex: "acessibilidade urbana", "calçada", "faixa de pedestre", "sinal sonoro"
+    descricao = db.Column(db.Text, nullable=False)
+    localizacao = db.Column(db.String(500), nullable=False)  # Endereço ou localização
+    nome_denunciante = db.Column(db.String(200), nullable=False)
+    telefone = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(200))
+    anexos = db.Column(db.Text)  # caminhos separados por vírgula
+    status = db.Column(db.String(50), default='novo')  # novo, em_analise, encaminhado, resolvido
+    observacoes_admin = db.Column(db.Text)  # Observações internas da associação
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class Banner(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50), nullable=False, unique=True)  # 'Campanhas', 'Apoie-nos', 'Editais'
@@ -1782,6 +1797,8 @@ def admin_dashboard():
         'radio_programas': RadioPrograma.query.filter_by(ativo=True).count(),
         'imagens': Imagem.query.count(),
         'videos': Video.query.count(),
+        'problemas_acessibilidade_novos': ProblemaAcessibilidade.query.filter_by(status='novo').count(),
+        'problemas_acessibilidade_total': ProblemaAcessibilidade.query.count(),
         'associados': Associado.query.count(),
         'associados_pendentes': Associado.query.filter_by(status='pendente').count(),
         'voluntarios': Voluntario.query.count(),
@@ -1790,6 +1807,114 @@ def admin_dashboard():
         'agendamentos': AgendamentoVoluntario.query.count(),
     }
     return render_template('admin/dashboard.html', stats=stats)
+
+
+@app.route('/problema-acessibilidade/registrar', methods=['GET', 'POST'])
+def problema_acessibilidade_registrar():
+    """Formulário público para registro de problemas de acessibilidade"""
+    if request.method == 'POST':
+        tipo_problema = request.form.get('tipo_problema', '').strip()
+        descricao = request.form.get('descricao', '').strip()
+        localizacao = request.form.get('localizacao', '').strip()
+        nome_denunciante = request.form.get('nome_denunciante', '').strip()
+        telefone = request.form.get('telefone', '').strip()
+        email = request.form.get('email', '').strip() or None
+
+        # Validação
+        if not tipo_problema or not descricao or not localizacao or not nome_denunciante or not telefone:
+            flash('Por favor, preencha todos os campos obrigatórios.', 'error')
+            return redirect(url_for('problema_acessibilidade_registrar'))
+
+        # Processar anexos
+        anexos_list = []
+        if 'anexos' in request.files:
+            files = request.files.getlist('anexos')
+            for file in files:
+                if file and file.filename:
+                    if not allowed_document_file(file.filename):
+                        flash('Tipo de arquivo não permitido. Use PDF/DOC/IMG etc.', 'error')
+                        return redirect(url_for('problema_acessibilidade_registrar'))
+                    upload_dir = os.path.join('static', 'documents', 'problemas_acessibilidade')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    filename = secure_filename(file.filename)
+                    unique_name = f"{uuid.uuid4()}_{filename}"
+                    filepath = os.path.join(upload_dir, unique_name)
+                    try:
+                        file.save(filepath)
+                        anexos_list.append(f"documents/problemas_acessibilidade/{unique_name}")
+                    except Exception as e:
+                        print('Erro ao salvar anexo:', e)
+                        flash('Erro ao salvar arquivo enviado.', 'error')
+                        return redirect(url_for('problema_acessibilidade_registrar'))
+
+        anexos_txt = ','.join(anexos_list) if anexos_list else None
+
+        try:
+            problema = ProblemaAcessibilidade(
+                tipo_problema=tipo_problema,
+                descricao=descricao,
+                localizacao=localizacao,
+                nome_denunciante=nome_denunciante,
+                telefone=telefone,
+                email=email,
+                anexos=anexos_txt,
+                status='novo'
+            )
+            db.session.add(problema)
+            db.session.commit()
+            flash('Problema de acessibilidade registrado com sucesso! Obrigado por contribuir para uma cidade mais acessível.', 'success')
+            return redirect(url_for('problema_acessibilidade_registrar'))
+        except Exception as e:
+            db.session.rollback()
+            print('Erro ao salvar problema de acessibilidade:', e)
+            flash('Erro ao registrar problema. Tente novamente mais tarde.', 'error')
+            return redirect(url_for('problema_acessibilidade_registrar'))
+
+    return render_template('problema_acessibilidade/registrar.html')
+
+
+@app.route('/admin/problemas-acessibilidade')
+@admin_required
+def admin_problemas_acessibilidade():
+    """Listagem de problemas de acessibilidade para admin"""
+    problemas = ProblemaAcessibilidade.query.order_by(ProblemaAcessibilidade.created_at.desc()).all()
+    return render_template('admin/problemas_acessibilidade.html', problemas=problemas)
+
+
+@app.route('/admin/problemas-acessibilidade/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_problemas_acessibilidade_editar(id):
+    """Editar problema de acessibilidade"""
+    problema = ProblemaAcessibilidade.query.get_or_404(id)
+    if request.method == 'POST':
+        problema.tipo_problema = request.form.get('tipo_problema', problema.tipo_problema)
+        problema.descricao = request.form.get('descricao', problema.descricao)
+        problema.localizacao = request.form.get('localizacao', problema.localizacao)
+        problema.status = request.form.get('status', problema.status)
+        problema.observacoes_admin = request.form.get('observacoes_admin', problema.observacoes_admin)
+        try:
+            db.session.commit()
+            flash('Problema atualizado com sucesso.', 'success')
+            return redirect(url_for('admin_problemas_acessibilidade'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar problema: {e}', 'error')
+    return render_template('admin/problema_acessibilidade_form.html', problema=problema)
+
+
+@app.route('/admin/problemas-acessibilidade/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_problemas_acessibilidade_excluir(id):
+    """Excluir problema de acessibilidade"""
+    problema = ProblemaAcessibilidade.query.get_or_404(id)
+    try:
+        db.session.delete(problema)
+        db.session.commit()
+        flash('Problema excluído com sucesso.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir problema: {e}', 'error')
+    return redirect(url_for('admin_problemas_acessibilidade'))
 
 
 # ============================================
@@ -10938,6 +11063,15 @@ def ensure_db_initialized():
             except Exception as e:
                 print(f"⚠️ Aviso ao verificar colunas base64: {e}")
             
+            # Executar migração problema_acessibilidade para garantir que a tabela exista
+            try:
+                import migrate_postgres_problema_acessibilidade as mig_problema
+                print('Executando migração problema_acessibilidade (startup)...')
+                mig_problema.migrate()
+                print('Migração problema_acessibilidade executada com sucesso (startup)')
+            except Exception as e:
+                print(f'⚠️ Aviso: Não foi possível executar migração problema_acessibilidade no startup: {e}')
+
             # Criar todas as tabelas (idempotente - não recria se já existirem)
             db.create_all()
             print("✅ Tabelas do banco de dados verificadas/criadas")
