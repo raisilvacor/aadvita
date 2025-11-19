@@ -1834,10 +1834,10 @@ def sos_novo():
             return redirect(url_for('sos_novo'))
 
         # campos de contato (obrigatórios)
-        contato_nome = request.form.get('contato_nome')
-        contato_telefone = request.form.get('contato_telefone')
-        contato_email = request.form.get('contato_email')
-        contato_endereco = request.form.get('contato_endereco')
+        contato_nome = request.form.get('contato_nome', '').strip()
+        contato_telefone = request.form.get('contato_telefone', '').strip()
+        contato_email = request.form.get('contato_email', '').strip() or None
+        contato_endereco = request.form.get('contato_endereco', '').strip()
 
         # validar obrigatoriedade dos campos
         if not contato_nome or not contato_telefone or not contato_endereco:
@@ -1870,7 +1870,7 @@ def sos_novo():
 
         try:
             pedido = SosPedido(
-                associado_id=associado.id if associado else None,
+                associado_id=associado_id if associado_id else None,
                 descricao=descricao,
                 anexos=anexos_txt,
                 contato_nome=contato_nome,
@@ -1888,7 +1888,10 @@ def sos_novo():
             return redirect(url_for('sos_novo'))
         except Exception as e:
             db.session.rollback()
+            import traceback
+            error_details = traceback.format_exc()
             print('Erro ao salvar SOS pedido:', e)
+            print('Detalhes do erro:', error_details)
             flash('Erro ao enviar pedido. Tente novamente mais tarde.', 'error')
             return redirect(url_for('sos_novo'))
 
