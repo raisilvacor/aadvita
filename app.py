@@ -10287,6 +10287,28 @@ def certificado_esta_valido(certificado):
             return False
     return True
 
+def garantir_qr_certificado(certificado):
+    if not certificado:
+        return None
+    rel_path = certificado.qr_code_path
+    precisa_regenerar = False
+    if not rel_path:
+        precisa_regenerar = True
+    else:
+        file_path = os.path.join('static', rel_path.replace('\\', '/').replace('/', os.sep))
+        if not os.path.exists(file_path):
+            precisa_regenerar = True
+    if precisa_regenerar:
+        try:
+            rel_path = salvar_qr_certificado(certificado.numero_validacao)
+            certificado.qr_code_path = rel_path
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f'Erro ao regenerar QR do certificado {certificado.numero_validacao}:', e)
+            return None
+    return rel_path
+
 # Rota para upload de imagens
 @app.route('/upload-imagem', methods=['POST'])
 def upload_imagem():
@@ -10639,6 +10661,16 @@ def inject_conf():
             except:
                 return None
     
+    def certificado_qr_url(certificado):
+        rel_path = garantir_qr_certificado(certificado)
+        if rel_path:
+            try:
+                from flask import url_for
+                return url_for('static', filename=rel_path.replace('\\', '/'))
+            except Exception as e:
+                print(f'Erro ao gerar URL do QR do certificado: {e}')
+        return None
+    
     # Buscar dados da associação
     try:
         dados_associacao = DadosAssociacao.get_dados()
@@ -10670,7 +10702,8 @@ def inject_conf():
         is_super_admin=session.get('admin_is_super', False),
         dados_associacao=dados_associacao,  # Dados da associação para uso nos templates
         footer_configs=footer_configs,  # Configurações do rodapé
-        certificado_esta_valido=certificado_esta_valido
+        certificado_esta_valido=certificado_esta_valido,
+        certificado_qr_url=certificado_qr_url
     )
 
 # API endpoints para obtener datos

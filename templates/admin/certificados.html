@@ -61,8 +61,9 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if cert.qr_code_path %}
-                                <a href="{{ url_for('static', filename=cert.qr_code_path) }}" target="_blank">Ver QR</a>
+                            {% set qr_url = certificado_qr_url(cert) %}
+                            {% if qr_url %}
+                                <a href="{{ qr_url }}" target="_blank">Ver QR</a>
                             {% else %}
                                 -
                             {% endif %}
@@ -86,13 +87,3 @@
     </div>
 </div>
 {% endblock %}
-{
-  "cells": [],
-  "metadata": {
-    "language_info": {
-      "name": "python"
-    }
-  },
-  "nbformat": 4,
-  "nbformat_minor": 2
-}
