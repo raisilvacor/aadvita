@@ -10264,10 +10264,17 @@ def salvar_qr_certificado(numero_validacao):
 def certificado_esta_valido(certificado):
     if not certificado:
         return False
-    if certificado.status not in ('valido', 'ativo'):
+    status = (certificado.status or '').strip().lower()
+    if status not in ('valido', 'ativo'):
         return False
-    if certificado.data_validade and certificado.data_validade < datetime.utcnow():
-        return False
+    if certificado.data_validade:
+        validade = certificado.data_validade
+        try:
+            validade_date = validade.date()
+        except AttributeError:
+            validade_date = validade if isinstance(validade, date) else datetime.utcnow().date()
+        if validade_date < datetime.utcnow().date():
+            return False
     return True
 
 # Rota para upload de imagens
