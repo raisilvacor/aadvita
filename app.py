@@ -2121,6 +2121,16 @@ def certificado_validar(codigo):
     return render_template('certificados/validar.html', certificado=certificado, valido=valido)
 
 
+@app.route('/certificados/validar', methods=['GET', 'POST'])
+def certificado_validar_form():
+    if request.method == 'POST':
+        codigo = request.form.get('codigo', '').strip().upper()
+        if codigo:
+            return redirect(url_for('certificado_validar', codigo=codigo))
+        flash('Informe o número do certificado para validar.', 'error')
+    return render_template('certificados/validar_form.html')
+
+
 # ============================================
 # CRUD - REUNIÕES PRESENCIAIS
 # ============================================
