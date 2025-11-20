@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Certificados{% endblock %}
+
+{% block page_title %}Gerenciar Certificados{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Certificados Emitidos</h2>
+        <div>
+            <a href="{{ url_for('admin_certificados_novo') }}" class="btn-admin btn-admin-primary">
+                <span>➕</span> Novo Certificado
+            </a>
+            <a href="{{ url_for('admin_certificados') }}" class="btn-admin btn-admin-secondary" style="margin-left:0.5rem;">
+                Atualizar
+            </a>
+        </div>
+    </div>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Certificado</th>
+                    <th>Emitido Para</th>
+                    <th>Validade</th>
+                    <th>Status</th>
+                    <th>QR Code</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if certificados %}
+                    {% for cert in certificados %}
+                    <tr>
+                        <td>
+                            <strong>{{ cert.numero_validacao }}</strong><br>
+                            <small>{{ cert.curso or cert.descricao or 'Não informado' }}</small>
+                        </td>
+                        <td>
+                            {{ cert.nome_pessoa }}<br>
+                            <small>{{ cert.documento or '-' }}</small>
+                        </td>
+                        <td>
+                            {% if cert.data_validade %}
+                                {{ cert.data_validade.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if certificado_esta_valido(cert) %}
+                                <span class="status-badge" style="background:#10b981; color:white; padding:0.25rem 0.75rem; border-radius:0.25rem; font-weight:600;">
+                                    ✅ Válido
+                                </span>
+                            {% else %}
+                                <span class="status-badge" style="background:#ef4444; color:white; padding:0.25rem 0.75rem; border-radius:0.25rem; font-weight:600;">
+                                    ❌ Inválido
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cert.qr_code_path %}
+                                <a href="{{ url_for('static', filename=cert.qr_code_path) }}" target="_blank">Ver QR</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_certificados_editar', id=cert.id) }}" class="btn-admin btn-admin-edit btn-admin-small">✏️ Editar</a>
+                            <form method="POST" action="{{ url_for('admin_certificados_regenerar_qr', id=cert.id) }}" style="display:inline;" onsubmit="return confirm('Regenerar QR Code?');">
+                                <button type="submit" class="btn-admin btn-admin-secondary btn-admin-small" style="margin-left:0.5rem;">🔄 QR</button>
+                            </form>
+                            <a href="{{ url_for('certificado_validar', codigo=cert.numero_validacao) }}" target="_blank" class="btn-admin btn-admin-secondary btn-admin-small" style="margin-left:0.5rem;">🔍 Validar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:2rem; color:#6b7280;">Nenhum certificado emitido ainda.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{
+  "cells": [],
+  "metadata": {
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 2
+}

@@ -7,6 +7,7 @@ from datetime import datetime, date, timedelta
 from calendar import monthrange
 import os
 import uuid
+import qrcode
 import re
 import base64
 import requests
@@ -1662,6 +1663,21 @@ class ProblemaAcessibilidade(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class Certificado(db.Model):
+    __tablename__ = 'certificado'
+    id = db.Column(db.Integer, primary_key=True)
+    numero_validacao = db.Column(db.String(50), unique=True, nullable=False)
+    nome_pessoa = db.Column(db.String(200), nullable=False)
+    documento = db.Column(db.String(100), nullable=True)
+    descricao = db.Column(db.Text, nullable=True)
+    curso = db.Column(db.String(200), nullable=True)
+    data_emissao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_validade = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(50), default='valido')  # valido, revogado, expirado
+    qr_code_path = db.Column(db.String(300), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class Banner(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50), nullable=False, unique=True)  # 'Campanhas', 'Apoie-nos', 'Editais'
@@ -1799,6 +1815,7 @@ def admin_dashboard():
         'videos': Video.query.count(),
         'problemas_acessibilidade_novos': ProblemaAcessibilidade.query.filter_by(status='novo').count(),
         'problemas_acessibilidade_total': ProblemaAcessibilidade.query.count(),
+        'certificados_total': Certificado.query.count(),
         'associados': Associado.query.count(),
         'associados_pendentes': Associado.query.filter_by(status='pendente').count(),
         'voluntarios': Voluntario.query.count(),
@@ -1972,6 +1989,136 @@ def admin_problemas_acessibilidade_excluir(id):
         db.session.rollback()
         flash(f'Erro ao excluir problema: {e}', 'error')
     return redirect(url_for('admin_problemas_acessibilidade'))
+
+
+@app.route('/admin/certificados')
+@admin_required
+def admin_certificados():
+    certificados = Certificado.query.order_by(Certificado.created_at.desc()).all()
+    return render_template('admin/certificados.html', certificados=certificados)
+
+
+@app.route('/admin/certificados/novo', methods=['GET', 'POST'])
+@admin_required
+def admin_certificados_novo():
+    if request.method == 'POST':
+        nome_pessoa = request.form.get('nome_pessoa', '').strip()
+        documento = request.form.get('documento', '').strip() or None
+        descricao = request.form.get('descricao', '').strip() or None
+        curso = request.form.get('curso', '').strip() or None
+        data_emissao_str = request.form.get('data_emissao')
+        data_validade_str = request.form.get('data_validade')
+        status = request.form.get('status', 'valido')
+
+        if not nome_pessoa:
+            flash('Informe o nome do beneficiário do certificado.', 'error')
+            return redirect(url_for('admin_certificados_novo'))
+
+        data_emissao = datetime.utcnow()
+        if data_emissao_str:
+            try:
+                data_emissao = datetime.strptime(data_emissao_str, '%Y-%m-%d')
+            except ValueError:
+                flash('Data de emissão inválida.', 'error')
+                return redirect(url_for('admin_certificados_novo'))
+
+        data_validade = None
+        if data_validade_str:
+            try:
+                data_validade = datetime.strptime(data_validade_str, '%Y-%m-%d')
+            except ValueError:
+                flash('Data de validade inválida.', 'error')
+                return redirect(url_for('admin_certificados_novo'))
+
+        numero_validacao = gerar_codigo_certificado()
+        while Certificado.query.filter_by(numero_validacao=numero_validacao).first():
+            numero_validacao = gerar_codigo_certificado()
+
+        try:
+            certificado = Certificado(
+                numero_validacao=numero_validacao,
+                nome_pessoa=nome_pessoa,
+                documento=documento,
+                descricao=descricao,
+                curso=curso,
+                data_emissao=data_emissao,
+                data_validade=data_validade,
+                status=status
+            )
+            db.session.add(certificado)
+            db.session.commit()
+
+            certificado.qr_code_path = salvar_qr_certificado(certificado.numero_validacao)
+            db.session.commit()
+
+            flash('Certificado criado com sucesso.', 'success')
+            return redirect(url_for('admin_certificados'))
+        except Exception as e:
+            db.session.rollback()
+            print('Erro ao criar certificado:', e)
+            flash('Erro ao criar certificado.', 'error')
+            return redirect(url_for('admin_certificados_novo'))
+
+    return render_template('admin/certificado_form.html', certificado=None)
+
+
+@app.route('/admin/certificados/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_certificados_editar(id):
+    certificado = Certificado.query.get_or_404(id)
+    if request.method == 'POST':
+        certificado.nome_pessoa = request.form.get('nome_pessoa', certificado.nome_pessoa)
+        certificado.documento = request.form.get('documento', certificado.documento)
+        certificado.descricao = request.form.get('descricao', certificado.descricao)
+        certificado.curso = request.form.get('curso', certificado.curso)
+        status = request.form.get('status', certificado.status)
+        certificado.status = status
+
+        data_emissao_str = request.form.get('data_emissao')
+        data_validade_str = request.form.get('data_validade')
+
+        try:
+            if data_emissao_str:
+                certificado.data_emissao = datetime.strptime(data_emissao_str, '%Y-%m-%d')
+            if data_validade_str:
+                certificado.data_validade = datetime.strptime(data_validade_str, '%Y-%m-%d')
+            else:
+                certificado.data_validade = None
+        except ValueError:
+            flash('Datas inválidas.', 'error')
+            return redirect(url_for('admin_certificados_editar', id=id))
+
+        try:
+            db.session.commit()
+            flash('Certificado atualizado com sucesso.', 'success')
+            return redirect(url_for('admin_certificados'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar certificado: {e}', 'error')
+
+    return render_template('admin/certificado_form.html', certificado=certificado)
+
+
+@app.route('/admin/certificados/<int:id>/regenerar-qr', methods=['POST'])
+@admin_required
+def admin_certificados_regenerar_qr(id):
+    certificado = Certificado.query.get_or_404(id)
+    try:
+        certificado.qr_code_path = salvar_qr_certificado(certificado.numero_validacao)
+        db.session.commit()
+        flash('QR Code regenerado com sucesso.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao regenerar QR Code: {e}', 'error')
+    return redirect(url_for('admin_certificados'))
+
+
+@app.route('/certificados/validar/<codigo>')
+def certificado_validar(codigo):
+    codigo = codigo.upper()
+    certificado = Certificado.query.filter_by(numero_validacao=codigo).first()
+    valido = certificado_esta_valido(certificado)
+    return render_template('certificados/validar.html', certificado=certificado, valido=valido)
 
 
 # ============================================
@@ -10093,6 +10240,36 @@ def allowed_document_file(filename):
 def allowed_pdf_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'pdf'
 
+def gerar_codigo_certificado():
+    return f"CERT-{uuid.uuid4().hex[:10].upper()}"
+
+def salvar_qr_certificado(numero_validacao):
+    validation_url = url_for('certificado_validar', codigo=numero_validacao, _external=True)
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(validation_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    qr_dir = os.path.join('static', 'qrcodes', 'certificados')
+    os.makedirs(qr_dir, exist_ok=True)
+    filename = f"certificado_{numero_validacao}.png"
+    qr_path = os.path.join(qr_dir, filename)
+    img.save(qr_path)
+    return f"qrcodes/certificados/{filename}"
+
+def certificado_esta_valido(certificado):
+    if not certificado:
+        return False
+    if certificado.status not in ('valido', 'ativo'):
+        return False
+    if certificado.data_validade and certificado.data_validade < datetime.utcnow():
+        return False
+    return True
+
 # Rota para upload de imagens
 @app.route('/upload-imagem', methods=['POST'])
 def upload_imagem():
@@ -10475,7 +10652,8 @@ def inject_conf():
         user_tem_permissao=user_tem_permissao,
         is_super_admin=session.get('admin_is_super', False),
         dados_associacao=dados_associacao,  # Dados da associação para uso nos templates
-        footer_configs=footer_configs  # Configurações do rodapé
+        footer_configs=footer_configs,  # Configurações do rodapé
+        certificado_esta_valido=certificado_esta_valido
     )
 
 # API endpoints para obtener datos
@@ -11178,6 +11356,60 @@ def ensure_db_initialized():
                         print('✅ Tabela problema_acessibilidade criada manualmente')
                 except Exception as manual_error:
                     print(f'⚠️ Erro ao criar tabela manualmente: {manual_error}')
+
+            # Executar migração certificado para garantir que a tabela exista
+            try:
+                import migrate_postgres_certificado as mig_cert
+                print('Executando migração certificado (startup)...')
+                mig_cert.migrate()
+                print('Migração certificado executada com sucesso (startup)')
+            except Exception as e:
+                print(f'⚠️ Aviso: Não foi possível executar migração certificado no startup: {e}')
+                try:
+                    from sqlalchemy import inspect, text
+                    inspector = inspect(db.engine)
+                    if 'certificado' not in inspector.get_table_names():
+                        print('Criando tabela certificado manualmente...')
+                        is_sqlite = db_type == 'sqlite'
+                        with db.engine.connect() as conn:
+                            if is_sqlite:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS certificado (
+                                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                        numero_validacao VARCHAR(50) UNIQUE NOT NULL,
+                                        nome_pessoa VARCHAR(200) NOT NULL,
+                                        documento VARCHAR(100),
+                                        descricao TEXT,
+                                        curso VARCHAR(200),
+                                        data_emissao TIMESTAMP,
+                                        data_validade TIMESTAMP,
+                                        status VARCHAR(50) DEFAULT 'valido',
+                                        qr_code_path VARCHAR(300),
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            else:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS certificado (
+                                        id SERIAL PRIMARY KEY,
+                                        numero_validacao VARCHAR(50) UNIQUE NOT NULL,
+                                        nome_pessoa VARCHAR(200) NOT NULL,
+                                        documento VARCHAR(100),
+                                        descricao TEXT,
+                                        curso VARCHAR(200),
+                                        data_emissao TIMESTAMP,
+                                        data_validade TIMESTAMP,
+                                        status VARCHAR(50) DEFAULT 'valido',
+                                        qr_code_path VARCHAR(300),
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            conn.commit()
+                        print('✅ Tabela certificado criada manualmente')
+                except Exception as cert_manual_error:
+                    print(f'⚠️ Erro ao criar tabela certificado manualmente: {cert_manual_error}')
             
             # Verificar se há usuários, se não houver, inicializar dados
             try:

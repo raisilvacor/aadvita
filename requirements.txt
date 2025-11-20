@@ -8,3 +8,4 @@ gunicorn==21.2.0
 requests==2.31.0
 beautifulsoup4==4.12.2
 psycopg[binary]==3.2.12
+qrcode[pil]==7.4.2

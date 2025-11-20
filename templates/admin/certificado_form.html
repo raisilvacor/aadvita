@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+
+{% if certificado %}
+    {% set page_title = "Editar Certificado" %}
+{% else %}
+    {% set page_title = "Novo Certificado" %}
+{% endif %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">{{ page_title }}</h2>
+        <a href="{{ url_for('admin_certificados') }}" class="btn-admin btn-admin-secondary">Voltar</a>
+    </div>
+
+    <form method="POST" style="padding:1.5rem;">
+        <div class="form-group">
+            <label for="nome_pessoa"><strong>Nome do Beneficiário</strong></label>
+            <input type="text" id="nome_pessoa" name="nome_pessoa" class="form-input" value="{{ certificado.nome_pessoa if certificado else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="documento"><strong>Documento (CPF/RG) - opcional</strong></label>
+            <input type="text" id="documento" name="documento" class="form-input" value="{{ certificado.documento if certificado else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="curso"><strong>Curso/Atividade</strong></label>
+            <input type="text" id="curso" name="curso" class="form-input" value="{{ certificado.curso if certificado else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="descricao"><strong>Descrição</strong></label>
+            <textarea id="descricao" name="descricao" rows="4" class="form-input" placeholder="Detalhes do certificado, carga horária, etc.">{{ certificado.descricao if certificado else '' }}</textarea>
+        </div>
+
+        <div class="form-row" style="display:flex; gap:1rem;">
+            <div class="form-group" style="flex:1;">
+                <label for="data_emissao"><strong>Data de Emissão</strong></label>
+                <input type="date" id="data_emissao" name="data_emissao" class="form-input" value="{{ certificado.data_emissao.strftime('%Y-%m-%d') if certificado and certificado.data_emissao else '' }}">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label for="data_validade"><strong>Data de Validade (opcional)</strong></label>
+                <input type="date" id="data_validade" name="data_validade" class="form-input" value="{{ certificado.data_validade.strftime('%Y-%m-%d') if certificado and certificado.data_validade else '' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="status"><strong>Status</strong></label>
+            <select id="status" name="status" class="form-input">
+                {% set current_status = certificado.status if certificado else 'valido' %}
+                <option value="valido" {% if current_status == 'valido' %}selected{% endif %}>✅ Válido</option>
+                <option value="revogado" {% if current_status == 'revogado' %}selected{% endif %}>⛔ Revogado</option>
+                <option value="expirado" {% if current_status == 'expirado' %}selected{% endif %}>⌛ Expirado</option>
+            </select>
+        </div>
+
+        {% if certificado %}
+        <div class="form-group">
+            <label><strong>Número de Validação</strong></label>
+            <p style="padding:0.75rem; background:var(--bg-light); border-radius:0.5rem; font-weight:600;">
+                {{ certificado.numero_validacao }}
+            </p>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn-admin btn-admin-primary">Salvar</button>
+            <a href="{{ url_for('admin_certificados') }}" class="btn-admin btn-admin-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

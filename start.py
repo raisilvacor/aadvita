@@ -49,6 +49,19 @@ def run_migration():
     except Exception as e:
         print('Não foi possível importar/rodar migrate_postgres_problema_acessibilidade:', e)
         # continuar
+
+    # Tentar executar migração para certificados
+    try:
+        import migrate_postgres_certificado as mig_certificado
+        print('Executando migração certificado (se aplicável)...')
+        code5 = mig_certificado.migrate()
+        if code5 != 0:
+            print(f'Migração certificado retornou código {code5} (continuando startup).')
+        else:
+            print('Migração certificado finalizada com sucesso.')
+    except Exception as e:
+        print('Não foi possível importar/rodar migrate_postgres_certificado:', e)
+        # continuar
     return 0
 
 
