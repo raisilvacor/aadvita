@@ -253,7 +253,7 @@
                         </td>
                         <td>
                             {% if relatorio.arquivo %}
-                                <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small">
+                                <a href="{{ url_for('relatorio_atividade_arquivo', id=relatorio.id) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small">
                                     <span>📄</span> Ver
                                 </a>
                             {% else %}
