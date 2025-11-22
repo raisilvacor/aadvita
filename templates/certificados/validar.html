@@ -13,13 +13,7 @@
                 {% if certificado.curso %}<p><strong>Curso/Atividade:</strong> {{ certificado.curso }}</p>{% endif %}
                 {% if certificado.descricao %}<p><strong>Descrição:</strong> {{ certificado.descricao }}</p>{% endif %}
                 <p><strong>Data de emissão:</strong> {{ certificado.data_emissao.strftime('%d/%m/%Y') if certificado.data_emissao else '-' }}</p>
-                <p><strong>Validade:</strong>
-                    {% if certificado.data_validade %}
-                        {{ certificado.data_validade.strftime('%d/%m/%Y') }}
-                    {% else %}
-                        Indeterminada
-                    {% endif %}
-                </p>
+                <p><strong>Validade:</strong> Vitalício</p>
             </div>
         </div>
     {% else %}

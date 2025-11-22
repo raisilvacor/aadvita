@@ -38,15 +38,9 @@
             <textarea id="descricao" name="descricao" rows="4" class="form-input" placeholder="Detalhes do certificado, carga horária, etc.">{{ certificado.descricao if certificado else '' }}</textarea>
         </div>
 
-        <div class="form-row" style="display:flex; gap:1rem;">
-            <div class="form-group" style="flex:1;">
-                <label for="data_emissao"><strong>Data de Emissão</strong></label>
-                <input type="date" id="data_emissao" name="data_emissao" class="form-input" value="{{ certificado.data_emissao.strftime('%Y-%m-%d') if certificado and certificado.data_emissao else '' }}">
-            </div>
-            <div class="form-group" style="flex:1;">
-                <label for="data_validade"><strong>Data de Validade (opcional)</strong></label>
-                <input type="date" id="data_validade" name="data_validade" class="form-input" value="{{ certificado.data_validade.strftime('%Y-%m-%d') if certificado and certificado.data_validade else '' }}">
-            </div>
+        <div class="form-group">
+            <label for="data_emissao"><strong>Data de Emissão</strong></label>
+            <input type="date" id="data_emissao" name="data_emissao" class="form-input" value="{{ certificado.data_emissao.strftime('%Y-%m-%d') if certificado and certificado.data_emissao else '' }}">
         </div>
 
         <div class="form-group">

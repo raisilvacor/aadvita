@@ -2007,7 +2007,6 @@ def admin_certificados_novo():
         descricao = request.form.get('descricao', '').strip() or None
         curso = request.form.get('curso', '').strip() or None
         data_emissao_str = request.form.get('data_emissao')
-        data_validade_str = request.form.get('data_validade')
         status = request.form.get('status', 'valido')
 
         if not nome_pessoa:
@@ -2022,14 +2021,6 @@ def admin_certificados_novo():
                 flash('Data de emissão inválida.', 'error')
                 return redirect(url_for('admin_certificados_novo'))
 
-        data_validade = None
-        if data_validade_str:
-            try:
-                data_validade = datetime.strptime(data_validade_str, '%Y-%m-%d')
-            except ValueError:
-                flash('Data de validade inválida.', 'error')
-                return redirect(url_for('admin_certificados_novo'))
-
         numero_validacao = gerar_codigo_certificado()
         while Certificado.query.filter_by(numero_validacao=numero_validacao).first():
             numero_validacao = gerar_codigo_certificado()
@@ -2042,7 +2033,7 @@ def admin_certificados_novo():
                 descricao=descricao,
                 curso=curso,
                 data_emissao=data_emissao,
-                data_validade=data_validade,
+                data_validade=None,  # Certificados são vitalícios
                 status=status
             )
             db.session.add(certificado)
@@ -2075,17 +2066,14 @@ def admin_certificados_editar(id):
         certificado.status = status
 
         data_emissao_str = request.form.get('data_emissao')
-        data_validade_str = request.form.get('data_validade')
 
         try:
             if data_emissao_str:
                 certificado.data_emissao = datetime.strptime(data_emissao_str, '%Y-%m-%d')
-            if data_validade_str:
-                certificado.data_validade = datetime.strptime(data_validade_str, '%Y-%m-%d')
-            else:
-                certificado.data_validade = None
+            # Certificados são vitalícios, sempre manter data_validade como None
+            certificado.data_validade = None
         except ValueError:
-            flash('Datas inválidas.', 'error')
+            flash('Data de emissão inválida.', 'error')
             return redirect(url_for('admin_certificados_editar', id=id))
 
         try:
@@ -10272,40 +10260,18 @@ def salvar_qr_certificado(numero_validacao):
     return f"qrcodes/certificados/{filename}"
 
 def certificado_esta_valido(certificado):
-    """Verifica se um certificado está válido baseado no status e data de validade"""
+    """Verifica se um certificado está válido baseado apenas no status (certificados são vitalícios)"""
     if not certificado:
         return False
     
     # Verificar status - se for None ou vazio, considerar como válido (default do modelo)
     status_str = (certificado.status or '').strip().lower()
-    if status_str and status_str not in ('valido', 'ativo', 'válido', 'ativo'):
-        # Se status existe e não é válido/ativo, retornar False
-        if status_str in ('revogado', 'expirado', 'invalido', 'inválido'):
-            return False
     
-    # Se status é válido ou None/vazio, verificar data de validade
-    if certificado.data_validade:
-        try:
-            # Converter para date se for datetime
-            if isinstance(certificado.data_validade, datetime):
-                validade_date = certificado.data_validade.date()
-            elif isinstance(certificado.data_validade, date):
-                validade_date = certificado.data_validade
-            else:
-                # Tentar converter string para date
-                validade_date = datetime.strptime(str(certificado.data_validade), '%Y-%m-%d').date()
-            
-            # Comparar apenas a data (sem hora) - certificado válido até o fim do dia
-            hoje = datetime.utcnow().date()
-            if validade_date < hoje:
-                return False
-        except (ValueError, AttributeError, TypeError) as e:
-            # Se houver erro ao processar data, considerar válido se status for válido
-            print(f'Aviso: Erro ao processar data de validade do certificado {certificado.id}: {e}')
-            if status_str and status_str in ('revogado', 'expirado'):
-                return False
+    # Certificados são vitalícios, então apenas verificar se o status não é inválido
+    if status_str in ('revogado', 'expirado', 'invalido', 'inválido'):
+        return False
     
-    # Se chegou aqui e status não é inválido, considerar válido
+    # Se status é válido, ativo, None ou vazio, considerar válido
     return True
 
 def garantir_qr_certificado(certificado):

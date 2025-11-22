@@ -24,7 +24,6 @@
                 <tr>
                     <th>Certificado</th>
                     <th>Emitido Para</th>
-                    <th>Validade</th>
                     <th>Status</th>
                     <th>QR Code</th>
                     <th>Ações</th>
@@ -41,13 +40,6 @@
                         <td>
                             {{ cert.nome_pessoa }}<br>
                             <small>{{ cert.documento or '-' }}</small>
-                        </td>
-                        <td>
-                            {% if cert.data_validade %}
-                                {{ cert.data_validade.strftime('%d/%m/%Y') }}
-                            {% else %}
-                                -
-                            {% endif %}
                         </td>
                         <td>
                             {% if certificado_esta_valido(cert) %}
@@ -79,7 +71,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="6" style="text-align:center; padding:2rem; color:#6b7280;">Nenhum certificado emitido ainda.</td>
+                        <td colspan="5" style="text-align:center; padding:2rem; color:#6b7280;">Nenhum certificado emitido ainda.</td>
                     </tr>
                 {% endif %}
             </tbody>
