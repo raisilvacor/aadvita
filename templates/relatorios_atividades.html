@@ -29,21 +29,21 @@
                     
                     {% if get_text(relatorio, 'descricao') %}
                         <div class="relatorio-descricao">
-                            <p>{{ get_text(relatorio, 'descricao')|replace('<br>', '\n')|nl2br }}</p>
+                            <p>{{ get_text(relatorio, 'descricao')|limpar_br_nl2br }}</p>
                         </div>
                     {% endif %}
                     
                     {% if get_text(relatorio, 'atividades_realizadas') %}
                         <div class="prestacao-section">
                             <h4>{{ _('Atividades Realizadas:') }}</h4>
-                            <p>{{ get_text(relatorio, 'atividades_realizadas')|replace('<br>', '\n')|nl2br }}</p>
+                            <p>{{ get_text(relatorio, 'atividades_realizadas')|limpar_br_nl2br }}</p>
                         </div>
                     {% endif %}
                     
                     {% if get_text(relatorio, 'resultados') %}
                         <div class="prestacao-section">
                             <h4>{{ _('Resultados Alcançados:') }}</h4>
-                            <p>{{ get_text(relatorio, 'resultados')|replace('<br>', '\n')|nl2br }}</p>
+                            <p>{{ get_text(relatorio, 'resultados')|limpar_br_nl2br }}</p>
                         </div>
                     {% endif %}
                     

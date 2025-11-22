@@ -1036,6 +1036,20 @@ def nl2br_filter(text):
         return text.replace('\n', '<br>')
     return text
 
+# Filtro para limpar tags <br> e converter para quebras de linha, depois aplicar nl2br
+@app.template_filter('limpar_br_nl2br')
+def limpar_br_nl2br_filter(text):
+    """Remove tags <br> e converte para quebras de linha, depois aplica nl2br"""
+    if not text:
+        return ''
+    # Converter todas as variações de <br> para quebras de linha
+    import re
+    text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
+    # Remover outras tags HTML que possam ter sido inseridas
+    text = re.sub(r'<[^>]+>', '', text)
+    # Aplicar nl2br
+    return text.replace('\n', '<br>')
+
 # Modelos de Base de Datos
 # Tabela de associação para Usuario e Permissao
 usuario_permissao = db.Table('usuario_permissao',
@@ -10254,6 +10268,27 @@ def relatorios_atividades():
     
     # Buscar relatórios de atividades cadastrados no admin
     relatorios = RelatorioAtividade.query.order_by(RelatorioAtividade.ordem.asc(), RelatorioAtividade.periodo_inicio.desc()).all()
+    
+    # Limpar tags <br> dos dados existentes automaticamente
+    campos_texto = [
+        'descricao_pt', 'descricao_es', 'descricao_en',
+        'atividades_realizadas_pt', 'atividades_realizadas_es', 'atividades_realizadas_en',
+        'resultados_pt', 'resultados_es', 'resultados_en'
+    ]
+    precisa_salvar = False
+    for relatorio in relatorios:
+        for campo in campos_texto:
+            valor = getattr(relatorio, campo, None)
+            if valor and ('<br>' in valor or '<br/>' in valor or '<br />' in valor):
+                valor_limpo = processar_texto_relatorio(valor)
+                setattr(relatorio, campo, valor_limpo)
+                precisa_salvar = True
+    
+    if precisa_salvar:
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
     
     # Função auxiliar para obter texto no idioma correto
     def get_text(obj, field):
