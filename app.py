@@ -5134,6 +5134,17 @@ def admin_prestacao_excluir(id):
 # CRUD - RELATÓRIOS DE ATIVIDADES
 # ============================================
 
+def processar_texto_relatorio(texto):
+    """Processa texto de relatório: converte tags <br> para quebras de linha e limpa dados antigos"""
+    if not texto:
+        return ''
+    # Converter <br>, <br/>, <br /> para quebras de linha
+    texto = texto.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+    # Remover tags HTML restantes que possam ter sido inseridas
+    import re
+    texto = re.sub(r'<[^>]+>', '', texto)  # Remove qualquer tag HTML restante
+    return texto
+
 @app.route('/admin/transparencia/relatorio-atividade/novo', methods=['GET', 'POST'])
 @admin_required
 def admin_relatorio_atividade_novo():
@@ -5223,17 +5234,6 @@ def admin_relatorio_atividade_novo():
             flash(f'Erro ao cadastrar relatório de atividades: {str(e)}', 'error')
     
     return render_template('admin/relatorio_atividade_form.html')
-
-def processar_texto_relatorio(texto):
-    """Processa texto de relatório: converte tags <br> para quebras de linha e limpa dados antigos"""
-    if not texto:
-        return ''
-    # Converter <br>, <br/>, <br /> para quebras de linha
-    texto = texto.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
-    # Remover tags HTML restantes que possam ter sido inseridas
-    import re
-    texto = re.sub(r'<[^>]+>', '', texto)  # Remove qualquer tag HTML restante
-    return texto
 
 @app.route('/admin/transparencia/relatorio-atividade/<int:id>/editar', methods=['GET', 'POST'])
 @admin_required
