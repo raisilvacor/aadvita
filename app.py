@@ -1040,15 +1040,16 @@ def nl2br_filter(text):
 @app.template_filter('limpar_br_nl2br')
 def limpar_br_nl2br_filter(text):
     """Remove tags <br> e converte para quebras de linha, depois aplica nl2br"""
+    from markupsafe import Markup
     if not text:
-        return ''
+        return Markup('')
     # Converter todas as variações de <br> para quebras de linha
     import re
     text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
     # Remover outras tags HTML que possam ter sido inseridas
     text = re.sub(r'<[^>]+>', '', text)
-    # Aplicar nl2br
-    return text.replace('\n', '<br>')
+    # Aplicar nl2br e marcar como seguro para renderização HTML
+    return Markup(text.replace('\n', '<br>'))
 
 # Modelos de Base de Datos
 # Tabela de associação para Usuario e Permissao
