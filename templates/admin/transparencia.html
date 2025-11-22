@@ -252,7 +252,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if relatorio.arquivo %}
+                            {% if relatorio.arquivo or relatorio.arquivo_base64 %}
                                 <a href="{{ url_for('relatorio_atividade_arquivo', id=relatorio.id) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small">
                                     <span>📄</span> Ver
                                 </a>

@@ -5161,13 +5161,31 @@ def admin_relatorio_atividade_novo():
                 flash('Título em português é obrigatório!', 'error')
                 return redirect(url_for('admin_relatorio_atividade_novo'))
             
+            # Processar texto: converter tags <br> para quebras de linha
+            def processar_texto(texto):
+                if not texto:
+                    return ''
+                # Converter <br>, <br/>, <br /> para quebras de linha
+                texto = texto.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+                return texto
+            
+            descricao_pt = processar_texto(descricao_pt)
+            descricao_es = processar_texto(descricao_es)
+            descricao_en = processar_texto(descricao_en)
+            atividades_realizadas_pt = processar_texto(atividades_realizadas_pt)
+            atividades_realizadas_es = processar_texto(atividades_realizadas_es)
+            atividades_realizadas_en = processar_texto(atividades_realizadas_en)
+            resultados_pt = processar_texto(resultados_pt)
+            resultados_es = processar_texto(resultados_es)
+            resultados_en = processar_texto(resultados_en)
+            
             # Upload do arquivo - salvar como base64 no banco para persistência no Render
             arquivo_path = None
             arquivo_base64_data = None
             if 'arquivo' in request.files:
                 file = request.files['arquivo']
                 if file.filename != '':
-                    if file and allowed_file(file.filename):
+                    if file and allowed_document_file(file.filename):
                         # Salvar também como arquivo local (compatibilidade)
                         upload_folder = 'static/documents/transparencia'
                         os.makedirs(upload_folder, exist_ok=True)
@@ -5223,15 +5241,23 @@ def admin_relatorio_atividade_editar(id):
             relatorio.titulo_pt = request.form.get('titulo_pt')
             relatorio.titulo_es = request.form.get('titulo_es', '')
             relatorio.titulo_en = request.form.get('titulo_en', '')
-            relatorio.descricao_pt = request.form.get('descricao_pt', '')
-            relatorio.descricao_es = request.form.get('descricao_es', '')
-            relatorio.descricao_en = request.form.get('descricao_en', '')
-            relatorio.atividades_realizadas_pt = request.form.get('atividades_realizadas_pt', '')
-            relatorio.atividades_realizadas_es = request.form.get('atividades_realizadas_es', '')
-            relatorio.atividades_realizadas_en = request.form.get('atividades_realizadas_en', '')
-            relatorio.resultados_pt = request.form.get('resultados_pt', '')
-            relatorio.resultados_es = request.form.get('resultados_es', '')
-            relatorio.resultados_en = request.form.get('resultados_en', '')
+            # Processar texto: converter tags <br> para quebras de linha
+            def processar_texto(texto):
+                if not texto:
+                    return ''
+                # Converter <br>, <br/>, <br /> para quebras de linha
+                texto = texto.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+                return texto
+            
+            relatorio.descricao_pt = processar_texto(request.form.get('descricao_pt', ''))
+            relatorio.descricao_es = processar_texto(request.form.get('descricao_es', ''))
+            relatorio.descricao_en = processar_texto(request.form.get('descricao_en', ''))
+            relatorio.atividades_realizadas_pt = processar_texto(request.form.get('atividades_realizadas_pt', ''))
+            relatorio.atividades_realizadas_es = processar_texto(request.form.get('atividades_realizadas_es', ''))
+            relatorio.atividades_realizadas_en = processar_texto(request.form.get('atividades_realizadas_en', ''))
+            relatorio.resultados_pt = processar_texto(request.form.get('resultados_pt', ''))
+            relatorio.resultados_es = processar_texto(request.form.get('resultados_es', ''))
+            relatorio.resultados_en = processar_texto(request.form.get('resultados_en', ''))
             relatorio.ordem = int(request.form.get('ordem', 0))
             periodo_inicio_str = request.form.get('periodo_inicio')
             periodo_fim_str = request.form.get('periodo_fim')
@@ -5242,7 +5268,7 @@ def admin_relatorio_atividade_editar(id):
             if 'arquivo' in request.files:
                 file = request.files['arquivo']
                 if file.filename != '':
-                    if file and allowed_file(file.filename):
+                    if file and allowed_document_file(file.filename):
                         upload_folder = 'static/documents/transparencia'
                         os.makedirs(upload_folder, exist_ok=True)
                         
@@ -5287,12 +5313,13 @@ def relatorio_atividade_arquivo(id):
     try:
         relatorio = RelatorioAtividade.query.get_or_404(id)
         
-        if not relatorio.arquivo:
-            from flask import abort
-            abort(404)
-        
         # Verificar se tem arquivo em base64 (prioridade para persistência no Render)
         arquivo_base64 = getattr(relatorio, 'arquivo_base64', None)
+        
+        # Se não tem arquivo nem base64, retornar 404
+        if not relatorio.arquivo and not arquivo_base64:
+            from flask import abort
+            abort(404)
         
         if arquivo_base64:
             # Servir arquivo do banco de dados (base64)

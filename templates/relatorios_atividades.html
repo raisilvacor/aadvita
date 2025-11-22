@@ -47,7 +47,7 @@
                         </div>
                     {% endif %}
                     
-                    {% if relatorio.arquivo %}
+                    {% if relatorio.arquivo or relatorio.arquivo_base64 %}
                         <div class="relatorio-actions">
                             <a href="{{ url_for('relatorio_atividade_arquivo', id=relatorio.id) }}" target="_blank" class="btn btn-primary">
                                 <span>📄</span> {{ _('Baixar Documento') }}
