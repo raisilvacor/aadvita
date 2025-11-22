@@ -11760,13 +11760,13 @@ def ensure_db_initialized():
                     ('acao', 'imagem_base64'),
                     ('evento', 'imagem_base64'),
                     ('informativo', 'imagem_base64'),
-            ('radio_programa', 'imagem_base64'),
-            ('membro_diretoria', 'foto_base64'),
-            ('membro_conselho_fiscal', 'foto_base64'),
-            ('relatorio_atividade', 'arquivo_base64'),
-        ]
-        
-        for table_name, column_name in tables_to_migrate:
+                    ('radio_programa', 'imagem_base64'),
+                    ('membro_diretoria', 'foto_base64'),
+                    ('membro_conselho_fiscal', 'foto_base64'),
+                    ('relatorio_atividade', 'arquivo_base64'),
+                ]
+                
+                for table_name, column_name in tables_to_migrate:
                     table_exists = table_name in inspector.get_table_names()
                     if table_exists:
                         is_sqlite = db_type == 'sqlite'
