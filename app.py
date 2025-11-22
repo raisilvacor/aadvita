@@ -5162,22 +5162,15 @@ def admin_relatorio_atividade_novo():
                 return redirect(url_for('admin_relatorio_atividade_novo'))
             
             # Processar texto: converter tags <br> para quebras de linha
-            def processar_texto(texto):
-                if not texto:
-                    return ''
-                # Converter <br>, <br/>, <br /> para quebras de linha
-                texto = texto.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
-                return texto
-            
-            descricao_pt = processar_texto(descricao_pt)
-            descricao_es = processar_texto(descricao_es)
-            descricao_en = processar_texto(descricao_en)
-            atividades_realizadas_pt = processar_texto(atividades_realizadas_pt)
-            atividades_realizadas_es = processar_texto(atividades_realizadas_es)
-            atividades_realizadas_en = processar_texto(atividades_realizadas_en)
-            resultados_pt = processar_texto(resultados_pt)
-            resultados_es = processar_texto(resultados_es)
-            resultados_en = processar_texto(resultados_en)
+            descricao_pt = processar_texto_relatorio(descricao_pt)
+            descricao_es = processar_texto_relatorio(descricao_es)
+            descricao_en = processar_texto_relatorio(descricao_en)
+            atividades_realizadas_pt = processar_texto_relatorio(atividades_realizadas_pt)
+            atividades_realizadas_es = processar_texto_relatorio(atividades_realizadas_es)
+            atividades_realizadas_en = processar_texto_relatorio(atividades_realizadas_en)
+            resultados_pt = processar_texto_relatorio(resultados_pt)
+            resultados_es = processar_texto_relatorio(resultados_es)
+            resultados_en = processar_texto_relatorio(resultados_en)
             
             # Upload do arquivo - salvar como base64 no banco para persistência no Render
             arquivo_path = None
@@ -5231,33 +5224,58 @@ def admin_relatorio_atividade_novo():
     
     return render_template('admin/relatorio_atividade_form.html')
 
+def processar_texto_relatorio(texto):
+    """Processa texto de relatório: converte tags <br> para quebras de linha e limpa dados antigos"""
+    if not texto:
+        return ''
+    # Converter <br>, <br/>, <br /> para quebras de linha
+    texto = texto.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
+    # Remover tags HTML restantes que possam ter sido inseridas
+    import re
+    texto = re.sub(r'<[^>]+>', '', texto)  # Remove qualquer tag HTML restante
+    return texto
+
 @app.route('/admin/transparencia/relatorio-atividade/<int:id>/editar', methods=['GET', 'POST'])
 @admin_required
 def admin_relatorio_atividade_editar(id):
     relatorio = RelatorioAtividade.query.get_or_404(id)
+    
+    # Limpar dados existentes que têm tags <br> ao carregar para edição
+    if request.method == 'GET':
+        campos_texto = [
+            'descricao_pt', 'descricao_es', 'descricao_en',
+            'atividades_realizadas_pt', 'atividades_realizadas_es', 'atividades_realizadas_en',
+            'resultados_pt', 'resultados_es', 'resultados_en'
+        ]
+        precisa_salvar = False
+        for campo in campos_texto:
+            valor = getattr(relatorio, campo, None)
+            if valor and ('<br>' in valor or '<br/>' in valor or '<br />' in valor):
+                valor_limpo = processar_texto_relatorio(valor)
+                setattr(relatorio, campo, valor_limpo)
+                precisa_salvar = True
+        
+        if precisa_salvar:
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
     
     if request.method == 'POST':
         try:
             relatorio.titulo_pt = request.form.get('titulo_pt')
             relatorio.titulo_es = request.form.get('titulo_es', '')
             relatorio.titulo_en = request.form.get('titulo_en', '')
-            # Processar texto: converter tags <br> para quebras de linha
-            def processar_texto(texto):
-                if not texto:
-                    return ''
-                # Converter <br>, <br/>, <br /> para quebras de linha
-                texto = texto.replace('<br>', '\n').replace('<br/>', '\n').replace('<br />', '\n')
-                return texto
             
-            relatorio.descricao_pt = processar_texto(request.form.get('descricao_pt', ''))
-            relatorio.descricao_es = processar_texto(request.form.get('descricao_es', ''))
-            relatorio.descricao_en = processar_texto(request.form.get('descricao_en', ''))
-            relatorio.atividades_realizadas_pt = processar_texto(request.form.get('atividades_realizadas_pt', ''))
-            relatorio.atividades_realizadas_es = processar_texto(request.form.get('atividades_realizadas_es', ''))
-            relatorio.atividades_realizadas_en = processar_texto(request.form.get('atividades_realizadas_en', ''))
-            relatorio.resultados_pt = processar_texto(request.form.get('resultados_pt', ''))
-            relatorio.resultados_es = processar_texto(request.form.get('resultados_es', ''))
-            relatorio.resultados_en = processar_texto(request.form.get('resultados_en', ''))
+            relatorio.descricao_pt = processar_texto_relatorio(request.form.get('descricao_pt', ''))
+            relatorio.descricao_es = processar_texto_relatorio(request.form.get('descricao_es', ''))
+            relatorio.descricao_en = processar_texto_relatorio(request.form.get('descricao_en', ''))
+            relatorio.atividades_realizadas_pt = processar_texto_relatorio(request.form.get('atividades_realizadas_pt', ''))
+            relatorio.atividades_realizadas_es = processar_texto_relatorio(request.form.get('atividades_realizadas_es', ''))
+            relatorio.atividades_realizadas_en = processar_texto_relatorio(request.form.get('atividades_realizadas_en', ''))
+            relatorio.resultados_pt = processar_texto_relatorio(request.form.get('resultados_pt', ''))
+            relatorio.resultados_es = processar_texto_relatorio(request.form.get('resultados_es', ''))
+            relatorio.resultados_en = processar_texto_relatorio(request.form.get('resultados_en', ''))
             relatorio.ordem = int(request.form.get('ordem', 0))
             periodo_inicio_str = request.form.get('periodo_inicio')
             periodo_fim_str = request.form.get('periodo_fim')
@@ -11614,6 +11632,64 @@ def init_db():
         except Exception as e:
             print(f"Aviso: Erro ao gerar mensalidades automaticamente: {str(e)}")
 
+def _add_column(inspector, conn, table_name, column_name, is_sqlite, column_type='TEXT'):
+    """Função auxiliar para adicionar coluna a uma tabela"""
+    from sqlalchemy import text
+    try:
+        column_exists = False
+        
+        if is_sqlite:
+            result = conn.execute(text("PRAGMA table_info({})".format(table_name)))
+            columns = [row[1] for row in result]
+            column_exists = column_name in columns
+        else:
+            # PostgreSQL
+            result = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name = :table_name 
+                    AND column_name = :column_name
+                )
+            """), {'table_name': table_name, 'column_name': column_name})
+            column_exists = result.scalar()
+        
+        if not column_exists:
+            print(f"📝 Adicionando coluna {column_name} à tabela {table_name}...")
+            try:
+                if is_sqlite:
+                    conn.execute(text("ALTER TABLE {} ADD COLUMN {} {}".format(table_name, column_name, column_type)))
+                else:
+                    # PostgreSQL - usar IF NOT EXISTS via DO block com format dinâmico
+                    sql = f"""
+                        DO $$ 
+                        BEGIN
+                            IF NOT EXISTS (
+                                SELECT 1 FROM information_schema.columns 
+                                WHERE table_name = '{table_name}' 
+                                AND column_name = '{column_name}'
+                            ) THEN
+                                EXECUTE format('ALTER TABLE %I ADD COLUMN %I {column_type}', '{table_name}', '{column_name}');
+                            END IF;
+                        END $$;
+                    """
+                    conn.execute(text(sql))
+                conn.commit()
+                print(f"✅ Coluna {column_name} adicionada à tabela {table_name}.")
+            except Exception as e:
+                # Se a coluna já existe (erro de duplicação), ignorar
+                error_str = str(e).lower()
+                if 'duplicate' in error_str or 'already exists' in error_str or ('column' in error_str and 'already' in error_str):
+                    print(f"ℹ️ Coluna {table_name}.{column_name} já existe.")
+                else:
+                    raise
+        return True
+    except Exception as e:
+        print(f"⚠️ Erro ao adicionar coluna {table_name}.{column_name}: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 # Função para inicializar o banco de dados quando necessário
 def ensure_db_initialized():
     """Garante que o banco de dados está inicializado"""
@@ -11971,64 +12047,6 @@ except Exception as e:
 _migration_cache = {}
 _migration_lock = False
 _migration_initialized = False
-
-def _add_column(inspector, conn, table_name, column_name, is_sqlite, column_type='TEXT'):
-    """Função auxiliar para adicionar coluna a uma tabela"""
-    from sqlalchemy import text
-    try:
-        column_exists = False
-        
-        if is_sqlite:
-            result = conn.execute(text("PRAGMA table_info({})".format(table_name)))
-            columns = [row[1] for row in result]
-            column_exists = column_name in columns
-        else:
-            # PostgreSQL
-            result = conn.execute(text("""
-                SELECT EXISTS (
-                    SELECT 1 
-                    FROM information_schema.columns 
-                    WHERE table_name = :table_name 
-                    AND column_name = :column_name
-                )
-            """), {'table_name': table_name, 'column_name': column_name})
-            column_exists = result.scalar()
-        
-        if not column_exists:
-            print(f"📝 Adicionando coluna {column_name} à tabela {table_name}...")
-            try:
-                if is_sqlite:
-                    conn.execute(text("ALTER TABLE {} ADD COLUMN {} {}".format(table_name, column_name, column_type)))
-                else:
-                    # PostgreSQL - usar IF NOT EXISTS via DO block com format dinâmico
-                    sql = f"""
-                        DO $$ 
-                        BEGIN
-                            IF NOT EXISTS (
-                                SELECT 1 FROM information_schema.columns 
-                                WHERE table_name = '{table_name}' 
-                                AND column_name = '{column_name}'
-                            ) THEN
-                                EXECUTE format('ALTER TABLE %I ADD COLUMN %I {column_type}', '{table_name}', '{column_name}');
-                            END IF;
-                        END $$;
-                    """
-                    conn.execute(text(sql))
-                conn.commit()
-                print(f"✅ Coluna {column_name} adicionada à tabela {table_name}.")
-            except Exception as e:
-                # Se a coluna já existe (erro de duplicação), ignorar
-                error_str = str(e).lower()
-                if 'duplicate' in error_str or 'already exists' in error_str or ('column' in error_str and 'already' in error_str):
-                    print(f"ℹ️ Coluna {table_name}.{column_name} já existe.")
-                else:
-                    raise
-        return True
-    except Exception as e:
-        print(f"⚠️ Erro ao adicionar coluna {table_name}.{column_name}: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
 
 def _add_base64_column(inspector, conn, table_name, column_name, is_sqlite):
     """Função auxiliar para adicionar coluna base64 a uma tabela (alias para _add_column)"""
