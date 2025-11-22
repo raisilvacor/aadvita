@@ -7624,6 +7624,53 @@ def conselho_foto(id):
         from flask import abort
         abort(404)
 
+@app.route('/associado/<int:id>/foto')
+def associado_foto(id):
+    """Rota para servir fotos de associados do banco de dados (base64)"""
+    try:
+        associado = Associado.query.get_or_404(id)
+        
+        # Verificar se tem foto_base64
+        foto_base64 = getattr(associado, 'foto_base64', None)
+        
+        # Se tem foto em base64, servir ela
+        if foto_base64:
+            # Extrair o tipo MIME do campo foto
+            mime_type = 'image/jpeg'  # padrão
+            if associado.foto and associado.foto.startswith('base64:'):
+                mime_type = associado.foto.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(foto_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar foto base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if associado.foto and not (associado.foto.startswith('base64:') if associado.foto else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(associado.foto)
+            file_name = os.path.basename(associado.foto)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except Exception as e:
+                print(f"Erro ao servir arquivo estático: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir foto do associado: {e}")
+        from flask import abort
+        abort(404)
+
 @app.route('/banner-conteudo/<int:id>/imagem')
 def banner_conteudo_imagem(id):
     """Rota para servir imagens do banner conteúdo do banco de dados (base64)"""

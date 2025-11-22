@@ -60,9 +60,15 @@
                     <tr>
                         <td>
                             {% if associado.foto %}
-                                <img src="{{ url_for('static', filename=associado.foto) }}" 
-                                     alt="{{ associado.nome_completo }}" 
-                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #d1d5db;">
+                                {% if associado.foto.startswith('base64:') and associado.foto_base64 %}
+                                    <img src="{{ url_for('associado_foto', id=associado.id) }}" 
+                                         alt="{{ associado.nome_completo }}" 
+                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #d1d5db;">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename=associado.foto) }}" 
+                                         alt="{{ associado.nome_completo }}" 
+                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #d1d5db;">
+                                {% endif %}
                             {% else %}
                                 <div style="width: 50px; height: 50px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 1.5rem;">
                                     👤
