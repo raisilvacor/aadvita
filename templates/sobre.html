@@ -48,7 +48,7 @@
                         <div class="diretoria-card">
                             <div class="diretoria-photo">
                                 {% if membro.foto %}
-                                    <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ membro.cargo }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                                    <img src="{{ diretoria_foto_url(membro) or url_for('static', filename='images/placeholder.jpg') }}" alt="{{ membro.cargo }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
                                 {% else %}
                                     <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ membro.cargo }}">
                                 {% endif %}
@@ -69,7 +69,7 @@
                         <div class="diretoria-card">
                             <div class="diretoria-photo">
                                 {% if membro.foto %}
-                                    <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ _('Conselheiro(a)') }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
+                                    <img src="{{ conselho_foto_url(membro) or url_for('static', filename='images/placeholder.jpg') }}" alt="{{ _('Conselheiro(a)') }}" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
                                 {% else %}
                                     <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ _('Conselheiro(a)') }}">
                                 {% endif %}

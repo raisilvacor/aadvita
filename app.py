@@ -1399,6 +1399,7 @@ class MembroDiretoria(db.Model):
     nome_es = db.Column(db.String(200))
     nome_en = db.Column(db.String(200))
     foto = db.Column(db.String(500))
+    foto_base64 = db.Column(db.Text, nullable=True)  # salvar imagem em base64 para persistência no Render
     ordem = db.Column(db.Integer, default=0)  # Para ordenar os cargos
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -1409,6 +1410,7 @@ class MembroConselhoFiscal(db.Model):
     nome_es = db.Column(db.String(200))
     nome_en = db.Column(db.String(200))
     foto = db.Column(db.String(500))
+    foto_base64 = db.Column(db.Text, nullable=True)  # salvar imagem em base64 para persistência no Render
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -4378,12 +4380,14 @@ def admin_sobre_diretoria_novo():
                 flash('Cargo e nome são obrigatórios!', 'error')
                 return redirect(url_for('admin_sobre_diretoria_novo'))
             
-            # Upload da foto
+            # Upload da foto - salvar como base64 no banco para persistência no Render
             foto_path = None
+            foto_base64_data = None
             if 'foto' in request.files:
                 file = request.files['foto']
                 if file.filename != '':
                     if file and allowed_file(file.filename):
+                        # Salvar também como arquivo local (compatibilidade)
                         upload_folder = 'static/images/diretoria'
                         os.makedirs(upload_folder, exist_ok=True)
                         
@@ -4392,6 +4396,13 @@ def admin_sobre_diretoria_novo():
                         filepath = os.path.join(upload_folder, unique_filename)
                         file.save(filepath)
                         foto_path = f"images/diretoria/{unique_filename}"
+                        
+                        # Salvar em base64 para persistência no Render
+                        file.seek(0)  # Voltar ao início do arquivo
+                        file_data = file.read()
+                        mime_type = file.content_type or 'image/jpeg'
+                        foto_base64_data = base64.b64encode(file_data).decode('utf-8')
+                        foto_path = f"base64:{mime_type}"
             
             membro = MembroDiretoria(
                 cargo=cargo,
@@ -4399,6 +4410,7 @@ def admin_sobre_diretoria_novo():
                 nome_es=nome_es,
                 nome_en=nome_en,
                 foto=foto_path,
+                foto_base64=foto_base64_data,
                 ordem=ordem
             )
             db.session.add(membro)
@@ -4424,11 +4436,12 @@ def admin_sobre_diretoria_editar(id):
             membro.nome_en = request.form.get('nome_en', '')
             membro.ordem = int(request.form.get('ordem', 0))
             
-            # Upload da foto se fornecida
+            # Upload da foto (se uma nova foi enviada) - salvar como base64 no banco para persistência no Render
             if 'foto' in request.files:
                 file = request.files['foto']
                 if file.filename != '':
                     if file and allowed_file(file.filename):
+                        # Salvar também como arquivo local (compatibilidade)
                         upload_folder = 'static/images/diretoria'
                         os.makedirs(upload_folder, exist_ok=True)
                         
@@ -4436,7 +4449,13 @@ def admin_sobre_diretoria_editar(id):
                         unique_filename = f"{uuid.uuid4()}_{filename}"
                         filepath = os.path.join(upload_folder, unique_filename)
                         file.save(filepath)
-                        membro.foto = f"images/diretoria/{unique_filename}"
+                        
+                        # Salvar em base64 para persistência no Render
+                        file.seek(0)  # Voltar ao início do arquivo
+                        file_data = file.read()
+                        mime_type = file.content_type or 'image/jpeg'
+                        membro.foto_base64 = base64.b64encode(file_data).decode('utf-8')
+                        membro.foto = f"base64:{mime_type}"
             
             membro.updated_at = datetime.utcnow()
             db.session.commit()
@@ -4475,12 +4494,14 @@ def admin_sobre_conselho_novo():
                 flash('Nome é obrigatório!', 'error')
                 return redirect(url_for('admin_sobre_conselho_novo'))
             
-            # Upload da foto
+            # Upload da foto - salvar como base64 no banco para persistência no Render
             foto_path = None
+            foto_base64_data = None
             if 'foto' in request.files:
                 file = request.files['foto']
                 if file.filename != '':
                     if file and allowed_file(file.filename):
+                        # Salvar também como arquivo local (compatibilidade)
                         upload_folder = 'static/images/diretoria'
                         os.makedirs(upload_folder, exist_ok=True)
                         
@@ -4489,12 +4510,20 @@ def admin_sobre_conselho_novo():
                         filepath = os.path.join(upload_folder, unique_filename)
                         file.save(filepath)
                         foto_path = f"images/diretoria/{unique_filename}"
+                        
+                        # Salvar em base64 para persistência no Render
+                        file.seek(0)  # Voltar ao início do arquivo
+                        file_data = file.read()
+                        mime_type = file.content_type or 'image/jpeg'
+                        foto_base64_data = base64.b64encode(file_data).decode('utf-8')
+                        foto_path = f"base64:{mime_type}"
             
             membro = MembroConselhoFiscal(
                 nome_pt=nome_pt,
                 nome_es=nome_es,
                 nome_en=nome_en,
                 foto=foto_path,
+                foto_base64=foto_base64_data,
                 ordem=ordem
             )
             db.session.add(membro)
@@ -4519,11 +4548,12 @@ def admin_sobre_conselho_editar(id):
             membro.nome_en = request.form.get('nome_en', '')
             membro.ordem = int(request.form.get('ordem', 0))
             
-            # Upload da foto se fornecida
+            # Upload da foto (se uma nova foi enviada) - salvar como base64 no banco para persistência no Render
             if 'foto' in request.files:
                 file = request.files['foto']
                 if file.filename != '':
                     if file and allowed_file(file.filename):
+                        # Salvar também como arquivo local (compatibilidade)
                         upload_folder = 'static/images/diretoria'
                         os.makedirs(upload_folder, exist_ok=True)
                         
@@ -4531,7 +4561,13 @@ def admin_sobre_conselho_editar(id):
                         unique_filename = f"{uuid.uuid4()}_{filename}"
                         filepath = os.path.join(upload_folder, unique_filename)
                         file.save(filepath)
-                        membro.foto = f"images/diretoria/{unique_filename}"
+                        
+                        # Salvar em base64 para persistência no Render
+                        file.seek(0)  # Voltar ao início do arquivo
+                        file_data = file.read()
+                        mime_type = file.content_type or 'image/jpeg'
+                        membro.foto_base64 = base64.b64encode(file_data).decode('utf-8')
+                        membro.foto = f"base64:{mime_type}"
             
             membro.updated_at = datetime.utcnow()
             db.session.commit()
@@ -7139,6 +7175,98 @@ def informativo_imagem(id):
         print(f"Erro ao servir imagem do informativo: {e}")
         import traceback
         traceback.print_exc()
+        from flask import abort
+        abort(404)
+
+@app.route('/diretoria/<int:id>/foto')
+def diretoria_foto(id):
+    """Rota para servir fotos da diretoria do banco de dados (base64)"""
+    try:
+        membro = MembroDiretoria.query.get_or_404(id)
+        
+        # Verificar se tem foto_base64
+        foto_base64 = getattr(membro, 'foto_base64', None)
+        
+        # Se tem foto em base64, servir ela
+        if foto_base64:
+            # Extrair o tipo MIME do campo foto
+            mime_type = 'image/jpeg'  # padrão
+            if membro.foto and membro.foto.startswith('base64:'):
+                mime_type = membro.foto.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(foto_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar foto base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if membro.foto and not (membro.foto.startswith('base64:') if membro.foto else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(membro.foto)
+            file_name = os.path.basename(membro.foto)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except:
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir foto da diretoria: {e}")
+        from flask import abort
+        abort(404)
+
+@app.route('/conselho/<int:id>/foto')
+def conselho_foto(id):
+    """Rota para servir fotos do conselho fiscal do banco de dados (base64)"""
+    try:
+        membro = MembroConselhoFiscal.query.get_or_404(id)
+        
+        # Verificar se tem foto_base64
+        foto_base64 = getattr(membro, 'foto_base64', None)
+        
+        # Se tem foto em base64, servir ela
+        if foto_base64:
+            # Extrair o tipo MIME do campo foto
+            mime_type = 'image/jpeg'  # padrão
+            if membro.foto and membro.foto.startswith('base64:'):
+                mime_type = membro.foto.replace('base64:', '')
+            
+            # Decodificar base64
+            try:
+                image_data = base64.b64decode(foto_base64)
+                from flask import Response
+                return Response(image_data, mimetype=mime_type)
+            except Exception as e:
+                print(f"Erro ao decodificar foto base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if membro.foto and not (membro.foto.startswith('base64:') if membro.foto else False):
+            from flask import send_from_directory
+            import os
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            file_path = os.path.dirname(membro.foto)
+            file_name = os.path.basename(membro.foto)
+            try:
+                return send_from_directory(os.path.join(static_dir, file_path), file_name)
+            except:
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir foto do conselho: {e}")
         from flask import abort
         abort(404)
 
@@ -10672,6 +10800,34 @@ def inject_conf():
     except:
         footer_configs = {}
     
+    def diretoria_foto_url(membro):
+        """Helper function para obter URL da foto da diretoria"""
+        if not membro or not membro.foto:
+            return None
+        
+        # Se a foto está em base64, usar a rota especial
+        if membro.foto.startswith('base64:') or getattr(membro, 'foto_base64', None):
+            from flask import url_for
+            return url_for('diretoria_foto', id=membro.id)
+        
+        # Caso contrário, usar arquivo estático
+        from flask import url_for
+        return url_for('static', filename=membro.foto)
+    
+    def conselho_foto_url(membro):
+        """Helper function para obter URL da foto do conselho fiscal"""
+        if not membro or not membro.foto:
+            return None
+        
+        # Se a foto está em base64, usar a rota especial
+        if membro.foto.startswith('base64:') or getattr(membro, 'foto_base64', None):
+            from flask import url_for
+            return url_for('conselho_foto', id=membro.id)
+        
+        # Caso contrário, usar arquivo estático
+        from flask import url_for
+        return url_for('static', filename=membro.foto)
+    
     return dict(
         slider_imagem_url=slider_imagem_url,
         apoiador_logo_url=apoiador_logo_url,
@@ -10679,6 +10835,8 @@ def inject_conf():
         radio_programa_imagem_url=radio_programa_imagem_url,
         acao_imagem_url=acao_imagem_url,
         informativo_imagem_url=informativo_imagem_url,
+        diretoria_foto_url=diretoria_foto_url,
+        conselho_foto_url=conselho_foto_url,
         qrcode_url=qrcode_url,
         current_user=session.get('admin_username'),
         current_language=session.get('language', 'pt'),
@@ -11606,6 +11764,8 @@ def ensure_base64_columns(force=False):
             ('evento', 'imagem_base64'),
             ('informativo', 'imagem_base64'),
             ('radio_programa', 'imagem_base64'),
+            ('membro_diretoria', 'foto_base64'),
+            ('membro_conselho_fiscal', 'foto_base64'),
         ]
         
         for table_name, column_name in tables_to_migrate:

@@ -100,7 +100,7 @@ Transparência: Mantemos práticas éticas e transparentes em todas as nossas a�
                     <tr>
                         <td>
                             {% if membro.foto %}
-                                <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ membro.cargo }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb;">
+                                <img src="{{ diretoria_foto_url(membro) or url_for('static', filename='images/placeholder.jpg') }}" alt="{{ membro.cargo }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb;" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
                             {% else %}
                                 <span style="color: var(--text-light);">Sem foto</span>
                             {% endif %}
@@ -157,7 +157,7 @@ Transparência: Mantemos práticas éticas e transparentes em todas as nossas a�
                     <tr>
                         <td>
                             {% if membro.foto %}
-                                <img src="{{ url_for('static', filename=membro.foto) }}" alt="{{ membro.nome_pt }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb;">
+                                <img src="{{ conselho_foto_url(membro) or url_for('static', filename='images/placeholder.jpg') }}" alt="{{ membro.nome_pt }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2563eb;" onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'">
                             {% else %}
                                 <span style="color: var(--text-light);">Sem foto</span>
                             {% endif %}
