@@ -501,6 +501,10 @@ TRANSLATIONS = {
         'Acesse nosso estatuto social, atas de reuniões e documentos oficiais.': 'Accede a nuestro estatuto social, actas de reuniones y documentos oficiales.',
         'Prestação de Contas': 'Rendición de Cuentas',
         'Confira como utilizamos os recursos recebidos e os resultados alcançados.': 'Consulta cómo utilizamos los recursos recibidos y los resultados alcanzados.',
+        'Relatório de Atividades': 'Informe de Actividades',
+        'Acompanhe as atividades realizadas pela associação e os resultados alcançados.': 'Consulta las actividades realizadas por la asociación y los resultados alcanzados.',
+        'Nenhum relatório de atividades cadastrado no momento.': 'No hay informes de actividades registrados en este momento.',
+        'Atividades Realizadas:': 'Actividades Realizadas:',
         'Projetos e Ações': 'Proyectos y Acciones',
         'Veja os projetos desenvolvidos e ações realizadas em benefício da comunidade.': 'Consulta los proyectos desarrollados y acciones realizadas en beneficio de la comunidad.',
         'Doações e Recursos': 'Donaciones y Recursos',
@@ -1523,6 +1527,27 @@ class PrestacaoConta(db.Model):
     periodo_inicio = db.Column(db.Date)
     periodo_fim = db.Column(db.Date)
     arquivo = db.Column(db.String(500))
+    ordem = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class RelatorioAtividade(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo_pt = db.Column(db.String(200), nullable=False)
+    titulo_es = db.Column(db.String(200))
+    titulo_en = db.Column(db.String(200))
+    descricao_pt = db.Column(db.Text)
+    descricao_es = db.Column(db.Text)
+    descricao_en = db.Column(db.Text)
+    atividades_realizadas_pt = db.Column(db.Text)
+    atividades_realizadas_es = db.Column(db.Text)
+    atividades_realizadas_en = db.Column(db.Text)
+    resultados_pt = db.Column(db.Text)
+    resultados_es = db.Column(db.Text)
+    resultados_en = db.Column(db.Text)
+    periodo_inicio = db.Column(db.Date)
+    periodo_fim = db.Column(db.Date)
+    arquivo = db.Column(db.String(500))  # Caminho do arquivo PDF/documento
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -4713,12 +4738,14 @@ def admin_transparencia():
     relatorios = RelatorioFinanceiro.query.order_by(RelatorioFinanceiro.ordem.asc(), RelatorioFinanceiro.data_relatorio.desc()).all()
     documentos = EstatutoDocumento.query.order_by(EstatutoDocumento.ordem.asc(), EstatutoDocumento.data_documento.desc()).all()
     prestacoes = PrestacaoConta.query.order_by(PrestacaoConta.ordem.asc(), PrestacaoConta.periodo_inicio.desc()).all()
+    relatorios_atividades = RelatorioAtividade.query.order_by(RelatorioAtividade.ordem.asc(), RelatorioAtividade.periodo_inicio.desc()).all()
     informacoes_doacao = InformacaoDoacao.query.order_by(InformacaoDoacao.ordem.asc()).all()
     
     return render_template('admin/transparencia.html',
                          relatorios=relatorios,
                          documentos=documentos,
                          prestacoes=prestacoes,
+                         relatorios_atividades=relatorios_atividades,
                          informacoes_doacao=informacoes_doacao)
 
 # ============================================
@@ -5087,6 +5114,142 @@ def admin_prestacao_excluir(id):
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao excluir prestação de contas: {str(e)}', 'error')
+    return redirect(url_for('admin_transparencia'))
+
+# ============================================
+# CRUD - RELATÓRIOS DE ATIVIDADES
+# ============================================
+
+@app.route('/admin/transparencia/relatorio-atividade/novo', methods=['GET', 'POST'])
+@admin_required
+def admin_relatorio_atividade_novo():
+    if request.method == 'POST':
+        try:
+            titulo_pt = request.form.get('titulo_pt')
+            titulo_es = request.form.get('titulo_es', '')
+            titulo_en = request.form.get('titulo_en', '')
+            descricao_pt = request.form.get('descricao_pt', '')
+            descricao_es = request.form.get('descricao_es', '')
+            descricao_en = request.form.get('descricao_en', '')
+            atividades_realizadas_pt = request.form.get('atividades_realizadas_pt', '')
+            atividades_realizadas_es = request.form.get('atividades_realizadas_es', '')
+            atividades_realizadas_en = request.form.get('atividades_realizadas_en', '')
+            resultados_pt = request.form.get('resultados_pt', '')
+            resultados_es = request.form.get('resultados_es', '')
+            resultados_en = request.form.get('resultados_en', '')
+            ordem = int(request.form.get('ordem', 0))
+            periodo_inicio_str = request.form.get('periodo_inicio')
+            periodo_fim_str = request.form.get('periodo_fim')
+            periodo_inicio = datetime.strptime(periodo_inicio_str, '%Y-%m-%d').date() if periodo_inicio_str else None
+            periodo_fim = datetime.strptime(periodo_fim_str, '%Y-%m-%d').date() if periodo_fim_str else None
+            
+            if not titulo_pt:
+                flash('Título em português é obrigatório!', 'error')
+                return redirect(url_for('admin_relatorio_atividade_novo'))
+            
+            # Upload do arquivo
+            arquivo_path = None
+            if 'arquivo' in request.files:
+                file = request.files['arquivo']
+                if file.filename != '':
+                    if file and allowed_file(file.filename):
+                        upload_folder = 'static/documents/transparencia'
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.save(filepath)
+                        arquivo_path = f"documents/transparencia/{unique_filename}"
+            
+            relatorio = RelatorioAtividade(
+                titulo_pt=titulo_pt,
+                titulo_es=titulo_es,
+                titulo_en=titulo_en,
+                descricao_pt=descricao_pt,
+                descricao_es=descricao_es,
+                descricao_en=descricao_en,
+                atividades_realizadas_pt=atividades_realizadas_pt,
+                atividades_realizadas_es=atividades_realizadas_es,
+                atividades_realizadas_en=atividades_realizadas_en,
+                resultados_pt=resultados_pt,
+                resultados_es=resultados_es,
+                resultados_en=resultados_en,
+                periodo_inicio=periodo_inicio,
+                periodo_fim=periodo_fim,
+                arquivo=arquivo_path,
+                ordem=ordem
+            )
+            db.session.add(relatorio)
+            db.session.commit()
+            flash('Relatório de atividades cadastrado com sucesso!', 'success')
+            return redirect(url_for('admin_transparencia'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao cadastrar relatório de atividades: {str(e)}', 'error')
+    
+    return render_template('admin/relatorio_atividade_form.html')
+
+@app.route('/admin/transparencia/relatorio-atividade/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_relatorio_atividade_editar(id):
+    relatorio = RelatorioAtividade.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        try:
+            relatorio.titulo_pt = request.form.get('titulo_pt')
+            relatorio.titulo_es = request.form.get('titulo_es', '')
+            relatorio.titulo_en = request.form.get('titulo_en', '')
+            relatorio.descricao_pt = request.form.get('descricao_pt', '')
+            relatorio.descricao_es = request.form.get('descricao_es', '')
+            relatorio.descricao_en = request.form.get('descricao_en', '')
+            relatorio.atividades_realizadas_pt = request.form.get('atividades_realizadas_pt', '')
+            relatorio.atividades_realizadas_es = request.form.get('atividades_realizadas_es', '')
+            relatorio.atividades_realizadas_en = request.form.get('atividades_realizadas_en', '')
+            relatorio.resultados_pt = request.form.get('resultados_pt', '')
+            relatorio.resultados_es = request.form.get('resultados_es', '')
+            relatorio.resultados_en = request.form.get('resultados_en', '')
+            relatorio.ordem = int(request.form.get('ordem', 0))
+            periodo_inicio_str = request.form.get('periodo_inicio')
+            periodo_fim_str = request.form.get('periodo_fim')
+            relatorio.periodo_inicio = datetime.strptime(periodo_inicio_str, '%Y-%m-%d').date() if periodo_inicio_str else None
+            relatorio.periodo_fim = datetime.strptime(periodo_fim_str, '%Y-%m-%d').date() if periodo_fim_str else None
+            
+            # Upload do arquivo se fornecido
+            if 'arquivo' in request.files:
+                file = request.files['arquivo']
+                if file.filename != '':
+                    if file and allowed_file(file.filename):
+                        upload_folder = 'static/documents/transparencia'
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"{uuid.uuid4()}_{filename}"
+                        filepath = os.path.join(upload_folder, unique_filename)
+                        file.save(filepath)
+                        relatorio.arquivo = f"documents/transparencia/{unique_filename}"
+            
+            relatorio.updated_at = datetime.utcnow()
+            db.session.commit()
+            flash('Relatório de atividades atualizado com sucesso!', 'success')
+            return redirect(url_for('admin_transparencia'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar relatório de atividades: {str(e)}', 'error')
+    
+    return render_template('admin/relatorio_atividade_form.html', relatorio=relatorio)
+
+@app.route('/admin/transparencia/relatorio-atividade/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_relatorio_atividade_excluir(id):
+    relatorio = RelatorioAtividade.query.get_or_404(id)
+    try:
+        db.session.delete(relatorio)
+        db.session.commit()
+        flash('Relatório de atividades excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir relatório de atividades: {str(e)}', 'error')
     return redirect(url_for('admin_transparencia'))
 
 # ============================================
@@ -9882,6 +10045,7 @@ def transparencia():
     relatorios = RelatorioFinanceiro.query.order_by(RelatorioFinanceiro.ordem.asc(), RelatorioFinanceiro.data_relatorio.desc()).all()
     documentos = EstatutoDocumento.query.order_by(EstatutoDocumento.ordem.asc(), EstatutoDocumento.data_documento.desc()).all()
     prestacoes = PrestacaoConta.query.order_by(PrestacaoConta.ordem.asc(), PrestacaoConta.periodo_inicio.desc()).all()
+    relatorios_atividades = RelatorioAtividade.query.order_by(RelatorioAtividade.ordem.asc(), RelatorioAtividade.periodo_inicio.desc()).all()
     informacoes_doacao = InformacaoDoacao.query.order_by(InformacaoDoacao.ordem.asc()).all()
     
     # Função auxiliar para obter texto no idioma correto
@@ -9898,6 +10062,7 @@ def transparencia():
                          relatorios=relatorios,
                          documentos=documentos,
                          prestacoes=prestacoes,
+                         relatorios_atividades=relatorios_atividades,
                          informacoes_doacao=informacoes_doacao,
                          get_text=get_text,
                          current_lang=current_lang)
@@ -9943,6 +10108,28 @@ def estatuto_documentos():
     
     return render_template('estatuto_documentos.html',
                          documentos=documentos,
+                         get_text=get_text,
+                         current_lang=current_lang)
+
+@app.route('/transparencia/relatorios-atividades')
+def relatorios_atividades():
+    current_lang = session.get('language', 'pt')
+    
+    # Buscar relatórios de atividades cadastrados no admin
+    relatorios = RelatorioAtividade.query.order_by(RelatorioAtividade.ordem.asc(), RelatorioAtividade.periodo_inicio.desc()).all()
+    
+    # Função auxiliar para obter texto no idioma correto
+    def get_text(obj, field):
+        if not obj:
+            return None
+        if current_lang == 'es' and getattr(obj, f'{field}_es', None):
+            return getattr(obj, f'{field}_es')
+        elif current_lang == 'en' and getattr(obj, f'{field}_en', None):
+            return getattr(obj, f'{field}_en')
+        return getattr(obj, f'{field}_pt', None)
+    
+    return render_template('relatorios_atividades.html',
+                         relatorios=relatorios,
                          get_text=get_text,
                          current_lang=current_lang)
 

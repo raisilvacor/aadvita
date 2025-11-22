@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Relatório de Atividades') }} - {{ _('Transparência') }} - AADVITA{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title">
+    <div class="container">
+        <h1 id="page-title" class="page-title">{{ _('Relatório de Atividades') }}</h1>
+        <p class="page-description">{{ _('Acompanhe as atividades realizadas pela associação e os resultados alcançados') }}</p>
+    </div>
+</section>
+
+<section class="relatorios-section" aria-labelledby="relatorios-content">
+    <div class="container">
+        {% if relatorios %}
+            <div class="relatorios-list">
+                {% for relatorio in relatorios %}
+                <div class="relatorio-item">
+                    <div class="relatorio-header">
+                        <h3>{{ get_text(relatorio, 'titulo') or relatorio.titulo_pt }}</h3>
+                        <div class="relatorio-meta">
+                            {% if relatorio.periodo_inicio and relatorio.periodo_fim %}
+                                <span class="relatorio-date">{{ _('Período:') }} {{ relatorio.periodo_inicio.strftime('%d/%m/%Y') }} - {{ relatorio.periodo_fim.strftime('%d/%m/%Y') }}</span>
+                            {% elif relatorio.periodo_inicio %}
+                                <span class="relatorio-date">{{ _('A partir de') }} {{ relatorio.periodo_inicio.strftime('%d/%m/%Y') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if get_text(relatorio, 'descricao') %}
+                        <div class="relatorio-descricao">
+                            <p>{{ get_text(relatorio, 'descricao')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if get_text(relatorio, 'atividades_realizadas') %}
+                        <div class="prestacao-section">
+                            <h4>{{ _('Atividades Realizadas:') }}</h4>
+                            <p>{{ get_text(relatorio, 'atividades_realizadas')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if get_text(relatorio, 'resultados') %}
+                        <div class="prestacao-section">
+                            <h4>{{ _('Resultados Alcançados:') }}</h4>
+                            <p>{{ get_text(relatorio, 'resultados')|nl2br }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if relatorio.arquivo %}
+                        <div class="relatorio-actions">
+                            <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn btn-primary">
+                                <span>📄</span> {{ _('Baixar Documento') }}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">
+                <p>{{ _('Nenhum relatório de atividades cadastrado no momento.') }}</p>
+            </div>
+        {% endif %}
+
+        <div class="relatorios-back">
+            <a href="{{ url_for('transparencia') }}" class="btn btn-secondary">
+                <span>←</span> {{ _('Voltar para Transparência') }}
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

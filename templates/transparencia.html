@@ -59,6 +59,19 @@
                 </div>
 
                 <div class="transparencia-card">
+                    <div class="transparencia-icon">📋</div>
+                    <h3>{{ _('Relatório de Atividades') }}</h3>
+                    <p>{{ _('Acompanhe as atividades realizadas pela associação e os resultados alcançados.') }}</p>
+                    {% if relatorios_atividades %}
+                        <a href="{{ url_for('relatorios_atividades') }}" class="btn btn-primary">{{ _('Ver Relatórios') }}</a>
+                    {% else %}
+                        <div class="transparencia-status">
+                            <span class="status-badge">{{ _('Em breve') }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="transparencia-card">
                     <div class="transparencia-icon">📈</div>
                     <h3>{{ _('Projetos e Ações') }}</h3>
                     <p>{{ _('Veja os projetos desenvolvidos e ações realizadas em benefício da comunidade.') }}</p>

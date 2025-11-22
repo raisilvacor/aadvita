@@ -217,6 +217,74 @@
     </div>
 </div>
 
+<!-- Relatórios de Atividades -->
+<div class="admin-card" style="margin-bottom: 2rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Relatórios de Atividades</h2>
+        <a href="{{ url_for('admin_relatorio_atividade_novo') }}" class="btn-admin btn-admin-primary">
+            <span>➕</span> Novo Relatório
+        </a>
+    </div>
+    
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Título (PT)</th>
+                    <th>Período</th>
+                    <th>Arquivo</th>
+                    <th>Ordem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if relatorios_atividades %}
+                    {% for relatorio in relatorios_atividades %}
+                    <tr>
+                        <td>{{ relatorio.titulo_pt }}</td>
+                        <td>
+                            {% if relatorio.periodo_inicio and relatorio.periodo_fim %}
+                                {{ relatorio.periodo_inicio.strftime('%d/%m/%Y') }} - {{ relatorio.periodo_fim.strftime('%d/%m/%Y') }}
+                            {% elif relatorio.periodo_inicio %}
+                                A partir de {{ relatorio.periodo_inicio.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if relatorio.arquivo %}
+                                <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small">
+                                    <span>📄</span> Ver
+                                </a>
+                            {% else %}
+                                <span style="color: var(--text-light);">Sem arquivo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ relatorio.ordem }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_relatorio_atividade_editar', id=relatorio.id) }}" class="btn-admin btn-admin-edit btn-admin-small" style="margin-right: 0.5rem;">
+                                <span>✏️</span> Editar
+                            </a>
+                            <form method="POST" action="{{ url_for('admin_relatorio_atividade_excluir', id=relatorio.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este relatório de atividades?');">
+                                <button type="submit" class="btn-admin btn-admin-danger btn-admin-small">
+                                    <span>🗑️</span> Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            Nenhum relatório de atividades cadastrado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Doações e Recursos -->
 <div class="admin-card">
     <div class="admin-card-header">
