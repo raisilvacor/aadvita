@@ -12048,6 +12048,7 @@ def ensure_base64_columns(force=False):
             ('radio_programa', 'imagem_base64'),
             ('membro_diretoria', 'foto_base64'),
             ('membro_conselho_fiscal', 'foto_base64'),
+            ('relatorio_atividade', 'arquivo_base64'),
         ]
         
         for table_name, column_name in tables_to_migrate:
