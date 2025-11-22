@@ -1,1 +1,4 @@
 python app.py
+
+
+Jinja2 estava escapando o HTML, fazendo as tags aparecerem como texto

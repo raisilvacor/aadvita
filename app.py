@@ -10223,8 +10223,29 @@ def transparencia():
 def relatorios_financeiros():
     current_lang = session.get('language', 'pt')
     
+    # Obter parâmetros de filtro de data
+    data_inicio = request.args.get('data_inicio', '')
+    data_fim = request.args.get('data_fim', '')
+    
     # Buscar relatórios financeiros cadastrados no admin
-    relatorios = RelatorioFinanceiro.query.order_by(RelatorioFinanceiro.ordem.asc(), RelatorioFinanceiro.data_relatorio.desc()).all()
+    query = RelatorioFinanceiro.query
+    
+    # Aplicar filtros de data
+    if data_inicio:
+        try:
+            data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            query = query.filter(RelatorioFinanceiro.data_relatorio >= data_inicio_obj)
+        except ValueError:
+            pass
+    
+    if data_fim:
+        try:
+            data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+            query = query.filter(RelatorioFinanceiro.data_relatorio <= data_fim_obj)
+        except ValueError:
+            pass
+    
+    relatorios = query.order_by(RelatorioFinanceiro.ordem.asc(), RelatorioFinanceiro.data_relatorio.desc()).all()
     
     # Função auxiliar para obter texto no idioma correto
     def get_text(obj, field):
@@ -10239,7 +10260,9 @@ def relatorios_financeiros():
     return render_template('relatorios_financeiros.html',
                          relatorios=relatorios,
                          get_text=get_text,
-                         current_lang=current_lang)
+                         current_lang=current_lang,
+                         data_inicio=data_inicio,
+                         data_fim=data_fim)
 
 @app.route('/transparencia/estatuto-documentos')
 def estatuto_documentos():
@@ -10267,8 +10290,47 @@ def estatuto_documentos():
 def relatorios_atividades():
     current_lang = session.get('language', 'pt')
     
+    # Obter parâmetros de filtro de data
+    data_inicio = request.args.get('data_inicio', '')
+    data_fim = request.args.get('data_fim', '')
+    
     # Buscar relatórios de atividades cadastrados no admin
-    relatorios = RelatorioAtividade.query.order_by(RelatorioAtividade.ordem.asc(), RelatorioAtividade.periodo_inicio.desc()).all()
+    query = RelatorioAtividade.query
+    
+    # Aplicar filtros de data (verificar se o período se sobrepõe ao filtro)
+    if data_inicio:
+        try:
+            data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            # Relatórios onde o período_fim >= data_inicio OU período_inicio >= data_inicio
+            # Ou seja, relatórios que se sobrepõem ao período de filtro
+            query = query.filter(
+                db.or_(
+                    RelatorioAtividade.periodo_fim >= data_inicio_obj,
+                    RelatorioAtividade.periodo_inicio >= data_inicio_obj,
+                    db.and_(
+                        RelatorioAtividade.periodo_inicio.is_(None),
+                        RelatorioAtividade.periodo_fim.is_(None)
+                    )
+                )
+            )
+        except ValueError:
+            pass
+    
+    if data_fim:
+        try:
+            data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+            # Relatórios onde o período_inicio <= data_fim OU período_fim <= data_fim
+            query = query.filter(
+                db.or_(
+                    RelatorioAtividade.periodo_inicio <= data_fim_obj,
+                    RelatorioAtividade.periodo_fim <= data_fim_obj,
+                    RelatorioAtividade.periodo_inicio.is_(None)
+                )
+            )
+        except ValueError:
+            pass
+    
+    relatorios = query.order_by(RelatorioAtividade.ordem.asc(), RelatorioAtividade.periodo_inicio.desc()).all()
     
     # Limpar tags <br> dos dados existentes automaticamente
     campos_texto = [
@@ -10304,14 +10366,55 @@ def relatorios_atividades():
     return render_template('relatorios_atividades.html',
                          relatorios=relatorios,
                          get_text=get_text,
-                         current_lang=current_lang)
+                         current_lang=current_lang,
+                         data_inicio=data_inicio,
+                         data_fim=data_fim)
 
 @app.route('/transparencia/prestacao-contas')
 def prestacao_contas():
     current_lang = session.get('language', 'pt')
     
+    # Obter parâmetros de filtro de data
+    data_inicio = request.args.get('data_inicio', '')
+    data_fim = request.args.get('data_fim', '')
+    
     # Buscar prestações de contas cadastradas no admin
-    prestacoes = PrestacaoConta.query.order_by(PrestacaoConta.ordem.asc(), PrestacaoConta.periodo_inicio.desc()).all()
+    query = PrestacaoConta.query
+    
+    # Aplicar filtros de data (verificar se o período se sobrepõe ao filtro)
+    if data_inicio:
+        try:
+            data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            # Relatórios onde o período_fim >= data_inicio OU período_inicio >= data_inicio
+            # Ou seja, relatórios que se sobrepõem ao período de filtro
+            query = query.filter(
+                db.or_(
+                    PrestacaoConta.periodo_fim >= data_inicio_obj,
+                    PrestacaoConta.periodo_inicio >= data_inicio_obj,
+                    db.and_(
+                        PrestacaoConta.periodo_inicio.is_(None),
+                        PrestacaoConta.periodo_fim.is_(None)
+                    )
+                )
+            )
+        except ValueError:
+            pass
+    
+    if data_fim:
+        try:
+            data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+            # Relatórios onde o período_inicio <= data_fim OU período_fim <= data_fim
+            query = query.filter(
+                db.or_(
+                    PrestacaoConta.periodo_inicio <= data_fim_obj,
+                    PrestacaoConta.periodo_fim <= data_fim_obj,
+                    PrestacaoConta.periodo_inicio.is_(None)
+                )
+            )
+        except ValueError:
+            pass
+    
+    prestacoes = query.order_by(PrestacaoConta.ordem.asc(), PrestacaoConta.periodo_inicio.desc()).all()
     
     # Função auxiliar para obter texto no idioma correto
     def get_text(obj, field):
@@ -10326,7 +10429,9 @@ def prestacao_contas():
     return render_template('prestacao_contas.html',
                          prestacoes=prestacoes,
                          get_text=get_text,
-                         current_lang=current_lang)
+                         current_lang=current_lang,
+                         data_inicio=data_inicio,
+                         data_fim=data_fim)
 
 @app.route('/transparencia/doacoes-recursos')
 def doacoes_recursos():
