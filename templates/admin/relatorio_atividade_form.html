@@ -94,7 +94,7 @@
             {% if relatorio and relatorio.arquivo %}
                 <div style="margin-top: 1rem;">
                     <label>Arquivo Atual:</label>
-                    <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small" style="margin-left: 0.5rem;">
+                    <a href="{{ url_for('relatorio_atividade_arquivo', id=relatorio.id) }}" target="_blank" class="btn-admin btn-admin-edit btn-admin-small" style="margin-left: 0.5rem;">
                         <span>📄</span> Ver Arquivo
                     </a>
                 </div>

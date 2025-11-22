@@ -29,27 +29,27 @@
                     
                     {% if get_text(relatorio, 'descricao') %}
                         <div class="relatorio-descricao">
-                            <p>{{ get_text(relatorio, 'descricao')|nl2br }}</p>
+                            <p>{{ get_text(relatorio, 'descricao')|replace('<br>', '\n')|nl2br }}</p>
                         </div>
                     {% endif %}
                     
                     {% if get_text(relatorio, 'atividades_realizadas') %}
                         <div class="prestacao-section">
                             <h4>{{ _('Atividades Realizadas:') }}</h4>
-                            <p>{{ get_text(relatorio, 'atividades_realizadas')|nl2br }}</p>
+                            <p>{{ get_text(relatorio, 'atividades_realizadas')|replace('<br>', '\n')|nl2br }}</p>
                         </div>
                     {% endif %}
                     
                     {% if get_text(relatorio, 'resultados') %}
                         <div class="prestacao-section">
                             <h4>{{ _('Resultados Alcançados:') }}</h4>
-                            <p>{{ get_text(relatorio, 'resultados')|nl2br }}</p>
+                            <p>{{ get_text(relatorio, 'resultados')|replace('<br>', '\n')|nl2br }}</p>
                         </div>
                     {% endif %}
                     
                     {% if relatorio.arquivo %}
                         <div class="relatorio-actions">
-                            <a href="{{ url_for('static', filename=relatorio.arquivo) }}" target="_blank" class="btn btn-primary">
+                            <a href="{{ url_for('relatorio_atividade_arquivo', id=relatorio.id) }}" target="_blank" class="btn btn-primary">
                                 <span>📄</span> {{ _('Baixar Documento') }}
                             </a>
                         </div>

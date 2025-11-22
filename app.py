@@ -1560,7 +1560,8 @@ class RelatorioAtividade(db.Model):
     resultados_en = db.Column(db.Text)
     periodo_inicio = db.Column(db.Date)
     periodo_fim = db.Column(db.Date)
-    arquivo = db.Column(db.String(500))  # Caminho do arquivo PDF/documento
+    arquivo = db.Column(db.String(500))  # Caminho do arquivo PDF/documento ou 'base64:application/pdf'
+    arquivo_base64 = db.Column(db.Text, nullable=True)  # Arquivo em base64 para persistência no Render
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -2117,11 +2118,11 @@ def admin_certificados_editar(id):
             return redirect(url_for('admin_certificados_editar', id=id))
 
         try:
-            db.session.commit()
+        db.session.commit()
             flash('Certificado atualizado com sucesso.', 'success')
             return redirect(url_for('admin_certificados'))
-        except Exception as e:
-            db.session.rollback()
+    except Exception as e:
+        db.session.rollback()
             flash(f'Erro ao atualizar certificado: {e}', 'error')
 
     return render_template('admin/certificado_form.html', certificado=certificado)
@@ -5160,12 +5161,14 @@ def admin_relatorio_atividade_novo():
                 flash('Título em português é obrigatório!', 'error')
                 return redirect(url_for('admin_relatorio_atividade_novo'))
             
-            # Upload do arquivo
+            # Upload do arquivo - salvar como base64 no banco para persistência no Render
             arquivo_path = None
+            arquivo_base64_data = None
             if 'arquivo' in request.files:
                 file = request.files['arquivo']
                 if file.filename != '':
                     if file and allowed_file(file.filename):
+                        # Salvar também como arquivo local (compatibilidade)
                         upload_folder = 'static/documents/transparencia'
                         os.makedirs(upload_folder, exist_ok=True)
                         
@@ -5173,7 +5176,13 @@ def admin_relatorio_atividade_novo():
                         unique_filename = f"{uuid.uuid4()}_{filename}"
                         filepath = os.path.join(upload_folder, unique_filename)
                         file.save(filepath)
-                        arquivo_path = f"documents/transparencia/{unique_filename}"
+                        
+                        # Salvar em base64 para persistência no Render
+                        file.seek(0)  # Voltar ao início do arquivo
+                        file_data = file.read()
+                        mime_type = file.content_type or 'application/pdf'
+                        arquivo_base64_data = base64.b64encode(file_data).decode('utf-8')
+                        arquivo_path = f"base64:{mime_type}"
             
             relatorio = RelatorioAtividade(
                 titulo_pt=titulo_pt,
@@ -5191,6 +5200,7 @@ def admin_relatorio_atividade_novo():
                 periodo_inicio=periodo_inicio,
                 periodo_fim=periodo_fim,
                 arquivo=arquivo_path,
+                arquivo_base64=arquivo_base64_data,
                 ordem=ordem
             )
             db.session.add(relatorio)
@@ -5240,7 +5250,13 @@ def admin_relatorio_atividade_editar(id):
                         unique_filename = f"{uuid.uuid4()}_{filename}"
                         filepath = os.path.join(upload_folder, unique_filename)
                         file.save(filepath)
-                        relatorio.arquivo = f"documents/transparencia/{unique_filename}"
+                        
+                        # Salvar em base64 para persistência no Render
+                        file.seek(0)  # Voltar ao início do arquivo
+                        file_data = file.read()
+                        mime_type = file.content_type or 'application/pdf'
+                        relatorio.arquivo_base64 = base64.b64encode(file_data).decode('utf-8')
+                        relatorio.arquivo = f"base64:{mime_type}"
             
             relatorio.updated_at = datetime.utcnow()
             db.session.commit()
@@ -5264,6 +5280,69 @@ def admin_relatorio_atividade_excluir(id):
         db.session.rollback()
         flash(f'Erro ao excluir relatório de atividades: {str(e)}', 'error')
     return redirect(url_for('admin_transparencia'))
+
+@app.route('/relatorio-atividade/<int:id>/arquivo')
+def relatorio_atividade_arquivo(id):
+    """Rota para servir arquivos de relatórios de atividades do banco de dados (base64)"""
+    try:
+        relatorio = RelatorioAtividade.query.get_or_404(id)
+        
+        if not relatorio.arquivo:
+            from flask import abort
+            abort(404)
+        
+        # Verificar se tem arquivo em base64 (prioridade para persistência no Render)
+        arquivo_base64 = getattr(relatorio, 'arquivo_base64', None)
+        
+        if arquivo_base64:
+            # Servir arquivo do banco de dados (base64)
+            try:
+                # Extrair o tipo MIME do campo arquivo
+                mime_type = 'application/pdf'  # padrão
+                if relatorio.arquivo and relatorio.arquivo.startswith('base64:'):
+                    mime_type = relatorio.arquivo.replace('base64:', '')
+                
+                arquivo_data = base64.b64decode(arquivo_base64)
+                from flask import Response
+                return Response(
+                    arquivo_data,
+                    mimetype=mime_type,
+                    headers={
+                        'Content-Disposition': f'attachment; filename=relatorio_atividade_{relatorio.id}.pdf'
+                    }
+                )
+            except Exception as e:
+                print(f"Erro ao decodificar arquivo base64: {e}")
+                from flask import abort
+                abort(404)
+        
+        # Se não tem base64, tentar servir do arquivo (compatibilidade com dados antigos)
+        if relatorio.arquivo and not (relatorio.arquivo.startswith('base64:') if relatorio.arquivo else False):
+            from flask import send_from_directory
+            import os
+            
+            file_path = os.path.dirname(relatorio.arquivo)
+            file_name = os.path.basename(relatorio.arquivo)
+            static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+            
+            try:
+                return send_from_directory(
+                    os.path.join(static_dir, file_path), 
+                    file_name, 
+                    as_attachment=True,
+                    download_name=f'relatorio_atividade_{relatorio.id}.pdf'
+                )
+            except Exception as e:
+                print(f"Erro ao servir arquivo: {e}")
+                from flask import abort
+                abort(404)
+        
+        from flask import abort
+        abort(404)
+    except Exception as e:
+        print(f"Erro ao servir arquivo do relatório de atividades: {e}")
+        from flask import abort
+        abort(404)
 
 # ============================================
 # CRUD - INFORMAÇÕES DE DOAÇÕES
@@ -10984,7 +11063,7 @@ def inject_conf():
                 return url_for('static', filename=rel_path.replace('\\', '/'))
             except Exception as e:
                 print(f'Erro ao gerar URL do QR do certificado: {e}')
-        return None
+                return None
     
     # Buscar dados da associação
     try:
