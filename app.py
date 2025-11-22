@@ -6018,8 +6018,40 @@ def gerar_carteira_pdf(associado):
             foto_h_max = 28*mm
             
             if associado.foto:
-                foto_path = os.path.join('static', associado.foto)
-                if os.path.exists(foto_path):
+                foto_path = None
+                foto_temp_path = None
+                
+                # Verificar se a foto está em base64 (Render)
+                if associado.foto.startswith('base64:') and associado.foto_base64:
+                    try:
+                        import tempfile
+                        from PIL import Image as PILImage
+                        from io import BytesIO
+                        
+                        # Extrair o tipo MIME
+                        mime_type = associado.foto.replace('base64:', '')
+                        
+                        # Decodificar base64
+                        image_data = base64.b64decode(associado.foto_base64)
+                        
+                        # Criar imagem PIL a partir dos bytes
+                        img = PILImage.open(BytesIO(image_data))
+                        
+                        # Criar arquivo temporário
+                        foto_temp_path = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                        img.save(foto_temp_path.name, 'JPEG')
+                        foto_temp_path.close()
+                        foto_path = foto_temp_path.name
+                    except Exception as e:
+                        print(f"Erro ao processar foto base64: {e}")
+                        foto_path = None
+                else:
+                    # Tentar usar o caminho do arquivo
+                    foto_path = os.path.join('static', associado.foto)
+                    if not os.path.exists(foto_path):
+                        foto_path = None
+                
+                if foto_path and os.path.exists(foto_path):
                     try:
                         from PIL import Image as PILImage
                         img = PILImage.open(foto_path)
@@ -6031,8 +6063,15 @@ def gerar_carteira_pdf(associado):
                             foto_w = foto_w_max
                             foto_h = foto_w / aspect
                         c.drawImage(foto_path, foto_x, foto_y, width=foto_w, height=foto_h, preserveAspectRatio=True)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f"Erro ao desenhar foto na carteira: {e}")
+                    finally:
+                        # Limpar arquivo temporário se foi criado
+                        if foto_temp_path and os.path.exists(foto_temp_path.name):
+                            try:
+                                os.unlink(foto_temp_path.name)
+                            except:
+                                pass
             
             # Nome e CPF (direita da foto)
             text_x = inner_x + 24*mm
