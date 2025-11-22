@@ -2118,11 +2118,11 @@ def admin_certificados_editar(id):
             return redirect(url_for('admin_certificados_editar', id=id))
 
         try:
-        db.session.commit()
+            db.session.commit()
             flash('Certificado atualizado com sucesso.', 'success')
             return redirect(url_for('admin_certificados'))
-    except Exception as e:
-        db.session.rollback()
+        except Exception as e:
+            db.session.rollback()
             flash(f'Erro ao atualizar certificado: {e}', 'error')
 
     return render_template('admin/certificado_form.html', certificado=certificado)
