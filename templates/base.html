@@ -20,8 +20,8 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:title" content="{% block og_title %}{% block title %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses') }}{% endblock %}{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}{% block description %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.') }}{% endblock %}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses') }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.') }}{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -31,9 +31,9 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="{{ request.url }}">
-    <meta name="twitter:title" content="{% block twitter_title %}{% block title %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses') }}{% endblock %}{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}{% block description %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.') }}{% endblock %}{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{% block og_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}{% endblock %}">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses') }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.') }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}">
     
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon.png') }}">
