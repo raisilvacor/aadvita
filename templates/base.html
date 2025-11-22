@@ -5,17 +5,85 @@
     <!-- Todos os componentes (player de rádio, sliders, animações) usam HTML5/CSS3/JavaScript puro -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ _('Associação dos Deficientes Visuais Tapuienses AADVITA - Promovendo inclusão e acessibilidade') }}">
+    
+    <!-- SEO Meta Tags -->
+    {% set site_url = request.url_root.rstrip('/') %}
     <title>{% block title %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses') }}{% endblock %}</title>
+    <meta name="description" content="{% block description %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.') }}{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}AADVITA, aadvira, aadvita.org.br, Deficientes Visuais São Miguel do Tapuio, deficiência visual, inclusão, acessibilidade, associação, Piauí, Brasil{% endblock %}">
+    <meta name="author" content="AADVITA - Associação dos Deficientes Visuais Tapuienses">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow">
+    <meta name="language" content="{{ current_language }}">
+    <link rel="canonical" href="{{ request.url }}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:title" content="{% block og_title %}{% block title %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses') }}{% endblock %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{% block description %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.') }}{% endblock %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="AADVITA">
+    <meta property="og:locale" content="pt_BR">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ request.url }}">
+    <meta name="twitter:title" content="{% block twitter_title %}{% block title %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses') }}{% endblock %}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{% block description %}{{ _('AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.') }}{% endblock %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% block og_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}{% endblock %}">
+    
+    <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    
+    <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    
+    <!-- Fonts with display=swap for performance -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/language-selector.css') }}">
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "NGO",
+        "name": "AADVITA - Associação dos Deficientes Visuais Tapuienses",
+        "alternateName": "AADVITA",
+        "url": "{{ site_url }}",
+        "logo": "{{ url_for('static', filename='images/logo.png', _external=True) }}",
+        "description": "AADVITA - Associação dos Deficientes Visuais Tapuienses de São Miguel do Tapuio. Promovendo inclusão, acessibilidade e direitos das pessoas com deficiência visual.",
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "São Miguel do Tapuio",
+            "addressRegion": "PI",
+            "addressCountry": "BR"
+        },
+        "sameAs": [
+            {% if footer_configs.get('footer_facebook') %}"{{ footer_configs.get('footer_facebook') }}"{% if footer_configs.get('footer_instagram') or footer_configs.get('footer_youtube') %},{% endif %}{% endif %}
+            {% if footer_configs.get('footer_instagram') %}"{{ footer_configs.get('footer_instagram') }}"{% if footer_configs.get('footer_youtube') %},{% endif %}{% endif %}
+            {% if footer_configs.get('footer_youtube') %}"{{ footer_configs.get('footer_youtube') }}"{% endif %}
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Atendimento",
+            {% if footer_configs.get('footer_telefone') %}"telephone": "{{ footer_configs.get('footer_telefone') }}",{% endif %}
+            {% if footer_configs.get('footer_email') %}"email": "{{ footer_configs.get('footer_email') }}"{% endif %}
+        }
+    }
+    </script>
+    
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -199,9 +267,10 @@
         </div>
     </footer>
 
-    <script src="{{ url_for('static', filename='js/mobile-menu.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/language-selector.js') }}"></script>
+    <!-- Scripts with defer for better performance -->
+    <script src="{{ url_for('static', filename='js/mobile-menu.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/language-selector.js') }}" defer></script>
     {% block extra_scripts %}{% endblock %}
     {# Floating WhatsApp button (uses footer config: footer_whatsapp_link or footer_whatsapp) #}
     {% if footer_configs.get('footer_whatsapp_link') or footer_configs.get('footer_whatsapp') %}

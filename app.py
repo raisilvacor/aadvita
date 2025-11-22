@@ -11678,6 +11678,80 @@ def before_request():
     """Executa migrações antes de cada requisição se necessário"""
     ensure_base64_columns()
 
+# ============================================
+# SEO: Sitemap e Robots.txt
+# ============================================
+
+@app.route('/sitemap.xml')
+def sitemap():
+    """Gera sitemap.xml dinâmico para SEO"""
+    from flask import Response
+    from xml.etree.ElementTree import Element, SubElement, tostring
+    
+    url_root = request.url_root.rstrip('/')
+    
+    urlset = Element('urlset')
+    urlset.set('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
+    
+    # Páginas principais (prioridade alta)
+    main_pages = [
+        ('/', '1.0', 'daily'),
+        ('/sobre', '0.9', 'weekly'),
+        ('/projetos', '0.9', 'weekly'),
+        ('/acoes', '0.9', 'weekly'),
+        ('/informativo', '0.8', 'daily'),
+        ('/radio', '0.8', 'daily'),
+        ('/videos', '0.8', 'weekly'),
+        ('/galeria', '0.8', 'weekly'),
+        ('/apoiadores', '0.7', 'monthly'),
+        ('/agenda-presencial', '0.8', 'weekly'),
+        ('/agenda-virtual', '0.8', 'weekly'),
+        ('/transparencia', '0.7', 'monthly'),
+        ('/problema-acessibilidade/registrar', '0.8', 'monthly'),
+        ('/certificados/validar', '0.6', 'monthly'),
+    ]
+    
+    for path, priority, changefreq in main_pages:
+        url_elem = SubElement(urlset, 'url')
+        SubElement(url_elem, 'loc').text = f"{url_root}{path}"
+        SubElement(url_elem, 'changefreq').text = changefreq
+        SubElement(url_elem, 'priority').text = priority
+        SubElement(url_elem, 'lastmod').text = datetime.utcnow().strftime('%Y-%m-%d')
+    
+    # Informativos (prioridade média-alta)
+    informativos = Informativo.query.filter_by(ativo=True).all()
+    for info in informativos:
+        url_elem = SubElement(urlset, 'url')
+        SubElement(url_elem, 'loc').text = f"{url_root}/informativo/{info.id}"
+        SubElement(url_elem, 'changefreq').text = 'weekly'
+        SubElement(url_elem, 'priority').text = '0.8'
+        if info.created_at:
+            SubElement(url_elem, 'lastmod').text = info.created_at.strftime('%Y-%m-%d')
+    
+    xml_str = tostring(urlset, encoding='unicode')
+    xml_str = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
+    
+    return Response(xml_str, mimetype='application/xml')
+
+
+@app.route('/robots.txt')
+def robots():
+    """Gera robots.txt para SEO"""
+    from flask import Response
+    url_root = request.url_root.rstrip('/')
+    robots_content = f"""User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /associado/
+Disallow: /voluntario/
+Disallow: /login
+Disallow: /admin/login
+
+Sitemap: {url_root}/sitemap.xml
+"""
+    return Response(robots_content, mimetype='text/plain')
+
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))

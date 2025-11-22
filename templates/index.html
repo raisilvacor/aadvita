@@ -432,7 +432,7 @@
                     <article class="card" role="article">
                         {% if projeto.imagen %}
                         <div class="card-image">
-                            <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.titulo }}">
+                            <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.titulo }}" loading="lazy" decoding="async">
                         </div>
                         {% endif %}
                         <div class="card-header">
@@ -464,7 +464,7 @@
                     <article class="card" role="article">
                         {% if evento.imagem %}
                         <div class="card-image">
-                            <img src="{{ url_for('static', filename=evento.imagem) }}" alt="{{ evento.titulo }}">
+                            <img src="{{ url_for('static', filename=evento.imagem) }}" alt="{{ evento.titulo }}" loading="lazy" decoding="async">
                         </div>
                         {% endif %}
                         <div class="card-header">
@@ -515,7 +515,7 @@
                     <article class="card" role="article">
                         {% if acao.imagem %}
                         <div class="card-image">
-                            <img src="{{ acao_imagem_url(acao) or url_for('static', filename=acao.imagem) }}" alt="{{ acao.titulo }}">
+                            <img src="{{ acao_imagem_url(acao) or url_for('static', filename=acao.imagem) }}" alt="{{ acao.titulo }}" loading="lazy" decoding="async">
                         </div>
                         {% endif %}
                         <div class="card-header">
@@ -611,7 +611,7 @@
                    class="instagram-post-card" 
                    style="display: block; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; text-decoration: none; color: inherit;">
                     <div style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; background: var(--bg-light);">
-                        <img src="{% if post.imagem_url and post.imagem_url.startswith('images/') %}{{ url_for('static', filename=post.imagem_url) }}{% else %}{{ post.imagem_url }}{% endif %}" 
+                        <img src="{% if post.imagem_url and post.imagem_url.startswith('images/') %}{{ url_for('static', filename=post.imagem_url) }}{% else %}{{ post.imagem_url }}{% endif %}" loading="lazy" decoding="async" 
                              alt="{% if post.legenda %}{{ post.legenda[:100] }}{% else %}Post do Instagram{% endif %}" 
                              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
                              loading="lazy"
@@ -680,7 +680,7 @@
                     <article class="video-card" role="listitem">
                         <div class="video-thumbnail-wrapper">
                             <a href="{{ video.url_youtube }}" target="_blank" rel="noopener noreferrer" class="video-link" aria-label="{{ _('Assistir vídeo') }}: {{ video.titulo }}">
-                                <img src="{{ video.get_thumbnail_url() }}" 
+                                <img src="{{ video.get_thumbnail_url() }}" loading="lazy" decoding="async" 
                                      alt="{{ video.titulo }}" 
                                      class="video-thumbnail"
                                      loading="lazy">
@@ -734,7 +734,7 @@
                         {% endif %}
                         <div class="apoiador-image-container" style="background: transparent !important; border: none; padding: 1rem; display: flex !important; align-items: center !important; justify-content: center !important; height: 180px; transition: transform 0.3s ease;">
                             {% if apoiador.logo %}
-                            <img src="{{ apoiador_logo_url(apoiador) or url_for('static', filename=apoiador.logo) }}" 
+                            <img src="{{ apoiador_logo_url(apoiador) or url_for('static', filename=apoiador.logo) }}" loading="lazy" decoding="async" 
                                  alt="{{ apoiador.nome }}" 
                                  class="apoiador-grid-image"
                                  style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; width: auto !important; height: auto !important; display: block !important; opacity: 1 !important; visibility: visible !important; filter: none !important; -webkit-filter: none !important; background: transparent !important;"
