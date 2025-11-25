@@ -6024,45 +6024,64 @@ def gerar_carteira_pdf(associado):
             # Usar a variável do escopo externo
             nonlocal foto_temp_path
             
+            print(f"[Carteira] Verificando foto do associado {associado.id} ({associado.nome_completo})")
+            print(f"[Carteira] associado.foto = {associado.foto}")
+            print(f"[Carteira] associado.foto_base64 existe? {bool(getattr(associado, 'foto_base64', None))}")
+            
             if associado.foto:
                 foto_path = None
                 
                 # Verificar se a foto está em base64 (Render)
-                if associado.foto.startswith('base64:') and associado.foto_base64:
-                    try:
-                        import tempfile
-                        from PIL import Image as PILImage
-                        from io import BytesIO
-                        
-                        # Extrair o tipo MIME
-                        mime_type = associado.foto.replace('base64:', '')
-                        
-                        # Decodificar base64
-                        image_data = base64.b64decode(associado.foto_base64)
-                        print(f"[Carteira] Foto base64 decodificada, tamanho: {len(image_data)} bytes")
-                        
-                        # Criar imagem PIL a partir dos bytes
-                        img = PILImage.open(BytesIO(image_data))
-                        
-                        # Criar arquivo temporário
-                        foto_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-                        foto_temp_path = foto_temp_file.name
-                        foto_temp_file.close()
-                        
-                        # Salvar imagem no arquivo temporário
-                        img.save(foto_temp_path, 'JPEG')
-                        print(f"[Carteira] Foto temporária salva em: {foto_temp_path}")
-                        
-                        foto_path = foto_temp_path
-                    except Exception as e:
-                        print(f"[Carteira] Erro ao processar foto base64: {e}")
-                        import traceback
-                        traceback.print_exc()
-                        foto_path = None
+                if associado.foto.startswith('base64:'):
+                    foto_base64 = getattr(associado, 'foto_base64', None)
+                    if foto_base64:
+                        try:
+                            import tempfile
+                            from PIL import Image as PILImage
+                            from io import BytesIO
+                            
+                            # Extrair o tipo MIME
+                            mime_type = associado.foto.replace('base64:', '')
+                            print(f"[Carteira] Tipo MIME da foto: {mime_type}")
+                            print(f"[Carteira] Tamanho do base64: {len(foto_base64)} caracteres")
+                            
+                            # Decodificar base64
+                            image_data = base64.b64decode(foto_base64)
+                            print(f"[Carteira] Foto base64 decodificada, tamanho: {len(image_data)} bytes")
+                            
+                            # Criar imagem PIL a partir dos bytes
+                            img = PILImage.open(BytesIO(image_data))
+                            print(f"[Carteira] Imagem PIL criada: {img.size} pixels, formato: {img.format}")
+                            
+                            # Converter para RGB se necessário (para JPEG)
+                            if img.mode != 'RGB':
+                                print(f"[Carteira] Convertendo imagem de {img.mode} para RGB")
+                                img = img.convert('RGB')
+                            
+                            # Criar arquivo temporário
+                            foto_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                            foto_temp_path = foto_temp_file.name
+                            foto_temp_file.close()
+                            
+                            # Salvar imagem no arquivo temporário
+                            img.save(foto_temp_path, 'JPEG', quality=95)
+                            print(f"[Carteira] Foto temporária salva em: {foto_temp_path}")
+                            print(f"[Carteira] Arquivo existe? {os.path.exists(foto_temp_path)}")
+                            
+                            foto_path = foto_temp_path
+                        except Exception as e:
+                            print(f"[Carteira] Erro ao processar foto base64: {e}")
+                            import traceback
+                            traceback.print_exc()
+                            foto_path = None
+                    else:
+                        print(f"[Carteira] Foto marcada como base64 mas foto_base64 está vazio")
                 else:
                     # Tentar usar o caminho do arquivo
                     foto_path = os.path.join('static', associado.foto)
+                    print(f"[Carteira] Tentando usar arquivo local: {foto_path}")
                     if not os.path.exists(foto_path):
+                        print(f"[Carteira] Arquivo não encontrado: {foto_path}")
                         foto_path = None
                 
                 if foto_path and os.path.exists(foto_path):
@@ -6076,14 +6095,17 @@ def gerar_carteira_pdf(associado):
                         if foto_w > foto_w_max:
                             foto_w = foto_w_max
                             foto_h = foto_w / aspect
-                        print(f"[Carteira] Desenhando foto: {foto_path}, tamanho: {foto_w}x{foto_h}")
+                        print(f"[Carteira] Desenhando foto: {foto_path}, tamanho: {foto_w}x{foto_h}, posição: ({foto_x}, {foto_y})")
                         c.drawImage(foto_path, foto_x, foto_y, width=foto_w, height=foto_h, preserveAspectRatio=True)
+                        print(f"[Carteira] Foto desenhada com sucesso!")
                     except Exception as e:
                         print(f"[Carteira] Erro ao desenhar foto na carteira: {e}")
                         import traceback
                         traceback.print_exc()
                 else:
                     print(f"[Carteira] Foto não encontrada ou inválida: {foto_path}")
+            else:
+                print(f"[Carteira] Associado não possui foto cadastrada")
             
             # Nome e CPF (direita da foto)
             text_x = inner_x + 24*mm
@@ -6286,6 +6308,13 @@ def admin_carteira_gerar(id):
         return redirect(url_for('admin_carteiras'))
     
     try:
+        # Recarregar associado do banco para garantir que tem foto_base64 atualizado
+        db.session.refresh(associado)
+        
+        print(f"[Admin Carteira] Gerando carteira para associado {associado.id} - {associado.nome_completo}")
+        print(f"[Admin Carteira] Foto: {associado.foto}")
+        print(f"[Admin Carteira] Foto base64 existe? {bool(associado.foto_base64)}")
+        
         # Deletar carteira antiga se existir (apenas se for arquivo, não base64)
         if associado.carteira_pdf and not associado.carteira_pdf.startswith('base64:'):
             old_filepath = os.path.join('static', associado.carteira_pdf)
@@ -6303,6 +6332,7 @@ def admin_carteira_gerar(id):
         
         # Atualizar no banco de dados (a função já atualizou carteira_pdf e carteira_pdf_base64)
         db.session.commit()
+        print(f"[Admin Carteira] Carteira gerada e salva com sucesso")
         
         flash(f'Carteira gerada com sucesso para {associado.nome_completo}!', 'success')
     except Exception as e:
