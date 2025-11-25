@@ -1348,6 +1348,7 @@ class Associado(db.Model):
     desconto_valor = db.Column(db.Numeric(10, 2), default=0.00)
     ativo = db.Column(db.Boolean, default=True)  # Controla se gera mensalidades automaticamente
     carteira_pdf = db.Column(db.String(300))  # Caminho do PDF da carteira de associado
+    carteira_pdf_base64 = db.Column(db.Text, nullable=True)  # PDF da carteira em base64 para persistência no Render
     foto = db.Column(db.String(300))  # Caminho da foto do associado
     foto_base64 = db.Column(db.Text, nullable=True)  # salvar imagem em base64 para persistência no Render
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
@@ -6205,6 +6206,26 @@ def gerar_carteira_pdf(associado):
         c.showPage()
         c.save()
         
+        # Ler o PDF gerado e converter para base64
+        pdf_base64 = None
+        try:
+            with open(filepath, 'rb') as pdf_file:
+                pdf_bytes = pdf_file.read()
+                pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+                print(f"[Carteira] PDF convertido para base64, tamanho: {len(pdf_base64)} caracteres")
+        except Exception as e:
+            print(f"[Carteira] Erro ao converter PDF para base64: {e}")
+        
+        # Salvar base64 no banco de dados (sem commit - será feito pela função chamadora)
+        if pdf_base64:
+            try:
+                associado.carteira_pdf_base64 = pdf_base64
+                associado.carteira_pdf = f"base64:application/pdf"  # Marcar como base64
+                # Não fazer commit aqui - será feito pela função que chama
+                print(f"[Carteira] PDF preparado para salvar em base64 no banco de dados")
+            except Exception as e:
+                print(f"[Carteira] Erro ao preparar PDF base64: {e}")
+        
         # Limpar arquivo temporário se foi criado (após salvar o PDF)
         if foto_temp_path and os.path.exists(foto_temp_path):
             try:
@@ -6265,8 +6286,8 @@ def admin_carteira_gerar(id):
         return redirect(url_for('admin_carteiras'))
     
     try:
-        # Deletar carteira antiga se existir
-        if associado.carteira_pdf:
+        # Deletar carteira antiga se existir (apenas se for arquivo, não base64)
+        if associado.carteira_pdf and not associado.carteira_pdf.startswith('base64:'):
             old_filepath = os.path.join('static', associado.carteira_pdf)
             if os.path.exists(old_filepath):
                 try:
@@ -6274,11 +6295,13 @@ def admin_carteira_gerar(id):
                 except Exception as e:
                     print(f"Erro ao deletar carteira antiga: {str(e)}")
         
-        # Gerar nova carteira
+        # Limpar base64 antigo
+        associado.carteira_pdf_base64 = None
+        
+        # Gerar nova carteira (a função já salva em base64 automaticamente)
         carteira_path = gerar_carteira_pdf(associado)
         
-        # Atualizar no banco de dados
-        associado.carteira_pdf = carteira_path
+        # Atualizar no banco de dados (a função já atualizou carteira_pdf e carteira_pdf_base64)
         db.session.commit()
         
         flash(f'Carteira gerada com sucesso para {associado.nome_completo}!', 'success')
@@ -6288,6 +6311,35 @@ def admin_carteira_gerar(id):
     
     return redirect(url_for('admin_carteiras'))
 
+@app.route('/admin/carteiras/<int:id>/pdf')
+@admin_required
+def admin_carteira_pdf(id):
+    """Rota para servir o PDF da carteira do associado"""
+    associado = Associado.query.get_or_404(id)
+    
+    if not associado.carteira_pdf:
+        from flask import abort
+        abort(404)
+    
+    # Verificar se está em base64 (Render)
+    if associado.carteira_pdf.startswith('base64:') and associado.carteira_pdf_base64:
+        try:
+            pdf_data = base64.b64decode(associado.carteira_pdf_base64)
+            from flask import Response
+            return Response(pdf_data, mimetype='application/pdf')
+        except Exception as e:
+            print(f"Erro ao servir carteira base64: {e}")
+            from flask import abort
+            abort(404)
+    
+    # Tentar servir do arquivo (compatibilidade com dados antigos)
+    filepath = os.path.join('static', associado.carteira_pdf)
+    if not os.path.exists(filepath):
+        from flask import abort
+        abort(404)
+    
+    return send_from_directory('static', associado.carteira_pdf, as_attachment=False)
+
 @app.route('/admin/carteiras/<int:id>/excluir', methods=['POST'])
 @admin_required
 def admin_carteira_excluir(id):
@@ -6296,11 +6348,15 @@ def admin_carteira_excluir(id):
     
     try:
         if associado.carteira_pdf:
-            filepath = os.path.join('static', associado.carteira_pdf)
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            # Deletar arquivo se existir (apenas se não for base64)
+            if not associado.carteira_pdf.startswith('base64:'):
+                filepath = os.path.join('static', associado.carteira_pdf)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
             
+            # Limpar campos no banco de dados
             associado.carteira_pdf = None
+            associado.carteira_pdf_base64 = None
             db.session.commit()
             flash(f'Carteira excluída com sucesso para {associado.nome_completo}!', 'success')
         else:
@@ -10909,6 +10965,18 @@ def associado_carteira():
         flash('Carteira de associado não disponível. Entre em contato com o administrador.', 'error')
         return redirect(url_for('associado_dashboard'))
     
+    # Verificar se está em base64 (Render)
+    if associado.carteira_pdf.startswith('base64:') and associado.carteira_pdf_base64:
+        try:
+            pdf_data = base64.b64decode(associado.carteira_pdf_base64)
+            from flask import Response
+            return Response(pdf_data, mimetype='application/pdf')
+        except Exception as e:
+            print(f"Erro ao servir carteira base64: {e}")
+            flash('Erro ao carregar carteira. Entre em contato com o administrador.', 'error')
+            return redirect(url_for('associado_dashboard'))
+    
+    # Tentar servir do arquivo (compatibilidade com dados antigos)
     filepath = os.path.join('static', associado.carteira_pdf)
     if not os.path.exists(filepath):
         flash('Arquivo da carteira não encontrado. Entre em contato com o administrador.', 'error')
@@ -10925,6 +10993,22 @@ def associado_carteira_download():
         flash('Carteira de associado não disponível. Entre em contato com o administrador.', 'error')
         return redirect(url_for('associado_dashboard'))
     
+    # Verificar se está em base64 (Render)
+    if associado.carteira_pdf.startswith('base64:') and associado.carteira_pdf_base64:
+        try:
+            pdf_data = base64.b64decode(associado.carteira_pdf_base64)
+            from flask import Response
+            return Response(
+                pdf_data, 
+                mimetype='application/pdf',
+                headers={'Content-Disposition': f'attachment; filename=carteira_associado_{associado.cpf}.pdf'}
+            )
+        except Exception as e:
+            print(f"Erro ao servir carteira base64: {e}")
+            flash('Erro ao carregar carteira. Entre em contato com o administrador.', 'error')
+            return redirect(url_for('associado_dashboard'))
+    
+    # Tentar servir do arquivo (compatibilidade com dados antigos)
     filepath = os.path.join('static', associado.carteira_pdf)
     if not os.path.exists(filepath):
         flash('Arquivo da carteira não encontrado. Entre em contato com o administrador.', 'error')
@@ -12121,6 +12205,7 @@ def ensure_db_initialized():
                     ('membro_diretoria', 'foto_base64'),
                     ('membro_conselho_fiscal', 'foto_base64'),
                     ('relatorio_atividade', 'arquivo_base64'),
+                    ('associado', 'carteira_pdf_base64'),
                 ]
                 
                 for table_name, column_name in tables_to_migrate:
@@ -12348,6 +12433,7 @@ def ensure_base64_columns(force=False):
             ('membro_diretoria', 'foto_base64'),
             ('membro_conselho_fiscal', 'foto_base64'),
             ('relatorio_atividade', 'arquivo_base64'),
+            ('associado', 'carteira_pdf_base64'),
         ]
         
         for table_name, column_name in tables_to_migrate:

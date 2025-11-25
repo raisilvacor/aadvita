@@ -103,7 +103,7 @@
                             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                 {% if associado.status == 'aprovado' %}
                                     {% if associado.carteira_pdf %}
-                                        <a href="{{ url_for('static', filename=associado.carteira_pdf) }}" target="_blank" 
+                                        <a href="{{ url_for('admin_carteira_pdf', id=associado.id) }}" target="_blank" 
                                            class="btn-admin btn-admin-edit btn-admin-small" style="text-decoration: none;">
                                             <span>👁️</span> Ver
                                         </a>
