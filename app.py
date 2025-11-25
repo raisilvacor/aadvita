@@ -5960,6 +5960,9 @@ def gerar_carteira_pdf(associado):
         c = pdfcanvas.Canvas(filepath, pagesize=landscape(A4))
         border_color = colors.HexColor('#1e40af')
         
+        # Variável para armazenar caminho do arquivo temporário (será deletado no final)
+        foto_temp_path = None
+        
         # Logo
         logo_path = os.path.join('static', 'images', 'logo.png')
         if not os.path.exists(logo_path):
@@ -6017,9 +6020,11 @@ def gerar_carteira_pdf(associado):
             foto_w_max = 22*mm
             foto_h_max = 28*mm
             
+            # Usar a variável do escopo externo
+            nonlocal foto_temp_path
+            
             if associado.foto:
                 foto_path = None
-                foto_temp_path = None
                 
                 # Verificar se a foto está em base64 (Render)
                 if associado.foto.startswith('base64:') and associado.foto_base64:
@@ -6033,17 +6038,25 @@ def gerar_carteira_pdf(associado):
                         
                         # Decodificar base64
                         image_data = base64.b64decode(associado.foto_base64)
+                        print(f"[Carteira] Foto base64 decodificada, tamanho: {len(image_data)} bytes")
                         
                         # Criar imagem PIL a partir dos bytes
                         img = PILImage.open(BytesIO(image_data))
                         
                         # Criar arquivo temporário
-                        foto_temp_path = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-                        img.save(foto_temp_path.name, 'JPEG')
-                        foto_temp_path.close()
-                        foto_path = foto_temp_path.name
+                        foto_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                        foto_temp_path = foto_temp_file.name
+                        foto_temp_file.close()
+                        
+                        # Salvar imagem no arquivo temporário
+                        img.save(foto_temp_path, 'JPEG')
+                        print(f"[Carteira] Foto temporária salva em: {foto_temp_path}")
+                        
+                        foto_path = foto_temp_path
                     except Exception as e:
-                        print(f"Erro ao processar foto base64: {e}")
+                        print(f"[Carteira] Erro ao processar foto base64: {e}")
+                        import traceback
+                        traceback.print_exc()
                         foto_path = None
                 else:
                     # Tentar usar o caminho do arquivo
@@ -6062,16 +6075,14 @@ def gerar_carteira_pdf(associado):
                         if foto_w > foto_w_max:
                             foto_w = foto_w_max
                             foto_h = foto_w / aspect
+                        print(f"[Carteira] Desenhando foto: {foto_path}, tamanho: {foto_w}x{foto_h}")
                         c.drawImage(foto_path, foto_x, foto_y, width=foto_w, height=foto_h, preserveAspectRatio=True)
                     except Exception as e:
-                        print(f"Erro ao desenhar foto na carteira: {e}")
-                    finally:
-                        # Limpar arquivo temporário se foi criado
-                        if foto_temp_path and os.path.exists(foto_temp_path.name):
-                            try:
-                                os.unlink(foto_temp_path.name)
-                            except:
-                                pass
+                        print(f"[Carteira] Erro ao desenhar foto na carteira: {e}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print(f"[Carteira] Foto não encontrada ou inválida: {foto_path}")
             
             # Nome e CPF (direita da foto)
             text_x = inner_x + 24*mm
@@ -6194,10 +6205,26 @@ def gerar_carteira_pdf(associado):
         c.showPage()
         c.save()
         
+        # Limpar arquivo temporário se foi criado (após salvar o PDF)
+        if foto_temp_path and os.path.exists(foto_temp_path):
+            try:
+                os.unlink(foto_temp_path)
+                print(f"[Carteira] Arquivo temporário removido: {foto_temp_path}")
+            except Exception as e:
+                print(f"[Carteira] Erro ao remover arquivo temporário: {e}")
+        
         return f"documents/carteiras/{filename}"
         
     except Exception as e:
         print(f"Erro ao gerar carteira PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        # Limpar arquivo temporário em caso de erro
+        if 'foto_temp_path' in locals() and foto_temp_path and os.path.exists(foto_temp_path):
+            try:
+                os.unlink(foto_temp_path)
+            except:
+                pass
         raise
 
 @app.route('/admin/carteiras')
