@@ -12497,6 +12497,56 @@ def ensure_db_initialized():
                 except Exception as cert_manual_error:
                     print(f'⚠️ Erro ao criar tabela certificado manualmente: {cert_manual_error}')
             
+            # Executar migração reciclagem para garantir que a tabela exista
+            try:
+                import migrate_postgres_reciclagem as mig_reciclagem
+                print('Executando migração reciclagem (startup)...')
+                mig_reciclagem.migrate()
+                print('Migração reciclagem executada com sucesso (startup)')
+            except Exception as e:
+                print(f'⚠️ Aviso: Não foi possível executar migração reciclagem no startup: {e}')
+                try:
+                    from sqlalchemy import inspect, text
+                    inspector = inspect(db.engine)
+                    if 'reciclagem' not in inspector.get_table_names():
+                        print('Criando tabela reciclagem manualmente...')
+                        is_sqlite = db_type == 'sqlite'
+                        with db.engine.connect() as conn:
+                            if is_sqlite:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS reciclagem (
+                                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                        tipo_material VARCHAR(50) NOT NULL,
+                                        nome_completo VARCHAR(200) NOT NULL,
+                                        telefone VARCHAR(20) NOT NULL,
+                                        endereco_retirada TEXT NOT NULL,
+                                        observacoes TEXT,
+                                        status VARCHAR(20) DEFAULT 'pendente',
+                                        observacoes_admin TEXT,
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            else:
+                                conn.execute(text('''
+                                    CREATE TABLE IF NOT EXISTS reciclagem (
+                                        id SERIAL PRIMARY KEY,
+                                        tipo_material VARCHAR(50) NOT NULL,
+                                        nome_completo VARCHAR(200) NOT NULL,
+                                        telefone VARCHAR(20) NOT NULL,
+                                        endereco_retirada TEXT NOT NULL,
+                                        observacoes TEXT,
+                                        status VARCHAR(20) DEFAULT 'pendente',
+                                        observacoes_admin TEXT,
+                                        created_at TIMESTAMP,
+                                        updated_at TIMESTAMP
+                                    )
+                                '''))
+                            conn.commit()
+                        print('✅ Tabela reciclagem criada manualmente')
+                except Exception as rec_manual_error:
+                    print(f'⚠️ Erro ao criar tabela reciclagem manualmente: {rec_manual_error}')
+            
             # Verificar se há usuários, se não houver, inicializar dados
             try:
                 from sqlalchemy import inspect
