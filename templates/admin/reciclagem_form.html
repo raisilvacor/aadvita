@@ -1,0 +1,89 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if reciclagem %}Editar{% else %}Nova{% endif %} Solicitação de Reciclagem{% endblock %}
+
+{% block page_title %}{% if reciclagem %}Editar{% else %}Nova{% endif %} Solicitação de Reciclagem{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">{% if reciclagem %}Editar{% else %}Nova{% endif %} Solicitação</h2>
+        <a href="{{ url_for('admin_reciclagem') }}" class="btn-admin btn-admin-secondary">
+            <span>←</span> Voltar
+        </a>
+    </div>
+    
+    <form method="POST" style="padding: 1.5rem;">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="tipo_material" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Tipo de Material
+            </label>
+            <input type="text" value="{{ reciclagem.tipo_material }}" disabled
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb; color: #6b7280;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="nome_completo" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Nome Completo
+            </label>
+            <input type="text" value="{{ reciclagem.nome_completo }}" disabled
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb; color: #6b7280;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="telefone" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Telefone/WhatsApp
+            </label>
+            <input type="text" value="{{ reciclagem.telefone }}" disabled
+                   style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb; color: #6b7280;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="endereco_retirada" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Endereço de Retirada
+            </label>
+            <textarea disabled rows="3"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb; color: #6b7280; resize: vertical;">{{ reciclagem.endereco_retirada }}</textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="observacoes" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Observações do Solicitante
+            </label>
+            <textarea disabled rows="3"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; background: #f9fafb; color: #6b7280; resize: vertical;">{{ reciclagem.observacoes or 'Nenhuma observação' }}</textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="status" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Status <span style="color: #ef4444;">*</span>
+            </label>
+            <select name="status" id="status" required style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem;">
+                <option value="pendente" {% if reciclagem.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                <option value="em_andamento" {% if reciclagem.status == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
+                <option value="coletado" {% if reciclagem.status == 'coletado' %}selected{% endif %}>Coletado</option>
+                <option value="cancelado" {% if reciclagem.status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label for="observacoes_admin" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Observações Administrativas
+            </label>
+            <textarea name="observacoes_admin" id="observacoes_admin" rows="4"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem; resize: vertical;"
+                      placeholder="Anotações internas sobre esta solicitação">{{ reciclagem.observacoes_admin or '' }}</textarea>
+        </div>
+
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn-admin btn-admin-primary">
+                <span>💾</span> Salvar
+            </button>
+            <a href="{{ url_for('admin_reciclagem') }}" class="btn-admin btn-admin-secondary" style="text-decoration: none;">
+                <span>❌</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

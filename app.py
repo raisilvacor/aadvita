@@ -1391,6 +1391,18 @@ class Mensalidade(db.Model):
     # Relacionamento
     associado = db.relationship('Associado', backref='mensalidades')
 
+class Reciclagem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tipo_material = db.Column(db.String(50), nullable=False)  # Ferro, Aluminio, Cobre, Plastico, Papel, Papelao
+    nome_completo = db.Column(db.String(200), nullable=False)
+    telefone = db.Column(db.String(20), nullable=False)
+    endereco_retirada = db.Column(db.Text, nullable=False)
+    observacoes = db.Column(db.Text)
+    status = db.Column(db.String(20), default='pendente')  # pendente, em_andamento, coletado, cancelado
+    observacoes_admin = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
+
 class Doacao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50), nullable=False)  # 'financeira', 'material', 'servico'
@@ -1879,6 +1891,8 @@ def admin_dashboard():
         'voluntarios_pendentes': Voluntario.query.filter_by(status='pendente').count(),
         'ofertas_horas': OfertaHoras.query.count(),
         'agendamentos': AgendamentoVoluntario.query.count(),
+        'reciclagem_pendentes': Reciclagem.query.filter_by(status='pendente').count(),
+        'reciclagem_total': Reciclagem.query.count(),
     }
     return render_template('admin/dashboard.html', stats=stats)
 
@@ -2174,6 +2188,57 @@ def certificado_validar_form():
             return redirect(url_for('certificado_validar', codigo=codigo))
         flash('Informe o número do certificado para validar.', 'error')
     return render_template('certificados/validar_form.html')
+
+@app.route('/reciclagem', methods=['GET', 'POST'])
+def reciclagem_form():
+    """Formulário público para coleta de reciclagem"""
+    if request.method == 'POST':
+        try:
+            tipo_material = request.form.get('tipo_material', '').strip()
+            nome_completo = request.form.get('nome_completo', '').strip()
+            telefone = request.form.get('telefone', '').strip()
+            endereco_retirada = request.form.get('endereco_retirada', '').strip()
+            observacoes = request.form.get('observacoes', '').strip()
+            
+            # Validações
+            if not tipo_material:
+                flash('Selecione o tipo de material.', 'error')
+                return render_template('reciclagem/form.html')
+            
+            if not nome_completo:
+                flash('Nome completo é obrigatório.', 'error')
+                return render_template('reciclagem/form.html')
+            
+            if not telefone:
+                flash('Telefone/WhatsApp é obrigatório.', 'error')
+                return render_template('reciclagem/form.html')
+            
+            if not endereco_retirada:
+                flash('Endereço de retirada é obrigatório.', 'error')
+                return render_template('reciclagem/form.html')
+            
+            # Criar registro
+            reciclagem = Reciclagem(
+                tipo_material=tipo_material,
+                nome_completo=nome_completo,
+                telefone=telefone,
+                endereco_retirada=endereco_retirada,
+                observacoes=observacoes if observacoes else None,
+                status='pendente'
+            )
+            
+            db.session.add(reciclagem)
+            db.session.commit()
+            
+            flash('Solicitação de coleta de reciclagem enviada com sucesso! Entraremos em contato em breve.', 'success')
+            return redirect(url_for('reciclagem_form'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Erro ao processar formulário de reciclagem: {e}")
+            flash('Erro ao enviar solicitação. Tente novamente.', 'error')
+    
+    return render_template('reciclagem/form.html')
 
 
 # ============================================
@@ -8687,6 +8752,78 @@ def admin_radio_config():
         flash(f'Erro ao atualizar configuração: {str(e)}', 'error')
     
     return redirect(url_for('admin_radio'))
+
+# ============================================
+# CRUD - RECICLAGEM
+# ============================================
+
+@app.route('/admin/reciclagem')
+@admin_required
+def admin_reciclagem():
+    """Lista todas as solicitações de reciclagem"""
+    status_filter = request.args.get('status', 'todos')
+    
+    if status_filter == 'pendente':
+        reciclagens = Reciclagem.query.filter_by(status='pendente').order_by(Reciclagem.created_at.desc()).all()
+    elif status_filter == 'em_andamento':
+        reciclagens = Reciclagem.query.filter_by(status='em_andamento').order_by(Reciclagem.created_at.desc()).all()
+    elif status_filter == 'coletado':
+        reciclagens = Reciclagem.query.filter_by(status='coletado').order_by(Reciclagem.created_at.desc()).all()
+    elif status_filter == 'cancelado':
+        reciclagens = Reciclagem.query.filter_by(status='cancelado').order_by(Reciclagem.created_at.desc()).all()
+    else:
+        reciclagens = Reciclagem.query.order_by(Reciclagem.created_at.desc()).all()
+    
+    # Contar por status
+    pendentes_count = Reciclagem.query.filter_by(status='pendente').count()
+    em_andamento_count = Reciclagem.query.filter_by(status='em_andamento').count()
+    coletados_count = Reciclagem.query.filter_by(status='coletado').count()
+    cancelados_count = Reciclagem.query.filter_by(status='cancelado').count()
+    
+    return render_template('admin/reciclagem.html',
+                         reciclagens=reciclagens,
+                         status_filter=status_filter,
+                         pendentes_count=pendentes_count,
+                         em_andamento_count=em_andamento_count,
+                         coletados_count=coletados_count,
+                         cancelados_count=cancelados_count)
+
+@app.route('/admin/reciclagem/<int:id>/editar', methods=['GET', 'POST'])
+@admin_required
+def admin_reciclagem_editar(id):
+    """Edita uma solicitação de reciclagem"""
+    reciclagem = Reciclagem.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        try:
+            reciclagem.status = request.form.get('status', 'pendente')
+            reciclagem.observacoes_admin = request.form.get('observacoes_admin', '').strip() or None
+            reciclagem.updated_at = datetime.now()
+            
+            db.session.commit()
+            flash('Solicitação de reciclagem atualizada com sucesso!', 'success')
+            return redirect(url_for('admin_reciclagem'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar solicitação: {str(e)}', 'error')
+    
+    return render_template('admin/reciclagem_form.html', reciclagem=reciclagem)
+
+@app.route('/admin/reciclagem/<int:id>/excluir', methods=['POST'])
+@admin_required
+def admin_reciclagem_excluir(id):
+    """Exclui uma solicitação de reciclagem"""
+    reciclagem = Reciclagem.query.get_or_404(id)
+    
+    try:
+        db.session.delete(reciclagem)
+        db.session.commit()
+        flash('Solicitação de reciclagem excluída com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir solicitação: {str(e)}', 'error')
+    
+    return redirect(url_for('admin_reciclagem'))
 
 # ============================================
 # CRUD - BANNERS

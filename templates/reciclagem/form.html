@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitar Coleta de Reciclagem{% endblock %}
+
+{% block content %}
+<section class="page-section" style="padding: 4rem 0; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+    <div class="container">
+        <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
+            <h1 style="color: #059669; font-size: 2.5rem; margin-bottom: 1rem;">
+                ♻️ Solicitar Coleta de Reciclagem
+            </h1>
+            <p style="color: #047857; font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                Preencha o formulário abaixo para solicitar a coleta de materiais recicláveis. Nossa equipe entrará em contato em breve.
+            </p>
+        </div>
+
+        <div class="form-container" style="max-width: 700px; margin: 0 auto; background: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.5rem; {% if category == 'error' %}background: #fee2e2; color: #991b1b;{% else %}background: #d1fae5; color: #065f46;{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('reciclagem_form') }}">
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="tipo_material" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #1f2937;">
+                        Tipo de Material <span style="color: #ef4444;">*</span>
+                    </label>
+                    <select name="tipo_material" id="tipo_material" required style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem; background: white;">
+                        <option value="">Selecione o tipo de material</option>
+                        <option value="Ferro">Ferro</option>
+                        <option value="Aluminio">Alumínio</option>
+                        <option value="Cobre">Cobre</option>
+                        <option value="Plastico">Plástico</option>
+                        <option value="Papel">Papel</option>
+                        <option value="Papelao">Papelão</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="nome_completo" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #1f2937;">
+                        Nome Completo <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="nome_completo" id="nome_completo" required 
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem;"
+                           placeholder="Digite seu nome completo">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="telefone" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #1f2937;">
+                        Telefone/WhatsApp <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" name="telefone" id="telefone" required 
+                           style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem;"
+                           placeholder="(86) 99999-9999">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="endereco_retirada" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #1f2937;">
+                        Endereço de Retirada do Material <span style="color: #ef4444;">*</span>
+                    </label>
+                    <textarea name="endereco_retirada" id="endereco_retirada" required rows="4"
+                              style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem; resize: vertical;"
+                              placeholder="Digite o endereço completo onde o material deve ser coletado"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 2rem;">
+                    <label for="observacoes" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #1f2937;">
+                        Observações
+                    </label>
+                    <textarea name="observacoes" id="observacoes" rows="4"
+                              style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 1rem; resize: vertical;"
+                              placeholder="Informações adicionais sobre o material ou horários preferenciais para coleta"></textarea>
+                </div>
+
+                <button type="submit" style="width: 100%; padding: 1rem; background: #059669; color: white; border: none; border-radius: 0.5rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                    ♻️ Enviar Solicitação
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

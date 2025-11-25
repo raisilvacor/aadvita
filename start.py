@@ -62,6 +62,19 @@ def run_migration():
     except Exception as e:
         print('Não foi possível importar/rodar migrate_postgres_certificado:', e)
         # continuar
+    
+    # Tentar executar migração para reciclagem
+    try:
+        import migrate_postgres_reciclagem as mig_reciclagem
+        print('Executando migração reciclagem (se aplicável)...')
+        code6 = mig_reciclagem.migrate()
+        if code6 != 0:
+            print(f'Migração reciclagem retornou código {code6} (continuando startup).')
+        else:
+            print('Migração reciclagem finalizada com sucesso.')
+    except Exception as e:
+        print('Não foi possível importar/rodar migrate_postgres_reciclagem:', e)
+        # continuar
     return 0
 
 

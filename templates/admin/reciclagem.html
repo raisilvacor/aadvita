@@ -1,0 +1,121 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gerenciar Reciclagem{% endblock %}
+
+{% block page_title %}Gerenciar Solicitações de Reciclagem{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Solicitações de Coleta de Reciclagem</h2>
+    </div>
+    
+    <!-- Filtros -->
+    <div style="padding: 1.5rem; border-bottom: 2px solid #e5e7eb;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <a href="{{ url_for('admin_reciclagem', status='todos') }}" 
+               class="btn-admin {% if status_filter == 'todos' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Todos ({{ pendentes_count + em_andamento_count + coletados_count + cancelados_count }})
+            </a>
+            <a href="{{ url_for('admin_reciclagem', status='pendente') }}" 
+               class="btn-admin {% if status_filter == 'pendente' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none; background: {% if status_filter == 'pendente' %}#f59e0b{% else %}#6b7280{% endif %};">
+                Pendentes ({{ pendentes_count }})
+            </a>
+            <a href="{{ url_for('admin_reciclagem', status='em_andamento') }}" 
+               class="btn-admin {% if status_filter == 'em_andamento' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Em Andamento ({{ em_andamento_count }})
+            </a>
+            <a href="{{ url_for('admin_reciclagem', status='coletado') }}" 
+               class="btn-admin {% if status_filter == 'coletado' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Coletados ({{ coletados_count }})
+            </a>
+            <a href="{{ url_for('admin_reciclagem', status='cancelado') }}" 
+               class="btn-admin {% if status_filter == 'cancelado' %}btn-admin-primary{% else %}btn-admin-secondary{% endif %}" 
+               style="text-decoration: none;">
+                Cancelados ({{ cancelados_count }})
+            </a>
+        </div>
+    </div>
+    
+    <!-- Tabela -->
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo de Material</th>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Endereço</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if reciclagens %}
+                    {% for reciclagem in reciclagens %}
+                    <tr>
+                        <td>{{ reciclagem.created_at.strftime('%d/%m/%Y %H:%M') if reciclagem.created_at else '-' }}</td>
+                        <td>
+                            <span style="padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600; background: #dbeafe; color: #1e40af;">
+                                {{ reciclagem.tipo_material }}
+                            </span>
+                        </td>
+                        <td>{{ reciclagem.nome_completo }}</td>
+                        <td>{{ reciclagem.telefone }}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ reciclagem.endereco_retirada }}
+                        </td>
+                        <td>
+                            {% if reciclagem.status == 'pendente' %}
+                                <span class="status-badge" style="background: #f59e0b; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ⏳ Pendente
+                                </span>
+                            {% elif reciclagem.status == 'em_andamento' %}
+                                <span class="status-badge" style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    🔄 Em Andamento
+                                </span>
+                            {% elif reciclagem.status == 'coletado' %}
+                                <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ✅ Coletado
+                                </span>
+                            {% elif reciclagem.status == 'cancelado' %}
+                                <span class="status-badge" style="background: #ef4444; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    ❌ Cancelado
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <a href="{{ url_for('admin_reciclagem_editar', id=reciclagem.id) }}" 
+                                   class="btn-admin btn-admin-edit btn-admin-small" style="text-decoration: none;">
+                                    <span>✏️</span> Editar
+                                </a>
+                                <form method="POST" action="{{ url_for('admin_reciclagem_excluir', id=reciclagem.id) }}" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('Tem certeza que deseja excluir esta solicitação?');">
+                                    <button type="submit" class="btn-admin btn-admin-delete btn-admin-small">
+                                        <span>🗑️</span> Excluir
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: #6b7280;">
+                            Nenhuma solicitação encontrada.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
