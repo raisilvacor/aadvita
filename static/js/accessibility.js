@@ -67,7 +67,59 @@
         }
     }
     
-    // Ler texto usando síntese de voz
+    // Função auxiliar para encontrar e garantir voz masculina
+    function ensureMaleVoice() {
+        if (!speechSynthesis) return null;
+        
+        // Se já temos uma voz masculina, retornar
+        if (maleVoice) {
+            return maleVoice;
+        }
+        
+        // Tentar encontrar voz masculina novamente
+        const voices = speechSynthesis.getVoices();
+        
+        if (voices.length === 0) {
+            // Se ainda não há vozes, aguardar e tentar novamente
+            return null;
+        }
+        
+        // Procurar por voz masculina em português (prioridade máxima)
+        maleVoice = voices.find(voice => 
+            (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
+            (voice.name.toLowerCase().includes('male') || 
+             voice.name.toLowerCase().includes('masculina') ||
+             voice.name.toLowerCase().includes('masculino') ||
+             voice.name.toLowerCase().includes('joão') ||
+             voice.name.toLowerCase().includes('carlos') ||
+             voice.name.toLowerCase().includes('paulo') ||
+             voice.name.toLowerCase().includes('ricardo') ||
+             voice.gender === 'male')
+        ) || voices.find(voice => 
+            (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) &&
+            !voice.name.toLowerCase().includes('female') &&
+            !voice.name.toLowerCase().includes('feminina') &&
+            !voice.name.toLowerCase().includes('maria') &&
+            !voice.name.toLowerCase().includes('helena') &&
+            !voice.name.toLowerCase().includes('lucia') &&
+            !voice.name.toLowerCase().includes('ana') &&
+            !voice.name.toLowerCase().includes('lucia') &&
+            voice.gender !== 'female'
+        ) || voices.find(voice => 
+            voice.lang.startsWith('pt') && 
+            voice.gender === 'male'
+        ) || voices.find(voice => 
+            voice.gender === 'male'
+        ) || voices.find(voice => 
+            voice.lang.startsWith('pt') &&
+            !voice.name.toLowerCase().includes('female') &&
+            !voice.name.toLowerCase().includes('feminina')
+        ) || voices.find(voice => voice.lang.startsWith('pt')) || voices[0];
+        
+        return maleVoice;
+    }
+    
+    // Ler texto usando síntese de voz (versão para áudio descrição - requer ativação)
     function speakText(text) {
         if (!speechSynthesis || !text || !isAudioDescEnabled) return;
         
@@ -76,28 +128,34 @@
         
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Configurar voz masculina se disponível
-        if (maleVoice) {
-            utterance.voice = maleVoice;
-        } else {
-            // Tentar encontrar voz masculina novamente
-            const voices = speechSynthesis.getVoices();
-            maleVoice = voices.find(voice => 
-                (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
-                (voice.name.toLowerCase().includes('male') || 
-                 voice.name.toLowerCase().includes('masculina') ||
-                 voice.name.toLowerCase().includes('masculino') ||
-                 voice.gender === 'male')
-            ) || voices.find(voice => 
-                voice.lang.startsWith('pt') &&
-                !voice.name.toLowerCase().includes('female') &&
-                !voice.name.toLowerCase().includes('feminina') &&
-                voice.gender !== 'female'
-            ) || voices.find(voice => voice.lang.startsWith('pt')) || voices[0];
-            
-            if (maleVoice) {
-                utterance.voice = maleVoice;
-            }
+        // Garantir voz masculina
+        const voice = ensureMaleVoice();
+        if (voice) {
+            utterance.voice = voice;
+        }
+        
+        // Configurações de voz
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0; // Velocidade normal
+        utterance.pitch = 0.9; // Tom ligeiramente mais grave (masculino)
+        utterance.volume = 1.0; // Volume máximo
+        
+        speechSynthesis.speak(utterance);
+    }
+    
+    // Ler texto usando síntese de voz (versão universal - sempre funciona)
+    function speakTextUniversal(text) {
+        if (!speechSynthesis || !text) return;
+        
+        // Parar qualquer fala anterior
+        speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Garantir voz masculina
+        const voice = ensureMaleVoice();
+        if (voice) {
+            utterance.voice = voice;
         }
         
         // Configurações de voz
@@ -866,7 +924,7 @@
                     // Aguardar um pouco para o estado atualizar
                     setTimeout(() => {
                         response = currentState ? 'Desativando alto contraste' : 'Ativando alto contraste';
-                        speakText(response);
+                        speakTextUniversal(response);
                     }, 100);
                     return true; // Retornar imediatamente, a resposta será falada no setTimeout
                 }
@@ -881,7 +939,7 @@
                     // Aguardar um pouco para o estado atualizar
                     setTimeout(() => {
                         response = currentState ? 'Desativando áudio descrição' : 'Ativando áudio descrição';
-                        speakText(response);
+                        speakTextUniversal(response);
                     }, 100);
                     return true; // Retornar imediatamente, a resposta será falada no setTimeout
                 }
@@ -896,7 +954,7 @@
                     // Aguardar um pouco para o estado atualizar
                     setTimeout(() => {
                         response = currentState ? 'Desativando comando de voz' : 'Ativando comando de voz';
-                        speakText(response);
+                        speakTextUniversal(response);
                     }, 100);
                     return true; // Retornar imediatamente, a resposta será falada no setTimeout
                 }
@@ -939,7 +997,7 @@
         }
         
         if (response) {
-            speakText(response);
+            speakTextUniversal(response);
             return true;
         }
         
@@ -969,13 +1027,13 @@
             
             // Se for apenas texto (sem navegação)
             if (action.text) {
-                speakText(action.text);
+                speakTextUniversal(action.text);
                 return true;
             }
         }
         
         // Comando não reconhecido
-        speakText('Desculpe, não entendi o comando. Por favor, tente novamente.');
+        speakTextUniversal('Desculpe, não entendi o comando. Por favor, tente novamente.');
         return false;
     }
     
@@ -987,18 +1045,22 @@
             return;
         }
         
+        // Parar qualquer fala anterior
+        speechSynthesis.cancel();
+        
         // Criar utterance
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Usar voz masculina se disponível
-        if (maleVoice) {
-            utterance.voice = maleVoice;
+        // Garantir voz masculina
+        const voice = ensureMaleVoice();
+        if (voice) {
+            utterance.voice = voice;
         }
         
         // Configurações de voz
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0;
-        utterance.pitch = 0.9;
+        utterance.pitch = 0.9; // Tom mais grave (masculino)
         utterance.volume = 1.0;
         
         // Navegar quando a fala terminar
@@ -1029,7 +1091,7 @@
             }
             
             if (!recognition) {
-                speakText('Desculpe, seu navegador não suporta reconhecimento de voz.');
+                speakTextUniversal('Desculpe, seu navegador não suporta reconhecimento de voz.');
                 isVoiceCommandEnabled = false;
                 return;
             }
@@ -1059,10 +1121,10 @@
                 if (event.error === 'no-speech') {
                     speakText('Não ouvi nada. Tente novamente.');
                 } else if (event.error === 'not-allowed') {
-                    speakText('Permissão de microfone negada. Por favor, permita o acesso ao microfone.');
+                    speakTextUniversal('Permissão de microfone negada. Por favor, permita o acesso ao microfone.');
                     isVoiceCommandEnabled = false;
                 } else {
-                    speakText('Erro ao processar comando. Tente novamente.');
+                    speakTextUniversal('Erro ao processar comando. Tente novamente.');
                 }
             };
             
@@ -1084,7 +1146,7 @@
                 recognition.start();
             } catch (e) {
                 console.error('Erro ao iniciar reconhecimento:', e);
-                speakText('Erro ao iniciar reconhecimento de voz.');
+                speakTextUniversal('Erro ao iniciar reconhecimento de voz.');
             }
         } else {
             // Parar reconhecimento
@@ -1095,7 +1157,7 @@
                     // Ignorar erros ao parar
                 }
             }
-            speakText('Comando de voz desativado.');
+            speakTextUniversal('Comando de voz desativado.');
         }
         
         // Atualizar label
