@@ -142,7 +142,7 @@
                                style="margin-left: 0.5rem;">
                                 <span>✏️</span> Editar
                             </a>
-                            {% if associado.status == 'aprovado' %}
+                            {% if associado.status == 'aprovado' and associado.tipo_associado == 'contribuinte' %}
                             <a href="{{ url_for('admin_financeiro_configurar_associado', id=associado.id) }}" 
                                class="btn-admin btn-admin-secondary btn-admin-small" 
                                style="margin-left: 0.5rem; background: #3b82f6;">
