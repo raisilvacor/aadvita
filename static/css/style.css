@@ -607,10 +607,12 @@ textarea:focus {
         flex-direction: column;
         gap: 0.9rem;
         overflow-y: auto;
+        overflow-x: hidden;
         z-index: 1000;
         transform: translateY(12px);
         opacity: 0;
         transition: transform 0.25s ease, opacity 0.25s ease;
+        box-sizing: border-box;
     }
 
     .nav-menu.active {
@@ -622,11 +624,15 @@ textarea:focus {
     .nav-menu li {
         width: 100%;
         margin: 0;
+        min-width: 0;
+        flex-shrink: 0;
+        box-sizing: border-box;
     }
 
     .nav-menu a,
     .nav-menu button {
         width: 100%;
+        max-width: 100%;
         display: block;
         text-align: left;
         padding: 0.85rem 1rem;
@@ -636,6 +642,10 @@ textarea:focus {
         font-weight: 600;
         color: var(--text-color);
         transition: background 0.2s ease, color 0.2s ease;
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .nav-menu a:hover,
@@ -3583,10 +3593,12 @@ textarea:focus {
         flex-direction: column;
         gap: 0.9rem;
         overflow-y: auto;
+        overflow-x: hidden;
         z-index: 1000;
         transform: translateY(12px);
         opacity: 0;
         transition: transform 0.25s ease, opacity 0.25s ease;
+        box-sizing: border-box;
     }
 
     .nav-menu.active {
@@ -3598,11 +3610,15 @@ textarea:focus {
     .nav-menu li {
         width: 100%;
         margin: 0;
+        min-width: 0;
+        flex-shrink: 0;
+        box-sizing: border-box;
     }
 
     .nav-menu a,
     .nav-menu button {
         width: 100%;
+        max-width: 100%;
         display: block;
         text-align: left;
         padding: 0.85rem 1rem;
@@ -3612,6 +3628,10 @@ textarea:focus {
         font-weight: 600;
         color: var(--text-color);
         transition: background 0.2s ease, color 0.2s ease;
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .nav-menu a:hover,
@@ -3649,28 +3669,40 @@ textarea:focus {
         color: var(--text-color);
     }
 
-    .language-selector {
-        width: 100%;
-        margin-top: 0.25rem;
+    .nav-menu .language-selector {
+        width: 100% !important;
+        margin-top: 0.5rem !important;
+        margin-left: 0 !important;
+        display: block !important;
+        box-sizing: border-box !important;
     }
 
-    .language-selector .lang-btn {
-        width: 100%;
-        justify-content: center;
-        padding: 0.85rem 1rem;
+    .nav-menu .language-selector .lang-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        justify-content: center !important;
+        padding: 0.85rem 1rem !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
-    .language-selector .lang-dropdown {
-        position: static;
-        width: 100%;
-        margin-top: 0.5rem;
-        box-shadow: none;
-        border: 1px solid rgba(0,0,0,0.1);
-        padding: 0.75rem;
+    .nav-menu .language-selector .lang-dropdown {
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 0.5rem !important;
+        box-shadow: none !important;
+        border: 1px solid rgba(0,0,0,0.1) !important;
+        padding: 0.75rem !important;
+        box-sizing: border-box !important;
     }
 
-    .language-selector .lang-option-link {
-        justify-content: center;
+    .nav-menu .language-selector .lang-option-link {
+        justify-content: center !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 }
 
