@@ -11368,6 +11368,17 @@ def set_language(lang):
         session['language'] = lang
     return redirect(request.referrer or url_for('index'))
 
+# Função para detectar dispositivo mobile
+def is_mobile_device():
+    """Detecta se o dispositivo é mobile baseado no User-Agent"""
+    user_agent = request.headers.get('User-Agent', '').lower()
+    mobile_keywords = [
+        'mobile', 'android', 'iphone', 'ipad', 'ipod', 
+        'blackberry', 'windows phone', 'opera mini', 
+        'iemobile', 'palm', 'smartphone', 'tablet'
+    ]
+    return any(keyword in user_agent for keyword in mobile_keywords)
+
 # Context processor para disponibilizar variáveis em todos os templates
 @app.context_processor
 def inject_conf():
@@ -11718,6 +11729,9 @@ def inject_conf():
         from flask import url_for
         return url_for('static', filename=membro.foto)
     
+    # Detectar dispositivo mobile
+    is_mobile = is_mobile_device()
+    
     return dict(
         slider_imagem_url=slider_imagem_url,
         apoiador_logo_url=apoiador_logo_url,
@@ -11738,7 +11752,8 @@ def inject_conf():
         dados_associacao=dados_associacao,  # Dados da associação para uso nos templates
         footer_configs=footer_configs,  # Configurações do rodapé
         certificado_esta_valido=certificado_esta_valido,
-        certificado_qr_url=certificado_qr_url
+        certificado_qr_url=certificado_qr_url,
+        is_mobile_device=is_mobile  # Detecção de dispositivo mobile
     )
 
 # API endpoints para obtener datos

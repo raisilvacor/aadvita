@@ -1,5 +1,61 @@
 // Acessibilidade e Funcionalidades JavaScript
 
+// Detecção de dispositivo mobile no cliente (fallback e confirmação)
+(function detectDevice() {
+    'use strict';
+    
+    const body = document.getElementById('main-body') || document.body;
+    if (!body) return;
+    
+    // Função para detectar mobile
+    function isMobileDevice() {
+        // Verificar User-Agent
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i;
+        
+        // Verificar largura da tela
+        const isSmallScreen = window.innerWidth <= 768;
+        
+        // Verificar touch support
+        const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Se já tem classe do servidor, usar ela
+        if (body.classList.contains('device-mobile')) {
+            return true;
+        }
+        if (body.classList.contains('device-desktop')) {
+            return false;
+        }
+        
+        // Detecção combinada
+        return mobileRegex.test(userAgent) || (isSmallScreen && hasTouchScreen);
+    }
+    
+    // Aplicar classe baseada na detecção
+    if (isMobileDevice()) {
+        body.classList.remove('device-desktop');
+        body.classList.add('device-mobile');
+    } else {
+        body.classList.remove('device-mobile');
+        body.classList.add('device-desktop');
+    }
+    
+    // Atualizar ao redimensionar (com debounce)
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            if (isMobileDevice()) {
+                body.classList.remove('device-desktop');
+                body.classList.add('device-mobile');
+            } else {
+                body.classList.remove('device-mobile');
+                body.classList.add('device-desktop');
+            }
+        }, 250);
+    });
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // Aplicar gradientes dinâmicos nos banners principais

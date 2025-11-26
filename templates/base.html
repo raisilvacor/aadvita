@@ -85,8 +85,51 @@
     </script>
     
     {% block extra_head %}{% endblock %}
+    
+    <!-- Detecção de dispositivo mobile (inline para aplicação imediata) -->
+    <script>
+        (function() {
+            'use strict';
+            // Detecção rápida baseada em User-Agent e largura da tela
+            function detectDevice() {
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera || '';
+                const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i;
+                const isSmallScreen = window.innerWidth <= 768;
+                const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                
+                return mobileRegex.test(userAgent) || (isSmallScreen && hasTouch);
+            }
+            
+            // Aplicar classe imediatamente quando o DOM estiver pronto
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    const body = document.getElementById('main-body') || document.body;
+                    if (body) {
+                        if (detectDevice()) {
+                            body.classList.add('device-mobile');
+                            body.classList.remove('device-desktop');
+                        } else {
+                            body.classList.add('device-desktop');
+                            body.classList.remove('device-mobile');
+                        }
+                    }
+                });
+            } else {
+                const body = document.getElementById('main-body') || document.body;
+                if (body) {
+                    if (detectDevice()) {
+                        body.classList.add('device-mobile');
+                        body.classList.remove('device-desktop');
+                    } else {
+                        body.classList.add('device-desktop');
+                        body.classList.remove('device-mobile');
+                    }
+                }
+            }
+        })();
+    </script>
 </head>
-<body>
+<body class="{% if is_mobile_device %}device-mobile{% else %}device-desktop{% endif %}" id="main-body">
     <!-- Skip to main content link for screen readers -->
     <a href="#main-content" class="skip-link">{{ _('Ir para conteúdo principal') }}</a>
     

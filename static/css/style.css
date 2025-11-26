@@ -4416,3 +4416,71 @@ textarea:focus {
     }
 }
 
+/* ============================================
+   ESTILOS BASEADOS EM DETECÇÃO DE DISPOSITIVO
+   Classes device-mobile e device-desktop
+   ============================================ */
+
+/* Garantir que versão mobile seja aplicada quando detectado mobile */
+body.device-mobile {
+    /* Forçar estilos mobile mesmo em telas maiores se detectado como mobile */
+}
+
+body.device-mobile .container {
+    padding: 0 1rem !important;
+    max-width: 100% !important;
+}
+
+body.device-mobile .hero-action-link,
+body.device-mobile .btn-transparency,
+body.device-mobile .btn-associate,
+body.device-mobile .btn-login,
+body.device-mobile .btn-volunteer,
+body.device-mobile .btn-acessibilidade,
+body.device-mobile .btn-certificados,
+body.device-mobile .btn-reciclagem {
+    width: 100% !important;
+    display: block !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 1rem !important;
+    text-align: center !important;
+    min-height: 48px !important;
+    box-sizing: border-box !important;
+}
+
+body.device-mobile .banners-grid,
+body.device-mobile .o-que-fazemos-grid,
+body.device-mobile .servicos-grid,
+body.device-mobile .projetos-grid,
+body.device-mobile .acoes-grid,
+body.device-mobile .informativo-banners-grid,
+body.device-mobile .galeria-grid,
+body.device-mobile .transparencia-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+}
+
+body.device-mobile .footer-content {
+    flex-direction: column !important;
+    gap: 2rem !important;
+}
+
+body.device-mobile .footer-section {
+    width: 100% !important;
+    text-align: center !important;
+}
+
+/* Garantir que versão desktop seja mantida quando detectado desktop */
+body.device-desktop {
+    /* Manter estrutura desktop */
+}
+
+/* Media queries continuam funcionando, mas as classes garantem detecção correta */
+@media (max-width: 768px) {
+    /* Aplicar estilos mobile mesmo se a classe não foi detectada corretamente */
+    body:not(.device-desktop) .container,
+    body.device-mobile .container {
+        padding: 0 1rem !important;
+    }
+}
+
