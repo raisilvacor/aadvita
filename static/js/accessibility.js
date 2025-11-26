@@ -31,12 +31,12 @@
             }
             
             // Carregar vozes (pode ser assíncrono)
-            // No mobile, as vozes podem demorar mais para carregar
+            // Funciona igual em mobile e desktop
             if (speechSynthesis.getVoices().length > 0) {
                 loadVoices();
             } else {
                 speechSynthesis.addEventListener('voiceschanged', loadVoices);
-                // Também tentar após delays para mobile (vozes podem carregar mais tarde)
+                // Tentar após delays para garantir que as vozes sejam carregadas (mobile e desktop)
                 setTimeout(loadVoices, 500);
                 setTimeout(loadVoices, 1000);
                 setTimeout(loadVoices, 2000);
@@ -48,7 +48,7 @@
     function ensureMaleVoice() {
         if (!speechSynthesis) return null;
         
-        // Tentar encontrar voz masculina novamente (sempre verificar, pois no mobile as vozes podem mudar)
+        // Tentar encontrar voz masculina novamente (sempre verificar)
         const voices = speechSynthesis.getVoices();
         
         if (voices.length === 0) {
@@ -57,7 +57,7 @@
         }
         
         // Procurar por voz masculina em português (prioridade máxima)
-        // No mobile, algumas vozes podem não ter gender definido, então usamos nome
+        // Funciona igual em mobile e desktop
         maleVoice = voices.find(voice => 
             (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
             (voice.gender === 'male' ||
@@ -103,13 +103,13 @@
         
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Garantir voz masculina (sempre verificar novamente, especialmente no mobile)
+        // Garantir voz masculina (sempre verificar novamente, igual em mobile e desktop)
         const voice = ensureMaleVoice();
         if (voice) {
             utterance.voice = voice;
         } else {
             // Se não encontrou voz masculina, tentar novamente após um pequeno delay
-            // No mobile, as vozes podem demorar para carregar
+            // Funciona igual em mobile e desktop
             setTimeout(() => {
                 const retryVoice = ensureMaleVoice();
                 if (retryVoice && utterance) {
@@ -118,10 +118,10 @@
             }, 100);
         }
         
-        // Configurações de voz
+        // Configurações de voz (iguais para mobile e desktop)
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0; // Velocidade normal
-        utterance.pitch = 0.9; // Tom ligeiramente mais grave (masculino) - importante para mobile
+        utterance.pitch = 0.9; // Tom ligeiramente mais grave (masculino)
         utterance.volume = 1.0; // Volume máximo
         
         speechSynthesis.speak(utterance);
@@ -136,13 +136,22 @@
         
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Garantir voz masculina
+        // Garantir voz masculina (sempre verificar novamente, igual ao desktop)
         const voice = ensureMaleVoice();
         if (voice) {
             utterance.voice = voice;
+        } else {
+            // Se não encontrou voz masculina, tentar novamente após um pequeno delay
+            // Funciona igual em mobile e desktop
+            setTimeout(() => {
+                const retryVoice = ensureMaleVoice();
+                if (retryVoice && utterance) {
+                    utterance.voice = retryVoice;
+                }
+            }, 100);
         }
         
-        // Configurações de voz
+        // Configurações de voz (iguais para mobile e desktop)
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0; // Velocidade normal
         utterance.pitch = 0.9; // Tom ligeiramente mais grave (masculino)
@@ -1035,13 +1044,13 @@
         // Criar utterance
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Garantir voz masculina (sempre verificar novamente, especialmente no mobile)
+        // Garantir voz masculina (sempre verificar novamente, igual em mobile e desktop)
         const voice = ensureMaleVoice();
         if (voice) {
             utterance.voice = voice;
         } else {
             // Se não encontrou voz masculina, tentar novamente após um pequeno delay
-            // No mobile, as vozes podem demorar para carregar
+            // Funciona igual em mobile e desktop
             setTimeout(() => {
                 const retryVoice = ensureMaleVoice();
                 if (retryVoice && utterance) {
@@ -1050,10 +1059,10 @@
             }, 100);
         }
         
-        // Configurações de voz
+        // Configurações de voz (iguais para mobile e desktop)
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0;
-        utterance.pitch = 0.9; // Tom mais grave (masculino) - importante para mobile
+        utterance.pitch = 0.9; // Tom mais grave (masculino)
         utterance.volume = 1.0;
         
         // Navegar quando a fala terminar
