@@ -4714,11 +4714,15 @@ body.font-xxlarge {
     .qr-code-container {
         display: flex !important;
         justify-content: center !important;
+        align-items: center !important;
     }
     
     .qr-code-footer {
-        max-width: 150px !important;
-        height: auto !important;
+        width: 120px !important;
+        height: 120px !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        object-fit: fill !important;
     }
     
     .social-icons {
