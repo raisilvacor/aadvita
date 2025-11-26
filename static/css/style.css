@@ -419,6 +419,190 @@ textarea:focus {
 }
 
 /* Floating WhatsApp button */
+/* Floating Accessibility Button */
+.accessibility-float {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + 56px + 56px + 1.5rem); /* Above language button */
+    z-index: 1202;
+}
+
+.accessibility-float-btn {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(127, 29, 29, 0.25);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+}
+
+.accessibility-float-btn:hover,
+.accessibility-float-btn:focus {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(127, 29, 29, 0.35);
+    outline: none;
+}
+
+.accessibility-float-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.accessibility-float-dropdown {
+    position: absolute;
+    bottom: calc(56px + 0.75rem);
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    min-width: 240px;
+    max-width: 300px;
+    overflow: hidden;
+    z-index: 1203;
+    display: none;
+    padding: 1rem;
+}
+
+.accessibility-float-dropdown.active {
+    display: block;
+    animation: fadeInDown 0.2s ease;
+}
+
+.accessibility-option-group {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.accessibility-option-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.accessibility-label {
+    display: block;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.accessibility-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: space-between;
+}
+
+.accessibility-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    color: #374151;
+    flex: 1;
+    justify-content: center;
+}
+
+.accessibility-btn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+.accessibility-btn:active {
+    transform: scale(0.95);
+}
+
+.accessibility-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.accessibility-value {
+    min-width: 50px;
+    text-align: center;
+    font-weight: 600;
+    color: #2563eb;
+    font-size: 0.875rem;
+}
+
+.accessibility-reset-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.accessibility-reset-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.accessibility-reset-btn:active {
+    transform: translateY(0);
+}
+
+.accessibility-reset-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* High contrast mode */
+body.high-contrast {
+    filter: contrast(1.5);
+}
+
+body.high-contrast * {
+    border-color: #000 !important;
+}
+
+/* Font size adjustments */
+body.font-small {
+    font-size: 85% !important;
+}
+
+body.font-medium {
+    font-size: 100% !important;
+}
+
+body.font-large {
+    font-size: 115% !important;
+}
+
+body.font-xlarge {
+    font-size: 130% !important;
+}
+
+body.font-xxlarge {
+    font-size: 150% !important;
+}
+
 /* Floating Language Selector Button */
 .language-float {
     position: fixed;
@@ -533,6 +717,27 @@ textarea:focus {
 .whatsapp-float svg { width: 22px; height: 22px; }
 
 @media (max-width: 480px) {
+    .accessibility-float {
+        right: 0.75rem;
+        bottom: calc(0.75rem + 50px + 50px + 1.5rem);
+    }
+    
+    .accessibility-float-btn {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .accessibility-float-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .accessibility-float-dropdown {
+        min-width: 200px;
+        max-width: 280px;
+        right: 0;
+    }
+    
     .language-float {
         right: 0.75rem;
         bottom: calc(0.75rem + 50px + 0.75rem);
