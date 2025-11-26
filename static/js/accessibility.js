@@ -1035,16 +1035,25 @@
         // Criar utterance
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Garantir voz masculina
+        // Garantir voz masculina (sempre verificar novamente, especialmente no mobile)
         const voice = ensureMaleVoice();
         if (voice) {
             utterance.voice = voice;
+        } else {
+            // Se não encontrou voz masculina, tentar novamente após um pequeno delay
+            // No mobile, as vozes podem demorar para carregar
+            setTimeout(() => {
+                const retryVoice = ensureMaleVoice();
+                if (retryVoice && utterance) {
+                    utterance.voice = retryVoice;
+                }
+            }, 100);
         }
         
         // Configurações de voz
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0;
-        utterance.pitch = 0.9; // Tom mais grave (masculino)
+        utterance.pitch = 0.9; // Tom mais grave (masculino) - importante para mobile
         utterance.volume = 1.0;
         
         // Navegar quando a fala terminar
