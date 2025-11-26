@@ -582,6 +582,22 @@ body.high-contrast * {
     border-color: #000 !important;
 }
 
+/* Garantir que botões flutuantes mantenham position: fixed no alto contraste */
+body.high-contrast .accessibility-float,
+body.high-contrast .language-float,
+body.high-contrast .whatsapp-float {
+    position: fixed !important;
+    z-index: 1202 !important;
+}
+
+body.high-contrast .language-float {
+    z-index: 1201 !important;
+}
+
+body.high-contrast .whatsapp-float {
+    z-index: 1200 !important;
+}
+
 /* Font size adjustments */
 body.font-small {
     font-size: 85% !important;
