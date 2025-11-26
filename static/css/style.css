@@ -4160,6 +4160,7 @@ body.font-xxlarge {
     cursor: pointer;
     transform: translateY(0);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.6s ease-out;
 }
 
 .banners-section .banner-card::before {
@@ -4202,10 +4203,6 @@ body.font-xxlarge {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.banners-section .banner-card {
-    animation: fadeInUp 0.6s ease-out;
 }
 
 .banners-section .banner-card:nth-child(1) {
