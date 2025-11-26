@@ -213,6 +213,38 @@
                 .o-que-fazemos-grid {
                     grid-template-columns: 1fr !important;
                     gap: 2rem !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                }
+                .o-que-fazemos-column {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    width: 100% !important;
+                    gap: 1.5rem !important;
+                }
+                .o-que-fazemos-item {
+                    width: 100% !important;
+                    margin-bottom: 1.5rem !important;
+                }
+            }
+            
+            /* Mobile - todos os serviços um abaixo do outro */
+            @media screen and (max-width: 768px) {
+                .o-que-fazemos-grid {
+                    grid-template-columns: 1fr !important;
+                    gap: 2rem !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                }
+                .o-que-fazemos-column {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    width: 100% !important;
+                    gap: 1.5rem !important;
+                }
+                .o-que-fazemos-item {
+                    width: 100% !important;
+                    margin-bottom: 1.5rem !important;
                 }
             }
         </style>
