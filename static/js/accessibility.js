@@ -48,49 +48,47 @@
     function ensureMaleVoice() {
         if (!speechSynthesis) return null;
         
-        // Se já temos uma voz masculina, retornar
-        if (maleVoice) {
-            return maleVoice;
-        }
-        
-        // Tentar encontrar voz masculina novamente
+        // Tentar encontrar voz masculina novamente (sempre verificar, pois no mobile as vozes podem mudar)
         const voices = speechSynthesis.getVoices();
         
         if (voices.length === 0) {
-            // Se ainda não há vozes, aguardar e tentar novamente
+            // Se ainda não há vozes, retornar null (será tentado novamente)
             return null;
         }
         
         // Procurar por voz masculina em português (prioridade máxima)
+        // No mobile, algumas vozes podem não ter gender definido, então usamos nome
         maleVoice = voices.find(voice => 
             (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
-            (voice.name.toLowerCase().includes('male') || 
+            (voice.gender === 'male' ||
+             voice.name.toLowerCase().includes('male') || 
              voice.name.toLowerCase().includes('masculina') ||
              voice.name.toLowerCase().includes('masculino') ||
              voice.name.toLowerCase().includes('joão') ||
              voice.name.toLowerCase().includes('carlos') ||
              voice.name.toLowerCase().includes('paulo') ||
              voice.name.toLowerCase().includes('ricardo') ||
-             voice.gender === 'male')
+             voice.name.toLowerCase().includes('thiago') ||
+             voice.name.toLowerCase().includes('felipe'))
         ) || voices.find(voice => 
             (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) &&
+            voice.gender !== 'female' &&
             !voice.name.toLowerCase().includes('female') &&
             !voice.name.toLowerCase().includes('feminina') &&
             !voice.name.toLowerCase().includes('maria') &&
             !voice.name.toLowerCase().includes('helena') &&
             !voice.name.toLowerCase().includes('lucia') &&
             !voice.name.toLowerCase().includes('ana') &&
-            !voice.name.toLowerCase().includes('lucia') &&
-            voice.gender !== 'female'
-        ) || voices.find(voice => 
-            voice.lang.startsWith('pt') && 
-            voice.gender === 'male'
+            !voice.name.toLowerCase().includes('sandra') &&
+            !voice.name.toLowerCase().includes('patricia')
         ) || voices.find(voice => 
             voice.gender === 'male'
         ) || voices.find(voice => 
             voice.lang.startsWith('pt') &&
             !voice.name.toLowerCase().includes('female') &&
-            !voice.name.toLowerCase().includes('feminina')
+            !voice.name.toLowerCase().includes('feminina') &&
+            !voice.name.toLowerCase().includes('maria') &&
+            !voice.name.toLowerCase().includes('helena')
         ) || voices.find(voice => voice.lang.startsWith('pt')) || voices[0];
         
         return maleVoice;
