@@ -1588,6 +1588,24 @@ body.font-xxlarge {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.25) !important;
+}
+
+.hero-action-group .btn-acessibilidade.hero-action-link {
+    background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+    box-shadow: 0 6px 20px rgba(127, 29, 29, 0.25) !important;
+}
+
+.hero-action-group .btn-certificados.hero-action-link {
+    background: linear-gradient(135deg, #312e81, #4338ca) !important;
+    box-shadow: 0 6px 20px rgba(49, 46, 129, 0.25) !important;
+}
+
+.hero-action-group .btn-reciclagem.hero-action-link {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.25) !important;
 }
 
 /* Buttons */
