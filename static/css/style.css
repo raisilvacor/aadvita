@@ -2287,7 +2287,8 @@ body.font-xxlarge {
 }
 
 .associate-form .form-group input,
-.associate-form .form-group textarea {
+.associate-form .form-group textarea,
+.associate-form .form-group select {
     width: 100%;
     padding: 0.875rem 1rem;
     border: 2px solid var(--border-color);
@@ -2296,10 +2297,14 @@ body.font-xxlarge {
     font-family: inherit;
     transition: var(--transition);
     background: var(--bg-color);
+    height: auto;
+    min-height: 48px;
+    box-sizing: border-box;
 }
 
 .associate-form .form-group input:focus,
-.associate-form .form-group textarea:focus {
+.associate-form .form-group textarea:focus,
+.associate-form .form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
