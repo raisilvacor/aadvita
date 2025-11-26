@@ -2233,22 +2233,28 @@ body.font-xxlarge {
 
 .qr-code-container {
     text-align: center;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 0;
+    padding: 0;
+    margin: 0 auto;
 }
 
 .qr-code-footer {
-    width: 120px;
-    height: 120px;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
     border-radius: 0;
-    background: white;
+    background: transparent;
     padding: 0;
     display: block;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    object-fit: fill;
+    margin: 0;
+    object-fit: contain;
     object-position: center;
-    margin: 0 auto;
 }
 
 .footer-bottom {
@@ -4712,17 +4718,20 @@ body.font-xxlarge {
     }
     
     .qr-code-container {
-        display: flex !important;
+        display: inline-flex !important;
         justify-content: center !important;
         align-items: center !important;
+        padding: 0 !important;
     }
     
     .qr-code-footer {
-        width: 120px !important;
-        height: 120px !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
         border-radius: 0 !important;
         padding: 0 !important;
-        object-fit: fill !important;
+        object-fit: contain !important;
     }
     
     .social-icons {
