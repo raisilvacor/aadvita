@@ -1090,18 +1090,9 @@
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Garantir voz masculina (sempre verificar novamente, igual em mobile e desktop)
-        const voice = ensureMaleVoice();
+        let voice = ensureMaleVoice();
         if (voice) {
             utterance.voice = voice;
-        } else {
-            // Se não encontrou voz masculina, tentar novamente após um pequeno delay
-            // Funciona igual em mobile e desktop
-            setTimeout(() => {
-                const retryVoice = ensureMaleVoice();
-                if (retryVoice && utterance) {
-                    utterance.voice = retryVoice;
-                }
-            }, 100);
         }
         
         // Configurações de voz (iguais para mobile e desktop)
@@ -1110,16 +1101,11 @@
         utterance.pitch = 0.8; // Tom mais grave (masculino) - reduzido para garantir voz mais masculina
         utterance.volume = 1.0;
         
-        // Retry agressivo para garantir voz masculina (especialmente no mobile)
-        let voice = ensureMaleVoice();
-        if (voice) {
-            utterance.voice = voice;
-        }
-        
         setTimeout(() => {
             const retryVoice = ensureMaleVoice();
             if (retryVoice && utterance && (!voice || voice !== retryVoice)) {
                 utterance.voice = retryVoice;
+                voice = retryVoice;
                 if (speechSynthesis.speaking) {
                     speechSynthesis.cancel();
                     speechSynthesis.speak(utterance);
@@ -1131,6 +1117,7 @@
             const retryVoice = ensureMaleVoice();
             if (retryVoice && utterance && (!voice || voice !== retryVoice)) {
                 utterance.voice = retryVoice;
+                voice = retryVoice;
                 if (speechSynthesis.speaking) {
                     speechSynthesis.cancel();
                     speechSynthesis.speak(utterance);
