@@ -107,16 +107,21 @@
         speechSynthesis.speak(utterance);
     }
     
-    // Obter descrição completa de uma imagem
+    // Obter descrição completa de uma imagem (apenas descrições textuais reais)
     function getImageDescription(img) {
         if (!img || img.tagName !== 'IMG') return '';
         
-        let description = 'Imagem: ';
         const parts = [];
         
-        // 1. Alt text (prioridade máxima)
+        // 1. Alt text (prioridade máxima - descrição textual fornecida)
+        // Ignorar se for apenas nome de arquivo ou vazio
         if (img.alt && img.alt.trim()) {
-            parts.push(img.alt.trim());
+            const altText = img.alt.trim();
+            // Verificar se não é apenas um nome de arquivo
+            const isFileName = /^[a-z0-9_-]+\.(jpg|jpeg|png|gif|webp|svg)$/i.test(altText);
+            if (!isFileName && altText !== 'undefined' && altText.length > 2) {
+                parts.push(altText);
+            }
         }
         
         // 2. Title
@@ -131,12 +136,11 @@
         }
         
         // 4. Buscar contexto próximo (título, descrição, etc.)
-        // Procurar em elementos próximos
         let contextText = '';
-        
-        // Procurar em parent com data-title ou aria-label
         let parent = img.parentElement;
+        
         if (parent) {
+            // Procurar em parent com data-title ou aria-label
             const dataTitle = parent.getAttribute('data-title');
             if (dataTitle && dataTitle.trim()) {
                 contextText = dataTitle.trim();
@@ -147,9 +151,8 @@
                 }
             }
             
-            // Procurar em elementos irmãos ou filhos próximos
+            // Procurar em overlay de imagem
             if (!contextText) {
-                // Procurar em overlay de imagem
                 const overlay = parent.querySelector('.image-overlay, .overlay, .caption, .image-title, .image-subtitle');
                 if (overlay) {
                     const overlayText = overlay.textContent || overlay.innerText;
@@ -157,17 +160,19 @@
                         contextText = overlayText.trim();
                     }
                 }
-                
-                // Procurar em elementos com classe de título/descrição
-                const titleEl = parent.querySelector('.title, .image-title, .photo-title, .gallery-title');
+            }
+            
+            // Procurar em elementos com classe de título/descrição
+            if (!contextText) {
+                const titleEl = parent.querySelector('.title, .image-title, .photo-title, .gallery-title, .slider-title');
                 if (titleEl) {
                     const titleText = titleEl.textContent || titleEl.innerText;
                     if (titleText && titleText.trim()) {
-                        contextText = (contextText ? contextText + '. ' : '') + titleText.trim();
+                        contextText = titleText.trim();
                     }
                 }
                 
-                const descEl = parent.querySelector('.description, .image-description, .photo-description, .caption');
+                const descEl = parent.querySelector('.description, .image-description, .photo-description, .caption, .slider-description');
                 if (descEl) {
                     const descText = descEl.textContent || descEl.innerText;
                     if (descText && descText.trim()) {
@@ -198,45 +203,37 @@
             }
         }
         
-        // 6. Informações da imagem (tamanho, tipo)
-        const imgInfo = [];
-        if (img.naturalWidth && img.naturalHeight) {
-            imgInfo.push(`${img.naturalWidth} por ${img.naturalHeight} pixels`);
+        // 6. Buscar em elementos pais mais distantes (avô, etc.)
+        if (!contextText && parent) {
+            const grandParent = parent.parentElement;
+            if (grandParent) {
+                const grandParentText = grandParent.textContent || grandParent.innerText;
+                if (grandParentText && grandParentText.trim() && grandParentText.trim().length < 300) {
+                    // Remover texto da imagem atual para evitar duplicação
+                    const cleanText = grandParentText.replace(img.alt || '', '').trim();
+                    if (cleanText && cleanText.length > 10) {
+                        contextText = cleanText.substring(0, 200).trim();
+                    }
+                }
+            }
         }
         
         // Combinar todas as informações
         if (parts.length > 0) {
-            description += parts.join('. ');
-        } else if (contextText) {
-            description += contextText;
-        } else {
-            // Se não houver nenhuma descrição, criar uma descrição genérica baseada no contexto
-            const src = img.src || '';
-            const fileName = src.split('/').pop().split('?')[0];
-            
-            // Tentar inferir do nome do arquivo
-            if (fileName && fileName !== 'undefined' && !fileName.includes('data:')) {
-                const cleanName = fileName.replace(/\.(jpg|jpeg|png|gif|webp|svg)$/i, '').replace(/[-_]/g, ' ');
-                if (cleanName.length > 3) {
-                    description += cleanName;
-                } else {
-                    description += 'sem descrição disponível';
-                }
-            } else {
-                description += 'sem descrição disponível';
+            let description = parts.join('. ');
+            if (contextText && !parts.some(p => contextText.includes(p))) {
+                description += '. ' + contextText;
             }
+            return description;
         }
         
-        // Adicionar informações adicionais se disponíveis
-        if (contextText && !parts.includes(contextText)) {
-            description += '. ' + contextText;
+        // Se temos contexto, usar ele
+        if (contextText) {
+            return contextText;
         }
         
-        if (imgInfo.length > 0) {
-            description += '. Dimensões: ' + imgInfo.join(', ');
-        }
-        
-        return description;
+        // Se não há descrição disponível, informar
+        return 'Imagem sem descrição disponível. Por favor, adicione um texto alternativo (alt) descrevendo o conteúdo da imagem.';
     }
     
     // Obter texto de um elemento para leitura
