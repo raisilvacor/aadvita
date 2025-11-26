@@ -2106,11 +2106,15 @@ textarea:focus {
     .nav-menu li {
         width: 100%;
         margin: 0;
+        min-width: 0;
+        flex-shrink: 0;
+        box-sizing: border-box;
     }
     
     .nav-menu a,
     .nav-menu button {
         width: 100%;
+        max-width: 100%;
         display: block;
         text-align: left;
         padding: 0.85rem 1rem;
@@ -2120,6 +2124,10 @@ textarea:focus {
         font-weight: 600;
         color: var(--text-color);
         transition: background 0.2s ease, color 0.2s ease;
+        box-sizing: border-box;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .nav-menu a:hover,
@@ -3622,7 +3630,7 @@ textarea:focus {
         top: 1.25rem;
         right: 1rem;
         width: min(90%, 360px);
-        max-height: calc(100vh - 2.5rem);
+        max-height: 85vh;
         padding: 1.75rem 1.5rem 3rem;
         background: #ffffff;
         border-radius: 20px;
@@ -3659,7 +3667,7 @@ textarea:focus {
     }
 
     .nav-menu.active {
-        display: flex;
+        display: flex !important;
         transform: translateY(0);
         opacity: 1;
     }
