@@ -596,10 +596,8 @@ textarea:focus {
         top: 1.25rem;
         right: 1rem;
         left: auto;
-        bottom: 1.25rem;
         width: min(90%, 360px);
         max-height: calc(100vh - 2.5rem);
-        min-height: auto;
         padding: 1.75rem 1.5rem 3rem;
         background: #ffffff;
         border-radius: 20px;
@@ -607,7 +605,7 @@ textarea:focus {
         display: none;
         flex-direction: column;
         gap: 0.9rem;
-        overflow-y: auto;
+        overflow-y: scroll;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
         z-index: 1000;
@@ -615,6 +613,24 @@ textarea:focus {
         opacity: 0;
         transition: transform 0.25s ease, opacity 0.25s ease;
         box-sizing: border-box;
+    }
+    
+    .nav-menu::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .nav-menu::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .nav-menu::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    
+    .nav-menu::-webkit-scrollbar-thumb:hover {
+        background: #555;
     }
 
     .nav-menu.active {
