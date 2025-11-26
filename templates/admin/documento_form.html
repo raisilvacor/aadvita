@@ -8,33 +8,13 @@
 <div class="admin-card">
     <form method="POST" class="admin-form" enctype="multipart/form-data">
         <div class="form-group">
-            <label for="titulo_pt">Título (Português) *</label>
+            <label for="titulo_pt">Título *</label>
             <input type="text" id="titulo_pt" name="titulo_pt" value="{% if documento %}{{ documento.titulo_pt }}{% endif %}" required>
         </div>
         
         <div class="form-group">
-            <label for="titulo_es">Título (Espanhol)</label>
-            <input type="text" id="titulo_es" name="titulo_es" value="{% if documento %}{{ documento.titulo_es }}{% endif %}">
-        </div>
-        
-        <div class="form-group">
-            <label for="titulo_en">Título (Inglês)</label>
-            <input type="text" id="titulo_en" name="titulo_en" value="{% if documento %}{{ documento.titulo_en }}{% endif %}">
-        </div>
-        
-        <div class="form-group">
-            <label for="descricao_pt">Descrição (Português)</label>
+            <label for="descricao_pt">Descrição</label>
             <textarea id="descricao_pt" name="descricao_pt" rows="4">{% if documento %}{{ documento.descricao_pt }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="descricao_es">Descrição (Espanhol)</label>
-            <textarea id="descricao_es" name="descricao_es" rows="4">{% if documento %}{{ documento.descricao_es }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="descricao_en">Descrição (Inglês)</label>
-            <textarea id="descricao_en" name="descricao_en" rows="4">{% if documento %}{{ documento.descricao_en }}{% endif %}</textarea>
         </div>
         
         <div class="form-row">
