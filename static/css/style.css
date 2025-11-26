@@ -1580,6 +1580,16 @@ body.font-xxlarge {
     white-space: nowrap;
 }
 
+/* Garantir que botões com hero-action-link mantenham seus estilos */
+.hero-action-group .btn-volunteer.hero-action-link,
+.hero-action-group .btn-acessibilidade.hero-action-link,
+.hero-action-group .btn-certificados.hero-action-link,
+.hero-action-group .btn-reciclagem.hero-action-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
 /* Buttons */
 .btn {
     display: inline-block;
