@@ -597,7 +597,7 @@ textarea:focus {
         right: 1rem;
         left: auto;
         width: min(90%, 360px);
-        max-height: calc(100vh - 2.5rem);
+        max-height: 85vh;
         padding: 1.75rem 1.5rem 3rem;
         background: #ffffff;
         border-radius: 20px;
@@ -634,7 +634,7 @@ textarea:focus {
     }
 
     .nav-menu.active {
-        display: flex;
+        display: flex !important;
         transform: translateY(0);
         opacity: 1;
     }
