@@ -114,13 +114,20 @@
         const parts = [];
         
         // 1. Alt text (prioridade máxima - descrição textual fornecida)
-        // Ignorar se for apenas nome de arquivo ou vazio
+        // SEMPRE usar o alt se ele existir e não for vazio, mesmo que seja curto
+        // O alt pode conter descricao_imagem salva pelo usuário
         if (img.alt && img.alt.trim()) {
             const altText = img.alt.trim();
             // Verificar se não é apenas um nome de arquivo
             const isFileName = /^[a-z0-9_-]+\.(jpg|jpeg|png|gif|webp|svg)$/i.test(altText);
-            if (!isFileName && altText !== 'undefined' && altText.length > 2) {
+            // Verificar se não é apenas "Imagem atual" ou similar (textos genéricos de formulários)
+            const isGenericText = /^(imagem atual|imagem|foto atual|foto|logo atual|logo)$/i.test(altText);
+            // Se não for nome de arquivo, não for texto genérico, e não for "undefined", usar
+            if (!isFileName && !isGenericText && altText !== 'undefined' && altText.length > 1) {
                 parts.push(altText);
+                // Se temos uma descrição válida no alt, retornar imediatamente (não buscar contexto)
+                // Isso garante que descrições salvas pelo usuário sejam sempre lidas
+                return altText;
             }
         }
         
