@@ -236,7 +236,82 @@
         return 'Imagem sem descrição disponível. Por favor, adicione um texto alternativo (alt) descrevendo o conteúdo da imagem.';
     }
     
-    // Obter texto de um elemento para leitura
+    // Obter todo o texto de um elemento e seus filhos (recursivo)
+    function getAllTextContent(element, depth = 0) {
+        if (!element || depth > 10) return ''; // Limitar profundidade
+        
+        let text = '';
+        
+        // Se for nó de texto, retornar diretamente
+        if (element.nodeType === Node.TEXT_NODE) {
+            return element.textContent || '';
+        }
+        
+        // Ignorar elementos ocultos ou scripts
+        if (element.nodeType === Node.ELEMENT_NODE) {
+            const style = window.getComputedStyle(element);
+            if (style.display === 'none' || style.visibility === 'hidden' || 
+                element.tagName === 'SCRIPT' || element.tagName === 'STYLE' ||
+                element.tagName === 'NOSCRIPT' || element.hasAttribute('aria-hidden')) {
+                return '';
+            }
+        }
+        
+        // Para elementos específicos, pegar texto de forma especial
+        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+            if (element.type === 'button' || element.type === 'submit' || element.type === 'reset') {
+                return element.value || '';
+            } else if (element.type === 'checkbox' || element.type === 'radio') {
+                const label = element.closest('label') || document.querySelector(`label[for="${element.id}"]`);
+                if (label) {
+                    return getAllTextContent(label, depth + 1);
+                }
+                return element.value || element.getAttribute('aria-label') || '';
+            } else {
+                return element.value || element.placeholder || '';
+            }
+        }
+        
+        if (element.tagName === 'SELECT') {
+            const selectedOption = element.options[element.selectedIndex];
+            return selectedOption ? selectedOption.text : '';
+        }
+        
+        // Para SVG, tentar pegar aria-label ou title
+        if (element.tagName === 'SVG') {
+            const svgLabel = element.getAttribute('aria-label') || 
+                           element.querySelector('title')?.textContent ||
+                           element.getAttribute('title');
+            if (svgLabel) return svgLabel;
+        }
+        
+        // Percorrer todos os nós filhos
+        for (let node = element.firstChild; node; node = node.nextSibling) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const nodeText = node.textContent || '';
+                if (nodeText.trim()) {
+                    text += (text ? ' ' : '') + nodeText.trim();
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // Ignorar imagens para evitar loops, mas incluir seu alt
+                if (node.tagName === 'IMG') {
+                    const imgAlt = node.getAttribute('alt') || node.getAttribute('aria-label');
+                    if (imgAlt && imgAlt.trim()) {
+                        text += (text ? ' ' : '') + imgAlt.trim();
+                    }
+                } else {
+                    const childText = getAllTextContent(node, depth + 1);
+                    if (childText.trim()) {
+                        text += (text ? ' ' : '') + childText.trim();
+                    }
+                }
+            }
+        }
+        
+        return text;
+    }
+    
+    // Obter texto de um elemento para leitura (versão melhorada)
     function getElementText(element) {
         if (!element) return '';
         
@@ -245,43 +320,71 @@
             return getImageDescription(element);
         }
         
-        // Priorizar aria-label
-        if (element.getAttribute('aria-label')) {
-            return element.getAttribute('aria-label');
+        // Priorizar aria-label (mais confiável)
+        const ariaLabel = element.getAttribute('aria-label');
+        if (ariaLabel && ariaLabel.trim()) {
+            return ariaLabel.trim();
         }
         
         // Priorizar title
-        if (element.title) {
-            return element.title;
+        if (element.title && element.title.trim()) {
+            return element.title.trim();
         }
         
-        // Obter texto visível
-        let text = '';
+        // Para botões e links, pegar texto completo
+        if (element.tagName === 'BUTTON' || element.tagName === 'A') {
+            const buttonText = getAllTextContent(element);
+            if (buttonText.trim()) {
+                return buttonText.trim();
+            }
+            // Fallback para value em botões
+            if (element.value && element.value.trim()) {
+                return element.value.trim();
+            }
+        }
         
-        // Se for input, textarea ou select, usar value ou selected option
+        // Para inputs e textareas
         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
             if (element.type === 'button' || element.type === 'submit' || element.type === 'reset') {
-                text = element.value || element.textContent || '';
+                return element.value || getAllTextContent(element) || '';
             } else if (element.type === 'checkbox' || element.type === 'radio') {
                 const label = element.closest('label') || document.querySelector(`label[for="${element.id}"]`);
                 if (label) {
-                    text = label.textContent.trim();
-                } else {
-                    text = element.value || element.getAttribute('aria-label') || '';
+                    return getAllTextContent(label).trim();
                 }
+                return element.value || element.getAttribute('aria-label') || '';
             } else {
-                text = element.value || element.placeholder || '';
+                const label = element.closest('label') || document.querySelector(`label[for="${element.id}"]`);
+                const labelText = label ? getAllTextContent(label).trim() : '';
+                const value = element.value || '';
+                const placeholder = element.placeholder || '';
+                
+                if (value) {
+                    return labelText ? `${labelText}: ${value}` : value;
+                }
+                return labelText || placeholder || '';
             }
-        } else if (element.tagName === 'SELECT') {
-            const selectedOption = element.options[element.selectedIndex];
-            text = selectedOption ? selectedOption.text : '';
-        } else {
-            // Para outros elementos, pegar texto visível
-            text = element.textContent || element.innerText || '';
         }
         
-        // Limpar texto (remover espaços extras, quebras de linha, etc)
-        text = text.trim().replace(/\s+/g, ' ').replace(/\n+/g, ' ');
+        if (element.tagName === 'SELECT') {
+            const selectedOption = element.options[element.selectedIndex];
+            const label = element.closest('label') || document.querySelector(`label[for="${element.id}"]`);
+            const labelText = label ? getAllTextContent(label).trim() : '';
+            const optionText = selectedOption ? selectedOption.text : '';
+            
+            return labelText ? `${labelText}: ${optionText}` : optionText;
+        }
+        
+        // Para outros elementos, pegar TODO o texto (não apenas textContent)
+        let text = getAllTextContent(element);
+        
+        // Limpar texto (remover espaços extras, mas manter palavras completas)
+        text = text.trim()
+            .replace(/\s+/g, ' ')  // Múltiplos espaços vira um
+            .replace(/\n+/g, ' ')  // Quebras de linha viram espaço
+            .replace(/\t+/g, ' ')  // Tabs viram espaço
+            .replace(/[ \t\n]+/g, ' ')  // Qualquer combinação de espaços vira um
+            .trim();
         
         // Se não houver texto, tentar pegar do primeiro filho com texto
         if (!text && element.children.length > 0) {
@@ -289,12 +392,37 @@
                 // Ignorar imagens nos filhos para evitar loops
                 if (child.tagName !== 'IMG') {
                     const childText = getElementText(child);
-                    if (childText) {
-                        text = childText;
+                    if (childText && childText.trim()) {
+                        text = childText.trim();
                         break;
                     }
                 }
             }
+        }
+        
+        // Adicionar contexto adicional se disponível
+        if (text) {
+            // Adicionar tipo de elemento se relevante
+            const role = element.getAttribute('role');
+            const tagName = element.tagName.toLowerCase();
+            
+            let prefix = '';
+            if (role === 'button' || tagName === 'button') {
+                prefix = 'Botão: ';
+            } else if (tagName === 'a') {
+                prefix = 'Link: ';
+            } else if (tagName === 'h1' || tagName === 'h2' || tagName === 'h3' || 
+                      tagName === 'h4' || tagName === 'h5' || tagName === 'h6') {
+                prefix = `Título ${tagName}: `;
+            } else if (tagName === 'nav') {
+                prefix = 'Navegação: ';
+            } else if (tagName === 'article') {
+                prefix = 'Artigo: ';
+            } else if (tagName === 'section') {
+                prefix = 'Seção: ';
+            }
+            
+            return prefix + text;
         }
         
         return text;
@@ -460,14 +588,10 @@
     
     // Manipular clique com áudio descrição
     function handleClickWithAudioDesc(e) {
-        // Ignorar cliques nos botões de acessibilidade
-        if (e.target.closest('.accessibility-float') || 
-            e.target.closest('.language-float') || 
-            e.target.closest('.whatsapp-float')) {
-            return;
-        }
-        
         const target = e.target;
+        
+        // NÃO ignorar botões flutuantes - eles também devem ser lidos!
+        // Removido: if (e.target.closest('.accessibility-float') || ...)
         
         // Verificar se é o mesmo elemento clicado anteriormente
         if (lastClickedElement === target && clickTimeout) {
@@ -512,14 +636,10 @@
     
     // Manipular touch com áudio descrição
     function handleTouchWithAudioDesc(e) {
-        // Ignorar toques nos botões de acessibilidade
-        if (e.target.closest('.accessibility-float') || 
-            e.target.closest('.language-float') || 
-            e.target.closest('.whatsapp-float')) {
-            return;
-        }
-        
         const target = e.target;
+        
+        // NÃO ignorar botões flutuantes - eles também devem ser lidos!
+        // Removido: if (e.target.closest('.accessibility-float') || ...)
         
         // Verificar se é o mesmo elemento tocado anteriormente
         if (lastClickedElement === target && clickTimeout) {
