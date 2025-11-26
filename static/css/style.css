@@ -574,19 +574,24 @@ textarea:focus {
 }
 
 /* High contrast mode */
-body.high-contrast {
-    filter: contrast(1.5);
-}
-
+/* O filter será aplicado via JavaScript no html, não no body, para evitar problemas com position: fixed */
 body.high-contrast * {
     border-color: #000 !important;
 }
 
-/* Garantir que botões flutuantes mantenham position: fixed no alto contraste */
+/* Garantir que botões flutuantes mantenham position: fixed e não sejam afetados pelo filter */
+.accessibility-float,
+.language-float,
+.whatsapp-float {
+    position: fixed !important;
+    filter: none !important;
+}
+
 body.high-contrast .accessibility-float,
 body.high-contrast .language-float,
 body.high-contrast .whatsapp-float {
     position: fixed !important;
+    filter: none !important;
     z-index: 1202 !important;
 }
 
@@ -596,6 +601,11 @@ body.high-contrast .language-float {
 
 body.high-contrast .whatsapp-float {
     z-index: 1200 !important;
+}
+
+body.high-contrast .accessibility-float-dropdown,
+body.high-contrast .lang-float-dropdown {
+    filter: none !important;
 }
 
 /* Font size adjustments */
@@ -4848,4 +4858,5 @@ body.device-desktop {
         width: 32px !important;
     }
 }
+
 
