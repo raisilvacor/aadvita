@@ -598,6 +598,7 @@ textarea:focus {
         left: auto;
         width: min(90%, 360px);
         max-height: 85vh;
+        min-height: 200px;
         padding: 1.75rem 1.5rem 3rem;
         background: #ffffff;
         border-radius: 20px;
@@ -605,14 +606,18 @@ textarea:focus {
         display: none;
         flex-direction: column;
         gap: 0.9rem;
-        overflow-y: scroll;
-        overflow-x: hidden;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch;
         z-index: 1000;
         transform: translateY(12px);
         opacity: 0;
         transition: transform 0.25s ease, opacity 0.25s ease;
         box-sizing: border-box;
+        align-items: stretch;
+        scrollbar-width: thin;
+        scrollbar-color: #888 #f1f1f1;
+        will-change: scroll-position;
     }
     
     .nav-menu::-webkit-scrollbar {
@@ -645,6 +650,9 @@ textarea:focus {
         min-width: 0;
         flex-shrink: 0;
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .nav-menu a,
@@ -3739,9 +3747,18 @@ textarea:focus {
         margin-top: 0.5rem !important;
         margin-left: 0 !important;
         margin-bottom: 0 !important;
+        margin-right: 0 !important;
         display: block !important;
         box-sizing: border-box !important;
         flex-shrink: 0 !important;
+        position: relative !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        order: 999 !important;
+        float: none !important;
+        clear: both !important;
     }
 
     .nav-menu .language-selector .lang-btn {

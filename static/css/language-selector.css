@@ -128,6 +128,7 @@
     .language-selector {
         margin-left: 0;
         width: 100%;
+        position: relative !important;
     }
     
     .lang-btn {
@@ -139,6 +140,20 @@
         width: 100%;
         right: 0;
         left: 0;
+    }
+}
+
+/* Language selector dentro do nav-menu mobile */
+@media (max-width: 1023px) {
+    .nav-menu .language-selector {
+        position: relative !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        margin: 0.5rem 0 0 0 !important;
+        display: block !important;
     }
 }
 
