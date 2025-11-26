@@ -2205,57 +2205,57 @@ textarea:focus {
     }
     
     .slider-nav {
-        width: 50px;
-        height: 50px;
-        min-width: 50px;
-        min-height: 50px;
-        background: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
         /* Melhor área de toque em mobile */
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
-        z-index: 10;
+        z-index: 10 !important;
     }
     
     .slider-nav svg {
-        width: 24px;
-        height: 24px;
+        width: 24px !important;
+        height: 24px !important;
         pointer-events: none; /* Evita conflitos de toque */
     }
     
     .slider-prev {
-        left: 20px;
+        left: 20px !important;
     }
     
     .slider-next {
-        right: 20px;
+        right: 20px !important;
     }
     
     .slider-indicators {
-        bottom: 20px;
-        gap: 10px;
-        padding: 0;
-        background: transparent;
-        border-radius: 0;
-        backdrop-filter: none;
-        z-index: 10;
+        bottom: 20px !important;
+        gap: 10px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        backdrop-filter: none !important;
+        z-index: 10 !important;
     }
     
     .slider-indicator {
-        width: 12px;
-        height: 12px;
-        min-width: 12px;
-        min-height: 12px;
-        border-width: 2px;
+        width: 12px !important;
+        height: 12px !important;
+        min-width: 12px !important;
+        min-height: 12px !important;
+        border-width: 2px !important;
         /* Melhor área de toque */
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
-        padding: 0;
-        margin: 0;
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
     .slider-indicator.active {
-        width: 32px;
+        width: 32px !important;
     }
     
     .slider-image {
@@ -2290,35 +2290,38 @@ textarea:focus {
     }
     
     .slider-nav {
-        width: 50px;
-        height: 50px;
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
     }
     
     .slider-nav svg {
-        width: 24px;
-        height: 24px;
+        width: 24px !important;
+        height: 24px !important;
     }
     
     .slider-prev {
-        left: 20px;
+        left: 20px !important;
     }
     
     .slider-next {
-        right: 20px;
+        right: 20px !important;
     }
     
     .slider-indicators {
-        bottom: 20px;
-        gap: 10px;
+        bottom: 20px !important;
+        gap: 10px !important;
+        z-index: 10 !important;
     }
     
     .slider-indicator {
-        width: 12px;
-        height: 12px;
+        width: 12px !important;
+        height: 12px !important;
     }
     
     .slider-indicator.active {
-        width: 32px;
+        width: 32px !important;
     }
 }
     
@@ -4486,6 +4489,50 @@ body.device-desktop {
     body:not(.device-desktop) .container,
     body.device-mobile .container {
         padding: 0 1rem !important;
+    }
+    
+    /* Garantir que botões do slider mantenham tamanho original em mobile */
+    body.device-mobile .slider-nav,
+    body:not(.device-desktop) .slider-nav {
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        z-index: 10 !important;
+    }
+    
+    body.device-mobile .slider-nav svg,
+    body:not(.device-desktop) .slider-nav svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    body.device-mobile .slider-prev,
+    body:not(.device-desktop) .slider-prev {
+        left: 20px !important;
+    }
+    
+    body.device-mobile .slider-next,
+    body:not(.device-desktop) .slider-next {
+        right: 20px !important;
+    }
+    
+    body.device-mobile .slider-indicators,
+    body:not(.device-desktop) .slider-indicators {
+        bottom: 20px !important;
+        gap: 10px !important;
+        z-index: 10 !important;
+    }
+    
+    body.device-mobile .slider-indicator,
+    body:not(.device-desktop) .slider-indicator {
+        width: 12px !important;
+        height: 12px !important;
+    }
+    
+    body.device-mobile .slider-indicator.active,
+    body:not(.device-desktop) .slider-indicator.active {
+        width: 32px !important;
     }
 }
 
