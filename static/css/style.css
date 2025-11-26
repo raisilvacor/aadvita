@@ -2233,16 +2233,21 @@ body.font-xxlarge {
 
 .qr-code-container {
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .qr-code-footer {
     width: 120px;
     height: 120px;
-    border-radius: 0.5rem;
+    border-radius: 0;
     background: white;
-    padding: 0.5rem;
+    padding: 0;
     display: block;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    object-fit: cover;
+    object-position: center;
 }
 
 .footer-bottom {
