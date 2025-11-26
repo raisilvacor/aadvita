@@ -80,7 +80,7 @@
             {% if programa and programa.imagem %}
             <div style="margin-bottom: 1rem;">
                 <img src="{{ radio_programa_imagem_url(programa) or url_for('static', filename=programa.imagem) }}" 
-                     alt="Imagem atual" 
+                     alt="{{ programa.descricao_imagem or 'Imagem atual' }}" 
                      style="max-width: 300px; max-height: 200px; border-radius: 0.5rem; border: 2px solid #d1d5db;">
                 <p style="color: var(--text-light); font-size: 0.875rem; margin-top: 0.5rem;">
                     Imagem atual. Selecione uma nova imagem para substituir.
@@ -91,6 +91,20 @@
                    style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
             <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
                 Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP. Máximo: 16MB.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="descricao_imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Descrição da Imagem
+            </label>
+            <textarea id="descricao_imagem" 
+                      name="descricao_imagem" 
+                      rows="3"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;"
+                      placeholder="Descreva o conteúdo da imagem para facilitar a leitura por leitores de tela.">{{ programa.descricao_imagem if programa and programa.descricao_imagem else '' }}</textarea>
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Descreva o conteúdo visual da imagem. Esta descrição será usada pelo leitor de áudio para descrever a imagem aos usuários com deficiência visual.
             </small>
         </div>
         

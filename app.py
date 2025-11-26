@@ -127,11 +127,56 @@ def _ensure_associado_tipo_associado():
         print('Startup: error while ensuring associado.tipo_associado:', e)
 
 
+def _ensure_descricao_imagem_columns():
+    """Garante que a coluna descricao_imagem existe em todas as tabelas que têm imagens"""
+    try:
+        # Only attempt for Postgres-like DBs
+        uri = app.config.get('SQLALCHEMY_DATABASE_URI', '') or ''
+        if uri.startswith('sqlite') or uri == '':
+            return
+
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        
+        # Tabelas que precisam da coluna descricao_imagem
+        tables_with_images = [
+            'slider_image',
+            'acao',
+            'evento',
+            'projeto',
+            'informativo',
+            'radio_programa',
+            'banner',
+            'banner_conteudo',
+            'apoiador',
+            'acao_foto',
+            'evento_foto',
+            'album_foto'
+        ]
+        
+        for table_name in tables_with_images:
+            if table_name in tables:
+                cols = [c['name'] for c in inspector.get_columns(table_name)]
+                if 'descricao_imagem' not in cols:
+                    print(f'Startup: descricao_imagem column missing in {table_name} — issuing ALTER TABLE')
+                    with db.engine.connect() as conn:
+                        conn.execute(text(f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS descricao_imagem TEXT'))
+                        try:
+                            conn.commit()
+                        except Exception:
+                            pass
+                    print(f'Startup: descricao_imagem column ensured in {table_name}')
+    except Exception as e:
+        print('Startup: error while ensuring descricao_imagem columns:', e)
+
+
 # Run safety-net migration now (before model classes are declared)
 try:
     with app.app_context():
         _ensure_associado_foto_base64()
         _ensure_associado_tipo_associado()
+        _ensure_descricao_imagem_columns()
 except Exception as _:
     # Swallow errors to avoid preventing app import — errors logged above
     pass
@@ -1359,6 +1404,7 @@ class Projeto(db.Model):
     consideracoes_finais = db.Column(db.Text)
     imagen = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagen_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     arquivo_pdf = db.Column(db.String(300))  # Caminho do arquivo PDF ou 'base64:application/pdf'
     arquivo_pdf_base64 = db.Column(db.Text, nullable=True)  # PDF em base64 para persistência no Render (opcional)
     estado = db.Column(db.String(50), default='Ativo')
@@ -1385,6 +1431,7 @@ class Acao(db.Model):
     categoria = db.Column(db.String(100))
     imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamento com fotos
@@ -1399,6 +1446,7 @@ class AcaoFoto(db.Model):
     caminho = db.Column(db.String(300), nullable=False)
     titulo = db.Column(db.String(200))
     descricao = db.Column(db.Text)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -1408,6 +1456,7 @@ class Apoiador(db.Model):
     tipo = db.Column(db.String(100))  # Empresa, Individual, Instituição
     logo = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     logo_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem (logo) para acessibilidade
     website = db.Column(db.String(500))
     descricao = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
@@ -1426,6 +1475,7 @@ class SliderImage(db.Model):
     titulo = db.Column(db.String(200))
     imagem = db.Column(db.String(300), nullable=False)  # Caminho da imagem ou 'base64:...'
     imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     link = db.Column(db.String(500))  # Link clicável (opcional)
     ordem = db.Column(db.Integer, default=0)  # Ordem de exibição
     ativo = db.Column(db.Boolean, default=True)
@@ -1502,6 +1552,7 @@ class Evento(db.Model):
     link = db.Column(db.String(500))
     imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamento com fotos
@@ -1516,6 +1567,7 @@ class EventoFoto(db.Model):
     caminho = db.Column(db.String(300), nullable=False)
     titulo = db.Column(db.String(200))
     descricao = db.Column(db.Text)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -1842,6 +1894,7 @@ class Informativo(db.Model):
     url_soundcloud = db.Column(db.String(500))  # URL do SoundCloud para podcasts
     imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     data_publicacao = db.Column(db.Date, nullable=False, default=date.today)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -1856,6 +1909,7 @@ class RadioPrograma(db.Model):
     url_arquivo = db.Column(db.String(500))  # URL para arquivo de áudio (episódio)
     imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     ativo = db.Column(db.Boolean, default=True)
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -1979,6 +2033,7 @@ class Banner(db.Model):
     url = db.Column(db.String(500))  # URL de destino
     imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     cor_gradiente_inicio = db.Column(db.String(7), default='#667eea')  # Cor inicial do gradiente
     cor_gradiente_fim = db.Column(db.String(7), default='#764ba2')  # Cor final do gradiente
     ativo = db.Column(db.Boolean, default=True)
@@ -1996,6 +2051,7 @@ class BannerConteudo(db.Model):
     conteudo = db.Column(db.Text)  # Conteúdo HTML/texto
     imagem = db.Column(db.String(300))  # Caminho da imagem ou 'base64:...'
     imagem_base64 = db.Column(db.Text, nullable=True)  # Imagem em base64 para persistência no Render (opcional)
+    descricao_imagem = db.Column(db.Text, nullable=True)  # Descrição da imagem para acessibilidade
     arquivo_pdf = db.Column(db.String(300))  # Arquivo PDF opcional
     ordem = db.Column(db.Integer, default=0)
     ativo = db.Column(db.Boolean, default=True)
@@ -2734,6 +2790,7 @@ def admin_projetos_novo():
                 data_fim=datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None,
                 imagen=imagen_path,
                 imagen_base64=imagen_base64_data,
+                descricao_imagem=request.form.get('descricao_imagem', '').strip() or None,
                 arquivo_pdf=pdf_path,
                 arquivo_pdf_base64=pdf_base64_data
             )
@@ -2873,6 +2930,7 @@ def admin_projetos_editar(id):
             projeto.estado = request.form.get('estado', 'Ativo')
             projeto.data_inicio = datetime.strptime(data_inicio_str, "%Y-%m-%d").date() if data_inicio_str else None
             projeto.data_fim = datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None
+            projeto.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             
             db.session.commit()
             flash('Projeto atualizado com sucesso!', 'success')
@@ -2954,7 +3012,8 @@ def admin_eventos_novo():
                 endereco=request.form.get('endereco'),
                 tipo=request.form.get('tipo'),
                 link=request.form.get('link'),
-                imagem=imagem_path
+                imagem=imagem_path,
+                descricao_imagem=request.form.get('descricao_imagem', '').strip() or None
             )
             db.session.add(evento)
             db.session.flush()  # Para obter o ID do evento
@@ -3020,6 +3079,7 @@ def admin_eventos_editar(id):
             evento.endereco = request.form.get('endereco')
             evento.tipo = request.form.get('tipo')
             evento.link = request.form.get('link')
+            evento.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             
             # Processar álbuns selecionados
             albuns_selecionados = request.form.getlist('albuns')
@@ -3204,7 +3264,8 @@ def admin_acoes_novo():
                 data=datetime.strptime(data_str, "%Y-%m-%d").date(),
                 categoria=request.form.get('categoria'),
                 imagem=imagem_path,
-                imagem_base64=imagem_base64_data
+                imagem_base64=imagem_base64_data,
+                descricao_imagem=request.form.get('descricao_imagem', '').strip() or None
             )
             db.session.add(acao)
             db.session.commit()
@@ -3279,6 +3340,7 @@ def admin_acoes_editar(id):
             acao.descricao = request.form.get('descricao')
             acao.data = datetime.strptime(data_str, "%Y-%m-%d").date()
             acao.categoria = request.form.get('categoria')
+            acao.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             
             # Processar álbuns selecionados
             albuns_selecionados = request.form.getlist('albuns')
@@ -7657,6 +7719,7 @@ def admin_slider_novo():
                 titulo=titulo,
                 imagem=imagem_path,
                 imagem_base64=imagem_base64_data,
+                descricao_imagem=request.form.get('descricao_imagem', '').strip() or None,
                 link=link if link else None,
                 ordem=int(ordem) if ordem else 0,
                 ativo=ativo,
@@ -8294,6 +8357,7 @@ def admin_informativos_novo():
                 url_soundcloud=url_soundcloud if tipo == 'Podcast' else None,
                 imagem=imagem_path,
                 imagem_base64=imagem_base64_data,
+                descricao_imagem=request.form.get('descricao_imagem', '').strip() or None,
                 data_publicacao=data_publicacao
             )
             db.session.add(informativo)
@@ -8405,6 +8469,7 @@ def admin_informativos_editar(id):
             informativo.subtitulo = subtitulo if subtitulo else None
             informativo.conteudo = conteudo if tipo == 'Noticia' else None
             informativo.url_soundcloud = url_soundcloud if tipo == 'Podcast' else None
+            informativo.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             informativo.data_publicacao = data_publicacao
             
             db.session.commit()
@@ -8875,6 +8940,7 @@ def admin_radio_novo():
                 url_arquivo=url_arquivo if url_arquivo else None,
                 imagem=imagem_path,
                 imagem_base64=imagem_base64_data,
+                descricao_imagem=request.form.get('descricao_imagem', '').strip() or None,
                 ativo=ativo,
                 ordem=ordem
             )
@@ -8966,6 +9032,7 @@ def admin_radio_editar(id):
             programa.horario = horario if horario else None
             programa.url_streaming = url_streaming if url_streaming else None
             programa.url_arquivo = url_arquivo if url_arquivo else None
+            programa.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             programa.ativo = ativo
             programa.ordem = ordem
             
@@ -9229,6 +9296,7 @@ def admin_banners_editar(id):
             banner.titulo = titulo
             banner.descricao = descricao if descricao else None
             banner.url = url if url else None
+            banner.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             banner.cor_gradiente_inicio = cor_gradiente_inicio
             banner.cor_gradiente_fim = cor_gradiente_fim
             banner.ativo = ativo
@@ -9330,12 +9398,16 @@ def admin_banner_conteudo_novo(banner_id):
             # Processar conteúdo: converter quebras de linha em parágrafos HTML
             conteudo_processado = processar_texto_paragrafos(conteudo) if conteudo else None
             
+            # Obter descricao_imagem
+            descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
+            
             novo_conteudo = BannerConteudo(
                 banner_id=banner_id,
                 titulo=titulo,
                 conteudo=conteudo_processado,
                 imagem=imagem_path,
                 imagem_base64=imagem_base64_data,
+                descricao_imagem=descricao_imagem,
                 arquivo_pdf=pdf_path,
                 ordem=ordem,
                 ativo=ativo
@@ -9474,8 +9546,12 @@ def admin_banner_conteudo_editar(id):
             # Processar conteúdo: converter quebras de linha em parágrafos HTML
             conteudo_processado = processar_texto_paragrafos(conteudo_text) if conteudo_text else None
             
+            # Obter descricao_imagem
+            descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
+            
             conteudo.titulo = titulo
             conteudo.conteudo = conteudo_processado
+            conteudo.descricao_imagem = descricao_imagem
             conteudo.ordem = ordem
             conteudo.ativo = ativo
             

@@ -14,13 +14,13 @@
                     {% if imagem.link %}
                     <a href="{{ imagem.link }}" class="slider-link" aria-label="{{ imagem.titulo }}" style="display: block; width: 100%; height: 100%;">
                         <img src="{{ slider_imagem_url(imagem) or url_for('static', filename=imagem.imagem) }}" 
-                             alt="{{ imagem.titulo }}" 
+                             alt="{{ imagem.descricao_imagem or imagem.titulo }}" 
                              class="slider-image"
                              loading="eager">
                     </a>
                     {% else %}
                     <img src="{% if imagem.imagem_base64 or imagem.imagem.startswith('base64:') %}/slider/{{ imagem.id }}/imagem{% else %}{{ url_for('static', filename=imagem.imagem) }}{% endif %}" 
-                         alt="{{ imagem.titulo }}" 
+                         alt="{{ imagem.descricao_imagem or imagem.titulo }}" 
                          class="slider-image"
                          loading="eager">
                     {% endif %}
@@ -475,7 +475,7 @@
                     <article class="card" role="article">
                         {% if projeto.imagen %}
                         <div class="card-image">
-                            <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.titulo }}" loading="lazy" decoding="async">
+                            <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.descricao_imagem or projeto.titulo }}" loading="lazy" decoding="async">
                         </div>
                         {% endif %}
                         <div class="card-header">
@@ -507,7 +507,7 @@
                     <article class="card" role="article">
                         {% if evento.imagem %}
                         <div class="card-image">
-                            <img src="{{ url_for('static', filename=evento.imagem) }}" alt="{{ evento.titulo }}" loading="lazy" decoding="async">
+                            <img src="{{ url_for('static', filename=evento.imagem) }}" alt="{{ evento.descricao_imagem or evento.titulo }}" loading="lazy" decoding="async">
                         </div>
                         {% endif %}
                         <div class="card-header">
@@ -558,7 +558,7 @@
                     <article class="card" role="article">
                         {% if acao.imagem %}
                         <div class="card-image">
-                            <img src="{{ acao_imagem_url(acao) or url_for('static', filename=acao.imagem) }}" alt="{{ acao.titulo }}" loading="lazy" decoding="async">
+                            <img src="{{ acao_imagem_url(acao) or url_for('static', filename=acao.imagem) }}" alt="{{ acao.descricao_imagem or acao.titulo }}" loading="lazy" decoding="async">
                         </div>
                         {% endif %}
                         <div class="card-header">
@@ -790,7 +790,7 @@
                         <div class="apoiador-image-container" style="background: transparent !important; border: none; padding: 1rem; display: flex !important; align-items: center !important; justify-content: center !important; height: 180px; transition: transform 0.3s ease;">
                             {% if apoiador.logo %}
                             <img src="{{ apoiador_logo_url(apoiador) or url_for('static', filename=apoiador.logo) }}" loading="lazy" decoding="async" 
-                                 alt="{{ apoiador.nome }}" 
+                                 alt="{{ apoiador.descricao_imagem or apoiador.nome }}" 
                                  class="apoiador-grid-image"
                                  style="max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; width: auto !important; height: auto !important; display: block !important; opacity: 1 !important; visibility: visible !important; filter: none !important; -webkit-filter: none !important; background: transparent !important;"
                                  loading="lazy"

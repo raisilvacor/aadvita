@@ -70,6 +70,20 @@
         </div>
         
         <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="descricao_imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Descrição da Imagem
+            </label>
+            <textarea id="descricao_imagem" 
+                      name="descricao_imagem" 
+                      rows="3"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;"
+                      placeholder="Descreva o conteúdo da imagem para facilitar a leitura por leitores de tela. Ex: 'Foto mostrando pessoas em uma reunião da AADVITA'">{{ slider_image.descricao_imagem if slider_image and slider_image.descricao_imagem else '' }}</textarea>
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Descreva o conteúdo visual da imagem. Esta descrição será usada pelo leitor de áudio para descrever a imagem aos usuários com deficiência visual.
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
             <label for="link" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
                 Link (Opcional)
             </label>

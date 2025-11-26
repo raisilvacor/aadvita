@@ -107,7 +107,7 @@
                 <article class="card radio-card" role="listitem">
                     {% if programa.imagem %}
                     <div class="card-image">
-                        <img src="{{ radio_programa_imagem_url(programa) or url_for('static', filename=programa.imagem) }}" alt="{{ programa.nome }}">
+                        <img src="{{ radio_programa_imagem_url(programa) or url_for('static', filename=programa.imagem) }}" alt="{{ programa.descricao_imagem or programa.nome }}">
                     </div>
                     {% endif %}
                     

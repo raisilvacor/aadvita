@@ -162,7 +162,7 @@
             {% if projeto and projeto.imagen %}
                 <div style="margin-bottom: 1rem;">
                     <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" 
-                         alt="{{ projeto.titulo }}" 
+                         alt="{{ projeto.descricao_imagem or projeto.titulo }}" 
                          style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 0.5rem; border: 2px solid #d1d5db;">
                     <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
                         Foto atual
@@ -176,6 +176,20 @@
                    style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
             <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
                 Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP (máx. 16MB)
+            </small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="descricao_imagem" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">
+                Descrição da Imagem
+            </label>
+            <textarea id="descricao_imagem" 
+                      name="descricao_imagem" 
+                      rows="3"
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit;"
+                      placeholder="Descreva o conteúdo da imagem para facilitar a leitura por leitores de tela.">{{ projeto.descricao_imagem if projeto and projeto.descricao_imagem else '' }}</textarea>
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                Descreva o conteúdo visual da imagem. Esta descrição será usada pelo leitor de áudio para descrever a imagem aos usuários com deficiência visual.
             </small>
         </div>
         

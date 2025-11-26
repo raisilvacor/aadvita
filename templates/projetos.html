@@ -18,7 +18,7 @@
                 <article class="card projeto-card" role="listitem">
                     {% if projeto.imagen %}
                     <div class="card-image">
-                        <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.titulo }}">
+                        <img src="{{ projeto_imagem_url(projeto) or url_for('static', filename=projeto.imagen) }}" alt="{{ projeto.descricao_imagem or projeto.titulo }}">
                     </div>
                     {% endif %}
                     <div class="card-header">

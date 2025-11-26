@@ -37,7 +37,7 @@
                     {% set has_base64 = conteudo.imagem_base64|default(false) %}
                     {% set is_base64_path = conteudo.imagem.startswith('base64:') if conteudo.imagem else false %}
                     <img src="{% if has_base64 or is_base64_path %}/banner-conteudo/{{ conteudo.id }}/imagem{% else %}{{ url_for('static', filename=conteudo.imagem) }}{% endif %}" 
-                         alt="{{ conteudo.titulo }}" 
+                         alt="{{ conteudo.descricao_imagem or conteudo.titulo }}" 
                          style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
                 </div>
                 {% endif %}
