@@ -419,6 +419,94 @@ textarea:focus {
 }
 
 /* Floating WhatsApp button */
+/* Floating Language Selector Button */
+.language-float {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + 56px + 0.75rem); /* Above WhatsApp button */
+    z-index: 1201;
+}
+
+.lang-float-btn {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+}
+
+.lang-float-btn:hover,
+.lang-float-btn:focus {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+    outline: none;
+}
+
+.lang-flag-icon {
+    width: 28px;
+    height: 20px;
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.lang-float-dropdown {
+    position: absolute;
+    bottom: calc(56px + 0.75rem);
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    min-width: 180px;
+    overflow: hidden;
+    z-index: 1202;
+    display: none;
+}
+
+.lang-float-dropdown.active {
+    display: block;
+    animation: fadeInDown 0.2s ease;
+}
+
+.lang-float-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    text-decoration: none;
+    color: var(--text-color, #333);
+    transition: background 0.2s ease;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+}
+
+.lang-float-option:hover {
+    background: #f3f4f6;
+    color: var(--primary-color, #2563eb);
+}
+
+.lang-float-option.active {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.1));
+    color: var(--primary-color, #2563eb);
+    font-weight: 600;
+}
+
+.lang-float-option img {
+    width: 24px;
+    height: 18px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 .whatsapp-float {
     position: fixed;
     right: 1rem;
@@ -445,7 +533,27 @@ textarea:focus {
 .whatsapp-float svg { width: 22px; height: 22px; }
 
 @media (max-width: 480px) {
-    .whatsapp-float { right: 0.75rem; bottom: 0.75rem; width: 50px; height: 50px; }
+    .language-float {
+        right: 0.75rem;
+        bottom: calc(0.75rem + 50px + 0.75rem);
+    }
+    
+    .lang-float-btn {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .lang-flag-icon {
+        width: 24px;
+        height: 18px;
+    }
+    
+    .whatsapp-float { 
+        right: 0.75rem; 
+        bottom: 0.75rem; 
+        width: 50px; 
+        height: 50px; 
+    }
 }
 
 .btn-login:active {
@@ -1767,54 +1875,6 @@ textarea:focus {
     padding: 0.5rem;
     display: block;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    margin-bottom: 1.5rem;
-}
-
-/* Language Selector no Footer */
-.footer-language-selector {
-    margin-top: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.footer-language-selector .language-selector {
-    margin: 0;
-    width: auto;
-}
-
-.footer-language-selector .lang-btn {
-    background-color: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.footer-language-selector .lang-btn:hover,
-.footer-language-selector .lang-btn:focus {
-    background-color: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
-    color: white;
-}
-
-.footer-language-selector .lang-dropdown {
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    margin-top: 4px;
-    right: 0;
-    left: auto;
-}
-
-.footer-language-selector .lang-dropdown a.lang-option-link {
-    color: var(--text-color, #333);
-}
-
-.footer-language-selector .lang-dropdown a.lang-option-link:hover {
-    background-color: #f0f0f0;
-    color: var(--primary-color, #2563eb);
 }
 
 .footer-bottom {
@@ -4167,18 +4227,6 @@ textarea:focus {
     .qr-code-footer {
         max-width: 150px !important;
         height: auto !important;
-        margin-bottom: 1rem !important;
-    }
-    
-    .footer-language-selector {
-        margin-top: 0.75rem !important;
-        width: 100% !important;
-    }
-    
-    .footer-language-selector .lang-btn {
-        width: 100% !important;
-        max-width: 200px !important;
-        justify-content: center !important;
     }
     
     .social-icons {

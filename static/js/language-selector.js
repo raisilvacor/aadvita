@@ -4,18 +4,25 @@
     
     // Aguardar DOM estar pronto
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initLanguageSelector);
+        document.addEventListener('DOMContentLoaded', initLanguageSelectors);
     } else {
-        initLanguageSelector();
+        initLanguageSelectors();
     }
     
-    function initLanguageSelector() {
-        const langBtn = document.getElementById("selected-lang");
-        const langOptions = document.getElementById("lang-options");
+    function initLanguageSelectors() {
+        // Inicializar seletor do menu (se existir)
+        initLanguageSelector('selected-lang', 'lang-options', '.language-selector');
+        
+        // Inicializar seletor flutuante
+        initLanguageSelector('selected-lang-float', 'lang-options-float', '.language-float');
+    }
+    
+    function initLanguageSelector(btnId, optionsId, containerSelector) {
+        const langBtn = document.getElementById(btnId);
+        const langOptions = document.getElementById(optionsId);
         
         if (!langBtn || !langOptions) {
-            console.warn('Elementos do seletor de idioma não encontrados');
-            return;
+            return; // Elementos não existem, pular
         }
         
         // Toggle do dropdown ao clicar no botão
@@ -34,7 +41,7 @@
         
         // Fechar dropdown ao clicar fora
         document.addEventListener('click', function(e) {
-            if (!e.target.closest('.language-selector')) {
+            if (!e.target.closest(containerSelector)) {
                 hideDropdown();
             }
         });
