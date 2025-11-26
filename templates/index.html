@@ -110,7 +110,7 @@
                         </svg>
                     </div>
                     <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
-                        {{ banner.titulo }}
+                        {{ get_banner_text(banner, 'titulo') }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
                         {{ _('Conheça nossas campanhas e participe.') }}
@@ -130,7 +130,7 @@
                         </svg>
                     </div>
                     <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
-                        {{ banner.titulo }}
+                        {{ get_banner_text(banner, 'titulo') }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
                         {{ _('Sua contribuição transforma vidas!') }}
@@ -150,7 +150,7 @@
                         </svg>
                     </div>
                     <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
-                        {{ banner.titulo }}
+                        {{ get_banner_text(banner, 'titulo') }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
                         {{ _('Confira nossos editais e oportunidades.') }}
@@ -276,8 +276,8 @@
                             {% endif %}
                         </div>
                         <div style="flex: 1; padding-top: 0.5rem;">
-                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ servico.titulo }}</h3>
-                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ servico.descricao }}</p>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ get_servico_text(servico, 'titulo') }}</h3>
+                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ get_servico_text(servico, 'descricao') }}</p>
                         </div>
                     </div>
                 </div>
@@ -305,8 +305,8 @@
                             {% endif %}
                         </div>
                         <div style="flex: 1; padding-top: 0.5rem;">
-                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ servico.titulo }}</h3>
-                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ servico.descricao }}</p>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ get_servico_text(servico, 'titulo') }}</h3>
+                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ get_servico_text(servico, 'descricao') }}</p>
                         </div>
                     </div>
                 </div>
@@ -334,8 +334,8 @@
                             {% endif %}
                         </div>
                         <div style="flex: 1; padding-top: 0.5rem;">
-                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ servico.titulo }}</h3>
-                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ servico.descricao }}</p>
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem; line-height: 1.4;">{{ get_servico_text(servico, 'titulo') }}</h3>
+                            <p style="font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0;">{{ get_servico_text(servico, 'descricao') }}</p>
                         </div>
                     </div>
                 </div>
@@ -344,7 +344,7 @@
         </div>
         {% else %}
         <div style="text-align: center; padding: 3rem; color: #6b7280;">
-            <p style="margin: 0; font-size: 1.1rem;">Nenhum serviço cadastrado no momento.</p>
+            <p style="margin: 0; font-size: 1.1rem;">{{ _('Nenhum serviço cadastrado no momento.') }}</p>
         </div>
         {% endif %}
     </div>
@@ -363,10 +363,10 @@
                         </svg>
                     </div>
                     <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
-                        Notícias
+                        {{ _('Notícias') }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
-                        Fique por dentro das novidades da AADVITA.
+                        {{ _('Fique por dentro das novidades da AADVITA.') }}
                     </p>
                 </div>
             </a>
@@ -380,10 +380,10 @@
                         </svg>
                     </div>
                     <h3 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);">
-                        Podcast
+                        {{ _('Podcast') }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
-                        Ouça nossos podcasts e conteúdos em áudio.
+                        {{ _('Ouça nossos podcasts e conteúdos em áudio.') }}
                     </p>
                 </div>
             </a>
@@ -479,13 +479,13 @@
                         </div>
                         {% endif %}
                         <div class="card-header">
-                            <h4 class="card-title">{{ projeto.titulo }}</h4>
+                            <h4 class="card-title">{{ get_projeto_text(projeto, 'titulo') }}</h4>
                             <span class="badge badge-{{ 'success' if projeto.estado == 'Ativo' else 'secondary' }}">
                                 {{ projeto.estado }}
                             </span>
                         </div>
                         <div class="card-body">
-                            <p>{{ projeto.descripcion }}</p>
+                            <p>{{ get_projeto_text(projeto, 'descripcion') }}</p>
                         </div>
                     </article>
                     {% endfor %}
@@ -511,13 +511,13 @@
                         </div>
                         {% endif %}
                         <div class="card-header">
-                            <h4 class="card-title">{{ evento.titulo }}</h4>
+                            <h4 class="card-title">{{ get_evento_text(evento, 'titulo') }}</h4>
                             <time datetime="{{ evento.data.strftime('%Y-%m-%d') }}" class="card-date">
                                 {{ evento.data.strftime('%d/%m/%Y') }}{% if evento.hora %} às {{ evento.hora }}{% endif %}
                             </time>
                         </div>
                         <div class="card-body">
-                            <p>{{ evento.descricao }}</p>
+                            <p>{{ get_evento_text(evento, 'descricao') }}</p>
                             {% if evento.tipo %}
                             <p class="card-platform">
                                 <strong>{{ _('Tipo:') }}</strong> {{ evento.tipo }}
@@ -562,13 +562,13 @@
                         </div>
                         {% endif %}
                         <div class="card-header">
-                            <h4 class="card-title">{{ acao.titulo }}</h4>
+                            <h4 class="card-title">{{ get_acao_text(acao, 'titulo') }}</h4>
                             <time datetime="{{ acao.data.strftime('%Y-%m-%d') }}" class="card-date">
                                 {{ acao.data.strftime('%d/%m/%Y') }}
                             </time>
                         </div>
                         <div class="card-body">
-                            <p>{{ acao.descricao }}</p>
+                            <p>{{ get_acao_text(acao, 'descricao') }}</p>
                             {% if acao.categoria %}
                             <span class="badge">{{ acao.categoria }}</span>
                             {% endif %}
@@ -722,9 +722,9 @@
                     {% for video in videos %}
                     <article class="video-card" role="listitem">
                         <div class="video-thumbnail-wrapper">
-                            <a href="{{ video.url_youtube }}" target="_blank" rel="noopener noreferrer" class="video-link" aria-label="{{ _('Assistir vídeo') }}: {{ video.titulo }}">
+                            <a href="{{ video.url_youtube }}" target="_blank" rel="noopener noreferrer" class="video-link" aria-label="{{ _('Assistir vídeo') }}: {{ get_video_text(video, 'titulo') }}">
                                 <img src="{{ video.get_thumbnail_url() }}" loading="lazy" decoding="async" 
-                                     alt="{{ video.titulo }}" 
+                                     alt="{{ get_video_text(video, 'titulo') }}" 
                                      class="video-thumbnail"
                                      loading="lazy">
                                 <div class="video-play-button" aria-hidden="true">
@@ -736,9 +736,9 @@
                             </a>
                         </div>
                         <div class="video-info">
-                            <h4 class="video-title">{{ video.titulo }}</h4>
+                            <h4 class="video-title">{{ get_video_text(video, 'titulo') }}</h4>
                             {% if video.descricao %}
-                            <p class="video-description">{{ video.descricao[:100] }}{% if video.descricao|length > 100 %}...{% endif %}</p>
+                            <p class="video-description">{{ get_video_text(video, 'descricao')[:100] }}{% if get_video_text(video, 'descricao')|length > 100 %}...{% endif %}</p>
                             {% endif %}
                             {% if video.categoria %}
                             <span class="badge badge-secondary">{{ video.categoria }}</span>

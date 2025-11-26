@@ -787,6 +787,9 @@ TRANSLATIONS = {
         'Envie fotos ou documentos que ajudem a ilustrar o problema. Tamanho máximo por arquivo: 16MB.': 'Envía fotos o documentos que ayuden a ilustrar el problema. Tamaño máximo por archivo: 16MB.',
         'Enviar Denúncia': 'Enviar Denuncia',
         'Cancelar': 'Cancelar',
+        'Fique por dentro das novidades da AADVITA.': 'Mantente al tanto de las novedades de AADVITA.',
+        'Ouça nossos podcasts e conteúdos em áudio.': 'Escucha nuestros podcasts y contenidos en audio.',
+        'Nenhum serviço cadastrado no momento.': 'Ningún servicio registrado en este momento.',
     },
     'en': {
         'Início': 'Home',
@@ -1159,6 +1162,9 @@ TRANSLATIONS = {
         'Envie fotos ou documentos que ajudem a ilustrar o problema. Tamanho máximo por arquivo: 16MB.': 'Send photos or documents that help illustrate the problem. Maximum file size: 16MB.',
         'Enviar Denúncia': 'Submit Report',
         'Cancelar': 'Cancel',
+        'Fique por dentro das novidades da AADVITA.': 'Stay up to date with AADVITA news.',
+        'Ouça nossos podcasts e conteúdos em áudio.': 'Listen to our podcasts and audio content.',
+        'Nenhum serviço cadastrado no momento.': 'No services registered at this time.',
     }
 }
 
@@ -10383,6 +10389,58 @@ def index():
                     instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
                     print(f"[Instagram] Usando posts existentes: {len(instagram_posts)} posts")
     
+    # Funções helper para tradução de conteúdos dinâmicos
+    current_lang = session.get('language', 'pt')
+    
+    def get_servico_text(servico, field):
+        """Retorna texto traduzido do serviço 'O que fazemos'"""
+        if not servico:
+            return ''
+        # Por enquanto, retorna o texto original (futuramente pode adicionar campos de tradução)
+        return getattr(servico, field, '')
+    
+    def get_reunion_text(reunion, field):
+        """Retorna texto traduzido da reunião"""
+        if not reunion:
+            return ''
+        # Por enquanto, retorna o texto original
+        return getattr(reunion, field, '')
+    
+    def get_projeto_text(projeto, field):
+        """Retorna texto traduzido do projeto"""
+        if not projeto:
+            return ''
+        # Por enquanto, retorna o texto original
+        return getattr(projeto, field, '')
+    
+    def get_evento_text(evento, field):
+        """Retorna texto traduzido do evento"""
+        if not evento:
+            return ''
+        # Por enquanto, retorna o texto original
+        return getattr(evento, field, '')
+    
+    def get_acao_text(acao, field):
+        """Retorna texto traduzido da ação"""
+        if not acao:
+            return ''
+        # Por enquanto, retorna o texto original
+        return getattr(acao, field, '')
+    
+    def get_video_text(video, field):
+        """Retorna texto traduzido do vídeo"""
+        if not video:
+            return ''
+        # Por enquanto, retorna o texto original
+        return getattr(video, field, '')
+    
+    def get_banner_text(banner, field):
+        """Retorna texto traduzido do banner"""
+        if not banner:
+            return ''
+        # Por enquanto, retorna o texto original
+        return getattr(banner, field, '')
+    
     return render_template('index.html',
                          reuniones_presenciales=reuniones_presenciales,
                          reuniones_virtuales=reuniones_virtuales,
@@ -10396,7 +10454,14 @@ def index():
                          apoiadores=apoiadores,
                          banners=banners_dict,
                          servicos_o_que_fazemos=servicos_por_coluna,
-                         slider_images=slider_images)
+                         slider_images=slider_images,
+                         get_servico_text=get_servico_text,
+                         get_reunion_text=get_reunion_text,
+                         get_projeto_text=get_projeto_text,
+                         get_evento_text=get_evento_text,
+                         get_acao_text=get_acao_text,
+                         get_video_text=get_video_text,
+                         get_banner_text=get_banner_text)
 
 @app.route('/agenda-presencial')
 def agenda_presencial():
