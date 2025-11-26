@@ -4015,7 +4015,7 @@ body.font-xxlarge {
 
 /* ===== Homepage Inline Styles (migrated from templates/index.html) ===== */
 
-/* Botões de Ação - Estilos e Animações */
+/* Botões de Ação - Estilos Simples e Limpos */
 .btn-volunteer,
 .btn-acessibilidade,
 .btn-certificados,
@@ -4025,93 +4025,52 @@ body.font-xxlarge {
     border-radius: 0.6rem !important;
     text-decoration: none !important;
     font-weight: 700 !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    position: relative !important;
-    overflow: hidden !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.2s ease !important;
     cursor: pointer !important;
     border: none !important;
     color: white !important;
 }
 
-.btn-volunteer *,
-.btn-acessibilidade *,
-.btn-certificados *,
-.btn-reciclagem * {
-    position: relative;
-    z-index: 2;
-}
-
 .btn-volunteer {
     background: #1e40af !important;
-    box-shadow: 0 6px 18px rgba(30, 64, 175, 0.25) !important;
 }
 
 .btn-acessibilidade {
     background: #7f1d1d !important;
-    box-shadow: 0 6px 18px rgba(127, 29, 29, 0.25) !important;
 }
 
 .btn-certificados {
     background: #312e81 !important;
-    box-shadow: 0 6px 18px rgba(49, 46, 129, 0.25) !important;
 }
 
 .btn-reciclagem {
     background: #059669 !important;
-    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.25) !important;
 }
 
-/* Efeito de brilho ao passar o mouse */
-.btn-volunteer::before,
-.btn-acessibilidade::before,
-.btn-certificados::before,
-.btn-reciclagem::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s ease;
-    z-index: 1;
-}
-
-.btn-volunteer:hover::before,
-.btn-acessibilidade:hover::before,
-.btn-certificados:hover::before,
-.btn-reciclagem:hover::before {
-    left: 100%;
-}
-
-/* Efeitos de hover */
-.btn-volunteer:hover,
-.btn-acessibilidade:hover,
-.btn-certificados:hover,
-.btn-reciclagem:hover {
-    transform: translateY(-4px) scale(1.05) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-}
-
+/* Efeitos de hover - Simples e Suaves */
 .btn-volunteer:hover {
-    box-shadow: 0 10px 30px rgba(30, 64, 175, 0.4) !important;
     background: #1e3a8a !important;
+    box-shadow: 0 6px 16px rgba(30, 64, 175, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
 .btn-acessibilidade:hover {
-    box-shadow: 0 10px 30px rgba(127, 29, 29, 0.4) !important;
     background: #991b1b !important;
+    box-shadow: 0 6px 16px rgba(127, 29, 29, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
 .btn-certificados:hover {
-    box-shadow: 0 10px 30px rgba(49, 46, 129, 0.4) !important;
     background: #1e1b4b !important;
+    box-shadow: 0 6px 16px rgba(49, 46, 129, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
 .btn-reciclagem:hover {
-    box-shadow: 0 10px 30px rgba(5, 150, 105, 0.4) !important;
     background: #047857 !important;
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
 /* Efeitos de active */
@@ -4119,102 +4078,23 @@ body.font-xxlarge {
 .btn-acessibilidade:active,
 .btn-certificados:active,
 .btn-reciclagem:active {
-    transform: translateY(-2px) scale(1.02) !important;
+    transform: translateY(0) !important;
 }
 
-/* Animação de entrada */
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.btn-volunteer,
-.btn-acessibilidade,
-.btn-certificados,
-.btn-reciclagem {
-    animation: slideInUp 0.5s ease-out;
-}
-
-.btn-acessibilidade {
-    animation-delay: 0.1s;
-}
-
-.btn-certificados {
-    animation-delay: 0.2s;
-}
-
-.btn-reciclagem {
-    animation-delay: 0.3s;
-}
-
-/* Banners Section */
+/* Banners Section - Estilos Simples */
 .banners-section .banner-card {
     position: relative;
-    overflow: hidden;
     cursor: pointer;
-    transform: translateY(0);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeInUp 0.6s ease-out;
-}
-
-.banners-section .banner-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-    z-index: 1;
-}
-
-.banners-section .banner-card:hover::before {
-    left: 100%;
+    transition: all 0.2s ease !important;
 }
 
 .banners-section .banner-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3) !important;
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25) !important;
 }
 
 .banners-section .banner-card:active {
-    transform: translateY(-4px) scale(1.01);
-}
-
-.banners-section .banner-card > div {
-    position: relative;
-    z-index: 2;
-}
-
-/* Animação de entrada dos banners */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.banners-section .banner-card:nth-child(1) {
-    animation-delay: 0.1s;
-}
-
-.banners-section .banner-card:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.banners-section .banner-card:nth-child(3) {
-    animation-delay: 0.3s;
+    transform: translateY(-2px) !important;
 }
 
 @media (max-width: 768px) {
