@@ -66,5 +66,35 @@
         {% endif %}
     </div>
 </section>
+
+<script>
+// Detectar quando thumbnail falha e mostrar player do YouTube diretamente
+document.addEventListener('DOMContentLoaded', function() {
+    const videoWrappers = document.querySelectorAll('.video-thumbnail-wrapper');
+    
+    videoWrappers.forEach(wrapper => {
+        const thumbnail = wrapper.querySelector('.video-thumbnail');
+        const embedContainer = wrapper.querySelector('.video-embed-container');
+        const videoLink = wrapper.querySelector('.video-link');
+        
+        if (thumbnail) {
+            thumbnail.addEventListener('error', function() {
+                // Esconder o link com thumbnail
+                if (videoLink) {
+                    videoLink.style.display = 'none';
+                }
+                // Mostrar o iframe
+                if (embedContainer) {
+                    embedContainer.style.display = 'block';
+                }
+                wrapper.classList.add('thumbnail-error');
+            });
+        } else if (embedContainer) {
+            // Se não tem thumbnail, mostrar iframe diretamente
+            embedContainer.style.display = 'block';
+        }
+    });
+});
+</script>
 {% endblock %}
 
