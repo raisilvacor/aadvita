@@ -1423,6 +1423,10 @@ body.font-xxlarge {
 .hero-action-group .transparency-btn-wrapper,
 .hero-action-group .associate-btn-wrapper,
 .hero-action-group .login-btn-wrapper,
+.hero-action-group .volunteer-btn-wrapper,
+.hero-action-group .acessibilidade-btn-wrapper,
+.hero-action-group .certificados-btn-wrapper,
+.hero-action-group .reciclagem-btn-wrapper,
 .hero-action-group .language-selector {
     margin: 0;
     display: flex;
@@ -4015,70 +4019,94 @@ body.font-xxlarge {
 
 /* ===== Homepage Inline Styles (migrated from templates/index.html) ===== */
 
-/* Botões de Ação - Estilos Simples e Limpos */
-.btn-volunteer,
-.btn-acessibilidade,
-.btn-certificados,
-.btn-reciclagem {
-    display: inline-block !important;
-    padding: 0.9rem 1.6rem !important;
-    border-radius: 0.6rem !important;
+/* Botões de Ação - Estilos Consistentes com os Outros Botões */
+.hero-action-group .btn-volunteer,
+.hero-action-group .btn-acessibilidade,
+.hero-action-group .btn-certificados,
+.hero-action-group .btn-reciclagem {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.75rem 1.75rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 600 !important;
     text-decoration: none !important;
-    font-weight: 700 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
+    color: white !important;
+    transition: var(--transition) !important;
     border: none !important;
+    cursor: pointer !important;
+}
+
+.hero-action-group .btn-volunteer {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
+    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.25) !important;
+}
+
+.hero-action-group .btn-volunteer:hover,
+.hero-action-group .btn-volunteer:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 25px rgba(30, 64, 175, 0.30) !important;
+    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
     color: white !important;
 }
 
-.btn-volunteer {
-    background: #1e40af !important;
-}
-
-.btn-acessibilidade {
-    background: #7f1d1d !important;
-}
-
-.btn-certificados {
-    background: #312e81 !important;
-}
-
-.btn-reciclagem {
-    background: #059669 !important;
-}
-
-/* Efeitos de hover - Simples e Suaves */
-.btn-volunteer:hover {
-    background: #1e3a8a !important;
-    box-shadow: 0 6px 16px rgba(30, 64, 175, 0.3) !important;
-    transform: translateY(-2px) !important;
-}
-
-.btn-acessibilidade:hover {
-    background: #991b1b !important;
-    box-shadow: 0 6px 16px rgba(127, 29, 29, 0.3) !important;
-    transform: translateY(-2px) !important;
-}
-
-.btn-certificados:hover {
-    background: #1e1b4b !important;
-    box-shadow: 0 6px 16px rgba(49, 46, 129, 0.3) !important;
-    transform: translateY(-2px) !important;
-}
-
-.btn-reciclagem:hover {
-    background: #047857 !important;
-    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3) !important;
-    transform: translateY(-2px) !important;
-}
-
-/* Efeitos de active */
-.btn-volunteer:active,
-.btn-acessibilidade:active,
-.btn-certificados:active,
-.btn-reciclagem:active {
+.hero-action-group .btn-volunteer:active {
     transform: translateY(0) !important;
+    box-shadow: 0 4px 15px rgba(30, 64, 175, 0.25) !important;
+}
+
+.hero-action-group .btn-acessibilidade {
+    background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+    box-shadow: 0 6px 20px rgba(127, 29, 29, 0.25) !important;
+}
+
+.hero-action-group .btn-acessibilidade:hover,
+.hero-action-group .btn-acessibilidade:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 25px rgba(127, 29, 29, 0.30) !important;
+    background: linear-gradient(135deg, #991b1b, #7f1d1d) !important;
+    color: white !important;
+}
+
+.hero-action-group .btn-acessibilidade:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 15px rgba(127, 29, 29, 0.25) !important;
+}
+
+.hero-action-group .btn-certificados {
+    background: linear-gradient(135deg, #312e81, #4338ca) !important;
+    box-shadow: 0 6px 20px rgba(49, 46, 129, 0.25) !important;
+}
+
+.hero-action-group .btn-certificados:hover,
+.hero-action-group .btn-certificados:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 25px rgba(49, 46, 129, 0.30) !important;
+    background: linear-gradient(135deg, #4338ca, #312e81) !important;
+    color: white !important;
+}
+
+.hero-action-group .btn-certificados:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 15px rgba(49, 46, 129, 0.25) !important;
+}
+
+.hero-action-group .btn-reciclagem {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.25) !important;
+}
+
+.hero-action-group .btn-reciclagem:hover,
+.hero-action-group .btn-reciclagem:focus {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 25px rgba(5, 150, 105, 0.30) !important;
+    background: linear-gradient(135deg, #047857, #059669) !important;
+    color: white !important;
+}
+
+.hero-action-group .btn-reciclagem:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 15px rgba(5, 150, 105, 0.25) !important;
 }
 
 /* Banners Section - Estilos Simples */
