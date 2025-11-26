@@ -2915,6 +2915,7 @@ def admin_projetos_editar(id):
             
             projeto.titulo = request.form.get('titulo')
             projeto.descripcion = request.form.get('descripcion')
+            projeto.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             projeto.identificacao = request.form.get('identificacao')
             projeto.contexto_justificativa = request.form.get('contexto_justificativa')
             projeto.objetivos = request.form.get('objetivos')
@@ -7525,6 +7526,7 @@ def admin_apoiadores_editar(id):
         apoiador.tipo = tipo
         apoiador.descricao = descricao if descricao else None
         apoiador.website = website if website else None
+        apoiador.logo_descricao = request.form.get('logo_descricao', '').strip() or None
         
         try:
             db.session.commit()
@@ -7790,6 +7792,7 @@ def admin_slider_editar(id):
         # Atualizar dados
         slider_image.titulo = titulo
         slider_image.link = link if link else None
+        slider_image.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
         slider_image.ordem = int(ordem) if ordem else 0
         slider_image.ativo = ativo
         slider_image.updated_at = datetime.now()
