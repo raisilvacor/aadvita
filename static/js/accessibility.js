@@ -61,47 +61,24 @@
     // Aplicar contraste
     function applyContrast(enabled) {
         const body = document.body;
-        const html = document.documentElement;
         
         if (enabled) {
             body.classList.add('high-contrast');
-            // Aplicar filter no html ao invés do body para evitar problemas com position: fixed
-            // Mas precisamos aplicar apenas no conteúdo, não nos botões flutuantes
-            // Criar um wrapper se não existir
-            let wrapper = document.getElementById('content-wrapper');
-            if (!wrapper) {
-                // Criar wrapper para o conteúdo principal
-                wrapper = document.createElement('div');
-                wrapper.id = 'content-wrapper';
-                wrapper.style.cssText = 'filter: contrast(1.5); min-height: 100vh;';
-                
-                // Mover todos os filhos do body para o wrapper, exceto os botões flutuantes
-                const children = Array.from(body.children);
-                children.forEach(child => {
-                    if (!child.classList.contains('accessibility-float') && 
-                        !child.classList.contains('language-float') && 
-                        !child.classList.contains('whatsapp-float')) {
-                        wrapper.appendChild(child);
-                    }
-                });
-                body.appendChild(wrapper);
-            } else {
-                wrapper.style.filter = 'contrast(1.5)';
-            }
+            // Aplicar filter apenas em elementos específicos, não no body
+            // Isso evita problemas com position: fixed
+            const elementsToFilter = document.querySelectorAll('body > *:not(.accessibility-float):not(.language-float):not(.whatsapp-float)');
+            elementsToFilter.forEach(el => {
+                el.style.filter = 'contrast(1.5)';
+                el.setAttribute('data-high-contrast', 'true');
+            });
         } else {
             body.classList.remove('high-contrast');
-            const wrapper = document.getElementById('content-wrapper');
-            if (wrapper) {
-                wrapper.style.filter = '';
-                // Se o wrapper foi criado por nós, restaurar estrutura original
-                if (wrapper.parentNode === body) {
-                    const wrapperChildren = Array.from(wrapper.children);
-                    wrapperChildren.forEach(child => {
-                        body.insertBefore(child, wrapper);
-                    });
-                    wrapper.remove();
-                }
-            }
+            // Remover filter de todos os elementos que receberam
+            const elementsWithFilter = document.querySelectorAll('[data-high-contrast="true"]');
+            elementsWithFilter.forEach(el => {
+                el.style.filter = '';
+                el.removeAttribute('data-high-contrast');
+            });
         }
         
         // Atualizar label

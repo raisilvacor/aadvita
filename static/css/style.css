@@ -574,7 +574,8 @@ textarea:focus {
 }
 
 /* High contrast mode */
-/* O filter será aplicado via JavaScript no html, não no body, para evitar problemas com position: fixed */
+/* O filter será aplicado via JavaScript apenas em elementos filhos do body, não no body em si */
+/* Isso evita problemas com position: fixed dos botões flutuantes */
 body.high-contrast * {
     border-color: #000 !important;
 }
@@ -605,6 +606,14 @@ body.high-contrast .whatsapp-float {
 
 body.high-contrast .accessibility-float-dropdown,
 body.high-contrast .lang-float-dropdown {
+    filter: none !important;
+}
+
+/* Garantir que elementos com data-high-contrast não afetem filhos com position: fixed */
+[data-high-contrast="true"] .accessibility-float,
+[data-high-contrast="true"] .language-float,
+[data-high-contrast="true"] .whatsapp-float {
+    position: fixed !important;
     filter: none !important;
 }
 
