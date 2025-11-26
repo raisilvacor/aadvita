@@ -2931,7 +2931,6 @@ def admin_projetos_editar(id):
             projeto.estado = request.form.get('estado', 'Ativo')
             projeto.data_inicio = datetime.strptime(data_inicio_str, "%Y-%m-%d").date() if data_inicio_str else None
             projeto.data_fim = datetime.strptime(data_fim_str, "%Y-%m-%d").date() if data_fim_str else None
-            projeto.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             
             db.session.commit()
             flash('Projeto atualizado com sucesso!', 'success')
