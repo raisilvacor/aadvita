@@ -3678,8 +3678,10 @@ textarea:focus {
         width: 100% !important;
         margin-top: 0.5rem !important;
         margin-left: 0 !important;
+        margin-bottom: 0 !important;
         display: block !important;
         box-sizing: border-box !important;
+        flex-shrink: 0 !important;
     }
 
     .nav-menu .language-selector .lang-btn {
@@ -3691,6 +3693,7 @@ textarea:focus {
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        min-height: 48px !important;
     }
 
     .nav-menu .language-selector .lang-dropdown {
