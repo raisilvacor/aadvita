@@ -9573,8 +9573,11 @@ def admin_financeiro():
                              associado=associado,
                              view_mode='mensalidades')
     else:
-        # Mostrar lista de associados
-        associados = Associado.query.filter_by(status='aprovado').order_by(Associado.nome_completo.asc()).all()
+        # Mostrar lista de associados (apenas Contribuintes)
+        associados = Associado.query.filter_by(
+            status='aprovado',
+            tipo_associado='contribuinte'
+        ).order_by(Associado.nome_completo.asc()).all()
         
         # Estatísticas gerais
         mensalidades_pendentes = Mensalidade.query.filter_by(status='pendente').count()
