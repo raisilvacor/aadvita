@@ -3756,6 +3756,27 @@ body.font-xxlarge {
     background: var(--bg-light);
 }
 
+.video-thumbnail-wrapper.thumbnail-error {
+    padding-top: 0;
+}
+
+.video-embed-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.video-embed-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
 .video-thumbnail {
     position: absolute;
     top: 0;
