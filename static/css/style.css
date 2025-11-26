@@ -1767,6 +1767,54 @@ textarea:focus {
     padding: 0.5rem;
     display: block;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 1.5rem;
+}
+
+/* Language Selector no Footer */
+.footer-language-selector {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.footer-language-selector .language-selector {
+    margin: 0;
+    width: auto;
+}
+
+.footer-language-selector .lang-btn {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.footer-language-selector .lang-btn:hover,
+.footer-language-selector .lang-btn:focus {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+.footer-language-selector .lang-dropdown {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    margin-top: 4px;
+    right: 0;
+    left: auto;
+}
+
+.footer-language-selector .lang-dropdown a.lang-option-link {
+    color: var(--text-color, #333);
+}
+
+.footer-language-selector .lang-dropdown a.lang-option-link:hover {
+    background-color: #f0f0f0;
+    color: var(--primary-color, #2563eb);
 }
 
 .footer-bottom {
@@ -4119,6 +4167,18 @@ textarea:focus {
     .qr-code-footer {
         max-width: 150px !important;
         height: auto !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .footer-language-selector {
+        margin-top: 0.75rem !important;
+        width: 100% !important;
+    }
+    
+    .footer-language-selector .lang-btn {
+        width: 100% !important;
+        max-width: 200px !important;
+        justify-content: center !important;
     }
     
     .social-icons {
