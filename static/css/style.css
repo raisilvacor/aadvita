@@ -4063,24 +4063,27 @@ textarea:focus {
         padding: 2rem 0 !important;
     }
     
-    .o-que-fazemos-grid {
+    #o-que-fazemos-grid {
         grid-template-columns: 1fr !important;
         gap: 2rem !important;
         padding: 0 1rem !important;
         display: flex !important;
         flex-direction: column !important;
+        max-width: 100% !important;
     }
     
-    .o-que-fazemos-column {
+    #o-que-fazemos-grid .o-que-fazemos-column {
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         gap: 1.5rem !important;
+        position: relative !important;
     }
     
-    .o-que-fazemos-item {
+    #o-que-fazemos-grid .o-que-fazemos-item {
         margin-bottom: 1.5rem !important;
         width: 100% !important;
+        position: relative !important;
     }
     
     /* Serviços mobile */
@@ -4470,23 +4473,26 @@ body.device-mobile .btn-reciclagem {
 }
 
 body.device-mobile .banners-grid,
-body.device-mobile .o-que-fazemos-grid {
+body.device-mobile #o-que-fazemos-grid {
     grid-template-columns: 1fr !important;
     gap: 2rem !important;
     display: flex !important;
     flex-direction: column !important;
+    max-width: 100% !important;
 }
 
-body.device-mobile .o-que-fazemos-column {
+body.device-mobile #o-que-fazemos-grid .o-que-fazemos-column {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
     gap: 1.5rem !important;
+    position: relative !important;
 }
 
-body.device-mobile .o-que-fazemos-item {
+body.device-mobile #o-que-fazemos-grid .o-que-fazemos-item {
     width: 100% !important;
     margin-bottom: 1.5rem !important;
+    position: relative !important;
 }
 
 body.device-mobile .servicos-grid,

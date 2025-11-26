@@ -210,45 +210,51 @@
             }
             /* Apenas em telas menores que 600px usar 1 coluna */
             @media screen and (max-width: 600px) {
-                .o-que-fazemos-grid {
+                #o-que-fazemos-grid {
                     grid-template-columns: 1fr !important;
                     gap: 2rem !important;
                     display: flex !important;
                     flex-direction: column !important;
+                    max-width: 100% !important;
                 }
-                .o-que-fazemos-column {
+                #o-que-fazemos-grid .o-que-fazemos-column {
                     display: flex !important;
                     flex-direction: column !important;
                     width: 100% !important;
                     gap: 1.5rem !important;
+                    position: relative !important;
                 }
-                .o-que-fazemos-item {
+                #o-que-fazemos-grid .o-que-fazemos-item {
                     width: 100% !important;
                     margin-bottom: 1.5rem !important;
+                    position: relative !important;
                 }
             }
             
             /* Mobile - todos os serviços um abaixo do outro */
             @media screen and (max-width: 768px) {
-                .o-que-fazemos-grid {
+                #o-que-fazemos-grid {
                     grid-template-columns: 1fr !important;
                     gap: 2rem !important;
                     display: flex !important;
                     flex-direction: column !important;
+                    max-width: 100% !important;
                 }
-                .o-que-fazemos-column {
+                #o-que-fazemos-grid .o-que-fazemos-column {
                     display: flex !important;
                     flex-direction: column !important;
                     width: 100% !important;
                     gap: 1.5rem !important;
+                    position: relative !important;
                 }
-                .o-que-fazemos-item {
+                #o-que-fazemos-grid .o-que-fazemos-item {
                     width: 100% !important;
                     margin-bottom: 1.5rem !important;
+                    position: relative !important;
                 }
             }
         </style>
-        <div class="o-que-fazemos-grid" id="o-que-fazemos-grid" style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 3rem 2rem !important; max-width: 1200px !important; margin: 0 auto !important; width: 100% !important;">
+        <div class="o-que-fazemos-grid" id="o-que-fazemos-grid">
             <!-- Coluna 1 -->
             <div class="o-que-fazemos-column" style="position: relative;">
                 {% for servico in servicos_o_que_fazemos.get(1, []) %}
