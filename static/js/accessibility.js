@@ -12,10 +12,12 @@
     let currentFontSize = DEFAULT_FONT_SIZE;
     let isHighContrast = false;
     let isAudioDescEnabled = false;
+    let isVoiceCommandEnabled = false;
     let clickTimeout = null;
     let lastClickedElement = null;
     let speechSynthesis = null;
     let maleVoice = null;
+    let recognition = null;
     
     // Inicializar Speech Synthesis e encontrar voz masculina
     function initSpeechSynthesis() {
@@ -476,6 +478,7 @@
         const savedFontSize = localStorage.getItem('accessibility_font_size');
         const savedContrast = localStorage.getItem('accessibility_high_contrast');
         const savedAudioDesc = localStorage.getItem('accessibility_audio_desc');
+        const savedVoiceCommand = localStorage.getItem('accessibility_voice_command');
         
         if (savedFontSize) {
             currentFontSize = parseInt(savedFontSize, 10);
@@ -490,6 +493,11 @@
         if (savedAudioDesc === 'true') {
             isAudioDescEnabled = true;
             enableAudioDesc(true);
+        }
+        
+        if (savedVoiceCommand === 'true') {
+            isVoiceCommandEnabled = true;
+            enableVoiceCommand(true);
         }
     }
     
@@ -629,6 +637,232 @@
         enableAudioDesc(!isAudioDescEnabled);
     }
     
+    // ============================================
+    // SISTEMA DE COMANDO DE VOZ
+    // ============================================
+    
+    // Inicializar reconhecimento de voz
+    function initVoiceRecognition() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            console.warn('Reconhecimento de voz não suportado neste navegador');
+            return null;
+        }
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.lang = 'pt-BR';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        
+        return recognition;
+    }
+    
+    // Mapeamento de comandos para ações
+    const voiceCommands = {
+        // Navegação principal
+        'inicio': { url: '/', text: 'Abrindo página inicial' },
+        'página inicial': { url: '/', text: 'Abrindo página inicial' },
+        'home': { url: '/', text: 'Abrindo página inicial' },
+        'sobre': { url: '/sobre', text: 'Abrindo página sobre' },
+        'projetos': { url: '/projetos', text: 'Abrindo projetos' },
+        'projeto': { url: '/projetos', text: 'Abrindo projetos' },
+        'ações': { url: '/acoes', text: 'Abrindo ações' },
+        'ação': { url: '/acoes', text: 'Abrindo ações' },
+        'informativo': { url: '/informativo', text: 'Abrindo informativo' },
+        'notícias': { url: '/informativo', text: 'Abrindo informativo' },
+        'podcast': { url: '/informativo', text: 'Abrindo informativo' },
+        'radio': { url: '/radio', text: 'Abrindo Rádio AADVITA' },
+        'rádio': { url: '/radio', text: 'Abrindo Rádio AADVITA' },
+        'radio aadvita': { url: '/radio', text: 'Abrindo Rádio AADVITA' },
+        'rádio aadvita': { url: '/radio', text: 'Abrindo Rádio AADVITA' },
+        'videos': { url: '/videos', text: 'Abrindo vídeos' },
+        'vídeos': { url: '/videos', text: 'Abrindo vídeos' },
+        'video': { url: '/videos', text: 'Abrindo vídeos' },
+        'galeria': { url: '/galeria', text: 'Abrindo galeria' },
+        'galeria de fotos': { url: '/galeria', text: 'Abrindo galeria' },
+        'apoiadores': { url: '/apoiadores', text: 'Abrindo apoiadores' },
+        'agenda presencial': { url: '/agenda-presencial', text: 'Abrindo agenda presencial' },
+        'agenda virtual': { url: '/agenda-virtual', text: 'Abrindo agenda virtual' },
+        'transparência': { url: '/transparencia', text: 'Abrindo transparência' },
+        'transparencia': { url: '/transparencia', text: 'Abrindo transparência' },
+        'associe-se': { url: '/associe-se', text: 'Abrindo página de associação' },
+        'seja voluntário': { url: '/voluntario/cadastro', text: 'Abrindo cadastro de voluntário' },
+        'voluntário': { url: '/voluntario/cadastro', text: 'Abrindo cadastro de voluntário' },
+        'radar de acessibilidade': { url: '/problema-acessibilidade/registrar', text: 'Abrindo Radar de Acessibilidade' },
+        'validar certificados': { url: '/certificados/validar', text: 'Abrindo validação de certificados' },
+        'certificados': { url: '/certificados/validar', text: 'Abrindo validação de certificados' },
+        'reciclagem': { url: '/reciclagem', text: 'Abrindo página de reciclagem' },
+        'campanhas': { url: '/campanhas', text: 'Abrindo campanhas' },
+        'campanha': { url: '/campanhas', text: 'Abrindo campanhas' },
+        'apoie-nos': { url: '/apoie-nos', text: 'Abrindo página de apoio' },
+        'editais': { url: '/editais', text: 'Abrindo editais' },
+        'edital': { url: '/editais', text: 'Abrindo editais' },
+        'login': { url: '/login', text: 'Abrindo página de login' },
+        'entrar': { url: '/login', text: 'Abrindo página de login' },
+    };
+    
+    // Processar comando de voz
+    function processVoiceCommand(command) {
+        const normalizedCommand = command.toLowerCase().trim();
+        
+        // Remover palavras comuns que não afetam o comando
+        let cleanCommand = normalizedCommand
+            .replace(/^(abra|abrir|vá para|ir para|mostre|mostrar|acesse|acessar|quero ver|quero ir|me leve|me leve para)\s+/i, '')
+            .replace(/\s+(por favor|pf|pfv)$/i, '')
+            .trim();
+        
+        // Buscar comando exato
+        if (voiceCommands[cleanCommand]) {
+            return voiceCommands[cleanCommand];
+        }
+        
+        // Buscar comando parcial (mais inteligente)
+        for (const [key, value] of Object.entries(voiceCommands)) {
+            if (cleanCommand.includes(key) || key.includes(cleanCommand)) {
+                return value;
+            }
+        }
+        
+        // Buscar por palavras-chave
+        const keywords = {
+            'projeto': { url: '/projetos', text: 'Abrindo projetos' },
+            'ação': { url: '/acoes', text: 'Abrindo ações' },
+            'radio': { url: '/radio', text: 'Abrindo Rádio AADVITA' },
+            'rádio': { url: '/radio', text: 'Abrindo Rádio AADVITA' },
+            'video': { url: '/videos', text: 'Abrindo vídeos' },
+            'vídeo': { url: '/videos', text: 'Abrindo vídeos' },
+            'galeria': { url: '/galeria', text: 'Abrindo galeria' },
+            'informativo': { url: '/informativo', text: 'Abrindo informativo' },
+            'sobre': { url: '/sobre', text: 'Abrindo página sobre' },
+            'transparência': { url: '/transparencia', text: 'Abrindo transparência' },
+            'transparencia': { url: '/transparencia', text: 'Abrindo transparência' },
+            'voluntário': { url: '/voluntario/cadastro', text: 'Abrindo cadastro de voluntário' },
+            'voluntario': { url: '/voluntario/cadastro', text: 'Abrindo cadastro de voluntário' },
+            'certificado': { url: '/certificados/validar', text: 'Abrindo validação de certificados' },
+            'reciclagem': { url: '/reciclagem', text: 'Abrindo página de reciclagem' },
+            'campanha': { url: '/campanhas', text: 'Abrindo campanhas' },
+            'edital': { url: '/editais', text: 'Abrindo editais' },
+        };
+        
+        for (const [keyword, value] of Object.entries(keywords)) {
+            if (cleanCommand.includes(keyword)) {
+                return value;
+            }
+        }
+        
+        return null;
+    }
+    
+    // Executar comando
+    function executeVoiceCommand(command) {
+        const action = processVoiceCommand(command);
+        
+        if (action) {
+            // Responder com áudio
+            speakText(action.text);
+            
+            // Aguardar um pouco antes de navegar para o áudio ser ouvido
+            setTimeout(() => {
+                window.location.href = action.url;
+            }, 500);
+            
+            return true;
+        }
+        
+        // Comando não reconhecido
+        speakText('Desculpe, não entendi o comando. Por favor, tente novamente.');
+        return false;
+    }
+    
+    // Habilitar/desabilitar comando de voz
+    function enableVoiceCommand(enabled) {
+        isVoiceCommandEnabled = enabled;
+        
+        if (enabled) {
+            if (!recognition) {
+                recognition = initVoiceRecognition();
+            }
+            
+            if (!recognition) {
+                speakText('Desculpe, seu navegador não suporta reconhecimento de voz.');
+                isVoiceCommandEnabled = false;
+                return;
+            }
+            
+            // Configurar eventos
+            recognition.onstart = function() {
+                speakText('Ouvindo...');
+            };
+            
+            recognition.onresult = function(event) {
+                const command = event.results[0][0].transcript;
+                console.log('Comando reconhecido:', command);
+                executeVoiceCommand(command);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Erro no reconhecimento:', event.error);
+                if (event.error === 'no-speech') {
+                    speakText('Não ouvi nada. Tente novamente.');
+                } else if (event.error === 'not-allowed') {
+                    speakText('Permissão de microfone negada. Por favor, permita o acesso ao microfone.');
+                    isVoiceCommandEnabled = false;
+                } else {
+                    speakText('Erro ao processar comando. Tente novamente.');
+                }
+            };
+            
+            recognition.onend = function() {
+                // Reiniciar se ainda estiver ativo
+                if (isVoiceCommandEnabled) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        // Já está ouvindo ou erro
+                    }
+                }
+            };
+            
+            // Iniciar reconhecimento
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Erro ao iniciar reconhecimento:', e);
+                speakText('Erro ao iniciar reconhecimento de voz.');
+            }
+        } else {
+            // Parar reconhecimento
+            if (recognition) {
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    // Ignorar erros ao parar
+                }
+            }
+            speakText('Comando de voz desativado.');
+        }
+        
+        // Atualizar label
+        const labelElement = document.getElementById('voice-command-label');
+        if (labelElement) {
+            if (enabled) {
+                labelElement.textContent = 'Comando de Voz Ativo';
+            } else {
+                labelElement.textContent = 'Comando de Voz';
+            }
+        }
+        
+        // Salvar preferência
+        localStorage.setItem('accessibility_voice_command', enabled.toString());
+    }
+    
+    // Alternar comando de voz
+    function toggleVoiceCommand() {
+        enableVoiceCommand(!isVoiceCommandEnabled);
+    }
+    
     // Encontrar o elemento pai relevante (link ou botão) se o elemento clicado for um filho
     function findRelevantElement(element) {
         if (!element) return element;
@@ -760,12 +994,20 @@
         currentFontSize = DEFAULT_FONT_SIZE;
         isHighContrast = false;
         isAudioDescEnabled = false;
+        isVoiceCommandEnabled = false;
         applyFontSize(currentFontSize);
         applyContrast(false);
         enableAudioDesc(false);
+        enableVoiceCommand(false);
         localStorage.removeItem('accessibility_font_size');
         localStorage.removeItem('accessibility_high_contrast');
         localStorage.removeItem('accessibility_audio_desc');
+        localStorage.removeItem('accessibility_voice_command');
+        
+        // Mostrar mensagem de sucesso (se disponível)
+        if (typeof flash === 'function') {
+            flash('Configurações de acessibilidade redefinidas!', 'success');
+        }
     }
     
     // Inicializar quando DOM estiver pronto
@@ -846,6 +1088,16 @@
                 e.preventDefault();
                 e.stopPropagation();
                 toggleAudioDesc();
+            });
+        }
+        
+        // Controle de comando de voz
+        const voiceCommandToggle = document.getElementById('voice-command-toggle');
+        if (voiceCommandToggle) {
+            voiceCommandToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleVoiceCommand();
             });
         }
         
