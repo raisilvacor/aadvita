@@ -10392,12 +10392,63 @@ def index():
     # Funções helper para tradução de conteúdos dinâmicos
     current_lang = session.get('language', 'pt')
     
+    # Dicionário de tradução estático para serviços "O que fazemos"
+    servicos_translations = {
+        'pt': {},
+        'es': {
+            'Biblioteca': 'Biblioteca',
+            'Espaço de leitura inclusiva com livros em Braille, audiolivros e materiais acessíveis que estimulam o aprendizado e a imaginação.': 'Espacio de lectura inclusiva con libros en Braille, audiolibros y materiales accesibles que estimulan el aprendizaje y la imaginación.',
+            'Serviço Social': 'Servicio Social',
+            'Orientação e apoio às famílias, auxiliando no acesso a benefícios, políticas públicas e encaminhamentos sociais.': 'Orientación y apoyo a las familias, ayudando en el acceso a beneficios, políticas públicas y derivaciones sociales.',
+            'Educação': 'Educación',
+            'Ações educativas e oficinas que garantem acesso ao conhecimento, alfabetização e inclusão escolar para todos.': 'Acciones educativas y talleres que garantizan el acceso al conocimiento, alfabetización e inclusión escolar para todos.',
+            'Ensino em Braille': 'Enseñanza en Braille',
+            'Aulas práticas e personalizadas que ensinam o sistema Braille, essencial para a leitura, escrita e independência educacional.': 'Clases prácticas y personalizadas que enseñan el sistema Braille, esencial para la lectura, escritura e independencia educativa.',
+            'Terapia Ocupacional': 'Terapia Ocupacional',
+            'Atividades que desenvolvem habilidades motoras e funcionais, promovendo autonomia e qualidade de vida no dia a dia.': 'Actividades que desarrollan habilidades motoras y funcionales, promoviendo autonomía y calidad de vida en el día a día.',
+            'Rádio': 'Radio',
+            'Canal de comunicação e informação acessível, onde a voz da inclusão é transmitida através de notícias, entrevistas e programas educativos.': 'Canal de comunicación e información accesible, donde la voz de la inclusión se transmite a través de noticias, entrevistas y programas educativos.',
+            'Informática e novas tecnologias': 'Informática y nuevas tecnologías',
+            'Capacitação em informática acessível e uso de tecnologias assistivas, promovendo autonomia digital e oportunidades de inserção profissional.': 'Capacitación en informática accesible y uso de tecnologías asistivas, promoviendo autonomía digital y oportunidades de inserción profesional.',
+            'Projetos': 'Proyectos',
+            'Iniciativas sociais e comunitárias que fortalecem os direitos, a cidadania e a qualidade de vida das pessoas com deficiência visual.': 'Iniciativas sociales y comunitarias que fortalecen los derechos, la ciudadanía y la calidad de vida de las personas con discapacidad visual.',
+            'Música': 'Música',
+            'Espaço de expressão artística e sensorial, que estimula talentos, integração e sensibilidade através do som e do ritmo.': 'Espacio de expresión artística y sensorial, que estimula talentos, integración y sensibilidad a través del sonido y el ritmo.',
+        },
+        'en': {
+            'Biblioteca': 'Library',
+            'Espaço de leitura inclusiva com livros em Braille, audiolivros e materiais acessíveis que estimulam o aprendizado e a imaginação.': 'Inclusive reading space with Braille books, audiobooks and accessible materials that stimulate learning and imagination.',
+            'Serviço Social': 'Social Service',
+            'Orientação e apoio às famílias, auxiliando no acesso a benefícios, políticas públicas e encaminhamentos sociais.': 'Guidance and support to families, assisting in access to benefits, public policies and social referrals.',
+            'Educação': 'Education',
+            'Ações educativas e oficinas que garantem acesso ao conhecimento, alfabetização e inclusão escolar para todos.': 'Educational actions and workshops that guarantee access to knowledge, literacy and school inclusion for everyone.',
+            'Ensino em Braille': 'Braille Teaching',
+            'Aulas práticas e personalizadas que ensinam o sistema Braille, essencial para a leitura, escrita e independência educacional.': 'Practical and personalized classes that teach the Braille system, essential for reading, writing and educational independence.',
+            'Terapia Ocupacional': 'Occupational Therapy',
+            'Atividades que desenvolvem habilidades motoras e funcionais, promovendo autonomia e qualidade de vida no dia a dia.': 'Activities that develop motor and functional skills, promoting autonomy and quality of life in daily life.',
+            'Rádio': 'Radio',
+            'Canal de comunicação e informação acessível, onde a voz da inclusão é transmitida através de notícias, entrevistas e programas educativos.': 'Accessible communication and information channel, where the voice of inclusion is transmitted through news, interviews and educational programs.',
+            'Informática e novas tecnologias': 'Computer Science and New Technologies',
+            'Capacitação em informática acessível e uso de tecnologias assistivas, promovendo autonomia digital e oportunidades de inserção profissional.': 'Training in accessible computing and use of assistive technologies, promoting digital autonomy and professional insertion opportunities.',
+            'Projetos': 'Projects',
+            'Iniciativas sociais e comunitárias que fortalecem os direitos, a cidadania e a qualidade de vida das pessoas com deficiência visual.': 'Social and community initiatives that strengthen the rights, citizenship and quality of life of visually impaired people.',
+            'Música': 'Music',
+            'Espaço de expressão artística e sensorial, que estimula talentos, integração e sensibilidade através do som e do ritmo.': 'Space for artistic and sensory expression, which stimulates talents, integration and sensitivity through sound and rhythm.',
+        }
+    }
+    
     def get_servico_text(servico, field):
         """Retorna texto traduzido do serviço 'O que fazemos'"""
         if not servico:
             return ''
-        # Por enquanto, retorna o texto original (futuramente pode adicionar campos de tradução)
-        return getattr(servico, field, '')
+        texto_original = getattr(servico, field, '')
+        if not texto_original:
+            return ''
+        # Tentar tradução estática primeiro
+        if current_lang in servicos_translations and texto_original in servicos_translations[current_lang]:
+            return servicos_translations[current_lang][texto_original]
+        # Se não encontrar tradução, retorna o original
+        return texto_original
     
     def get_reunion_text(reunion, field):
         """Retorna texto traduzido da reunião"""
