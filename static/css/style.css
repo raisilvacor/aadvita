@@ -4094,8 +4094,11 @@ body.font-xxlarge {
 
 /* Botões de Ação - Estilos Consistentes com os Outros Botões */
 .hero-action-group .btn-volunteer,
-.hero-action-group .btn-volunteer.hero-action-link {
+.hero-action-group .btn-volunteer.hero-action-link,
+.hero-action-group a.btn-volunteer,
+.hero-action-group a.btn-volunteer.hero-action-link {
     background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
+    background-color: #1e40af !important;
     color: #fff !important;
     box-shadow: 0 6px 20px rgba(30, 64, 175, 0.25) !important;
 }
