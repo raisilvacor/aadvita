@@ -6733,11 +6733,12 @@ def admin_associados_aprovar(id):
         associado.status = 'aprovado'
         db.session.commit()
         
-        # Gerar primeira mensalidade se o associado tiver valor configurado
-        try:
-            gerar_primeira_mensalidade(associado)
-        except Exception as e:
-            print(f"Aviso: Erro ao gerar primeira mensalidade: {str(e)}")
+        # Gerar primeira mensalidade apenas se for Contribuinte e tiver valor configurado
+        if associado.tipo_associado == 'contribuinte':
+            try:
+                gerar_primeira_mensalidade(associado)
+            except Exception as e:
+                print(f"Aviso: Erro ao gerar primeira mensalidade: {str(e)}")
         
         flash('Associado aprovado com sucesso!', 'success')
     except Exception as e:
