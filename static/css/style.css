@@ -3927,11 +3927,15 @@ textarea:focus {
 
 .nav-menu .language-selector {
     margin-top: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .nav-menu .language-selector .lang-btn,
 .nav-menu .language-selector .lang-dropdown {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .o-que-fazemos-column {
