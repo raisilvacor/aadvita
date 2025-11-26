@@ -16,12 +16,14 @@
             <div class="video-grid-full" role="list">
                 {% for video in videos %}
                 <article class="video-card-full" role="listitem">
-                    <div class="video-thumbnail-wrapper">
+                    <div class="video-thumbnail-wrapper" data-video-id="{{ video.get_youtube_id() }}" data-embed-url="{{ video.get_embed_url() }}">
+                        {% if video.get_thumbnail_url() %}
                         <a href="{{ video.url_youtube }}" target="_blank" rel="noopener noreferrer" class="video-link" aria-label="{{ _('Assistir vídeo') }}: {{ video.titulo }}">
                             <img src="{{ video.get_thumbnail_url() }}" 
                                  alt="{{ video.titulo }}" 
                                  class="video-thumbnail"
-                                 loading="lazy">
+                                 loading="lazy"
+                                 onerror="this.parentElement.parentElement.classList.add('thumbnail-error'); this.style.display='none';">
                             <div class="video-play-button" aria-hidden="true">
                                 <svg width="68" height="48" viewBox="0 0 68 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="red"/>
@@ -29,6 +31,17 @@
                                 </svg>
                             </div>
                         </a>
+                        {% endif %}
+                        <div class="video-embed-container" style="display: {% if not video.get_thumbnail_url() %}block{% else %}none{% endif %};">
+                            {% if video.get_embed_url() %}
+                            <iframe src="{{ video.get_embed_url() }}" 
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen
+                                    class="video-embed-iframe"
+                                    title="{{ video.titulo }}"></iframe>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="video-info-full">
                         <h2 class="video-title-full">{{ video.titulo }}</h2>
