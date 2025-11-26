@@ -10485,12 +10485,33 @@ def index():
         # Por enquanto, retorna o texto original
         return getattr(video, field, '')
     
+    # Dicionário de tradução estático para banners
+    banners_translations = {
+        'pt': {},
+        'es': {
+            'Campanhas': 'Campañas',
+            'Apoie-nos': 'Apóyanos',
+            'Editais': 'Editales',
+        },
+        'en': {
+            'Campanhas': 'Campaigns',
+            'Apoie-nos': 'Support Us',
+            'Editais': 'Public Notices',
+        }
+    }
+    
     def get_banner_text(banner, field):
         """Retorna texto traduzido do banner"""
         if not banner:
             return ''
-        # Por enquanto, retorna o texto original
-        return getattr(banner, field, '')
+        texto_original = getattr(banner, field, '')
+        if not texto_original:
+            return ''
+        # Tentar tradução estática primeiro
+        if current_lang in banners_translations and texto_original in banners_translations[current_lang]:
+            return banners_translations[current_lang][texto_original]
+        # Se não encontrar tradução, retorna o original
+        return texto_original
     
     return render_template('index.html',
                          reuniones_presenciales=reuniones_presenciales,
