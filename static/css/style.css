@@ -2246,8 +2246,9 @@ body.font-xxlarge {
     padding: 0;
     display: block;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    object-fit: cover;
+    object-fit: fill;
     object-position: center;
+    margin: 0 auto;
 }
 
 .footer-bottom {
