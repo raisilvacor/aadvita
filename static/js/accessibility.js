@@ -15,9 +15,9 @@
     let clickTimeout = null;
     let lastClickedElement = null;
     let speechSynthesis = null;
-    let femaleVoice = null;
+    let maleVoice = null;
     
-    // Inicializar Speech Synthesis e encontrar voz feminina
+    // Inicializar Speech Synthesis e encontrar voz masculina
     function initSpeechSynthesis() {
         if ('speechSynthesis' in window) {
             speechSynthesis = window.speechSynthesis;
@@ -26,23 +26,33 @@
             function loadVoices() {
                 const voices = speechSynthesis.getVoices();
                 
-                // Procurar por voz feminina em português
-                // Prioridade: português brasileiro feminina > português feminina > qualquer feminina
-                femaleVoice = voices.find(voice => 
+                // Procurar por voz masculina em português
+                // Prioridade: português brasileiro masculina > português masculina > qualquer masculina
+                maleVoice = voices.find(voice => 
                     (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
-                    (voice.name.toLowerCase().includes('female') || 
-                     voice.name.toLowerCase().includes('feminina') ||
-                     voice.name.toLowerCase().includes('maria') ||
-                     voice.name.toLowerCase().includes('helena') ||
-                     voice.name.toLowerCase().includes('lucia') ||
-                     voice.gender === 'female')
+                    (voice.name.toLowerCase().includes('male') || 
+                     voice.name.toLowerCase().includes('masculina') ||
+                     voice.name.toLowerCase().includes('masculino') ||
+                     voice.name.toLowerCase().includes('joão') ||
+                     voice.name.toLowerCase().includes('carlos') ||
+                     voice.name.toLowerCase().includes('paulo') ||
+                     voice.name.toLowerCase().includes('ricardo') ||
+                     voice.gender === 'male')
+                ) || voices.find(voice => 
+                    (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) &&
+                    !voice.name.toLowerCase().includes('female') &&
+                    !voice.name.toLowerCase().includes('feminina') &&
+                    !voice.name.toLowerCase().includes('maria') &&
+                    !voice.name.toLowerCase().includes('helena') &&
+                    !voice.name.toLowerCase().includes('lucia') &&
+                    voice.gender !== 'female'
                 ) || voices.find(voice => 
                     voice.lang.startsWith('pt')
                 ) || voices.find(voice => 
-                    voice.gender === 'female'
+                    voice.gender === 'male'
                 ) || voices.find(voice => 
-                    voice.name.toLowerCase().includes('female') || 
-                    voice.name.toLowerCase().includes('feminina')
+                    voice.name.toLowerCase().includes('male') || 
+                    voice.name.toLowerCase().includes('masculina')
                 ) || voices[0]; // Fallback para primeira voz disponível
             }
             
@@ -64,45 +74,183 @@
         
         const utterance = new SpeechSynthesisUtterance(text);
         
-        // Configurar voz feminina se disponível
-        if (femaleVoice) {
-            utterance.voice = femaleVoice;
+        // Configurar voz masculina se disponível
+        if (maleVoice) {
+            utterance.voice = maleVoice;
         } else {
-            // Tentar encontrar voz novamente
+            // Tentar encontrar voz masculina novamente
             const voices = speechSynthesis.getVoices();
-            femaleVoice = voices.find(voice => 
+            maleVoice = voices.find(voice => 
                 (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
-                (voice.name.toLowerCase().includes('female') || 
-                 voice.name.toLowerCase().includes('feminina') ||
-                 voice.gender === 'female')
+                (voice.name.toLowerCase().includes('male') || 
+                 voice.name.toLowerCase().includes('masculina') ||
+                 voice.name.toLowerCase().includes('masculino') ||
+                 voice.gender === 'male')
+            ) || voices.find(voice => 
+                voice.lang.startsWith('pt') &&
+                !voice.name.toLowerCase().includes('female') &&
+                !voice.name.toLowerCase().includes('feminina') &&
+                voice.gender !== 'female'
             ) || voices.find(voice => voice.lang.startsWith('pt')) || voices[0];
             
-            if (femaleVoice) {
-                utterance.voice = femaleVoice;
+            if (maleVoice) {
+                utterance.voice = maleVoice;
             }
         }
         
         // Configurações de voz
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0; // Velocidade normal
-        utterance.pitch = 1.0; // Tom normal
+        utterance.pitch = 0.9; // Tom ligeiramente mais grave (masculino)
         utterance.volume = 1.0; // Volume máximo
         
         speechSynthesis.speak(utterance);
+    }
+    
+    // Obter descrição completa de uma imagem
+    function getImageDescription(img) {
+        if (!img || img.tagName !== 'IMG') return '';
+        
+        let description = 'Imagem: ';
+        const parts = [];
+        
+        // 1. Alt text (prioridade máxima)
+        if (img.alt && img.alt.trim()) {
+            parts.push(img.alt.trim());
+        }
+        
+        // 2. Title
+        if (img.title && img.title.trim()) {
+            parts.push(img.title.trim());
+        }
+        
+        // 3. Aria-label
+        const ariaLabel = img.getAttribute('aria-label');
+        if (ariaLabel && ariaLabel.trim()) {
+            parts.push(ariaLabel.trim());
+        }
+        
+        // 4. Buscar contexto próximo (título, descrição, etc.)
+        // Procurar em elementos próximos
+        let contextText = '';
+        
+        // Procurar em parent com data-title ou aria-label
+        let parent = img.parentElement;
+        if (parent) {
+            const dataTitle = parent.getAttribute('data-title');
+            if (dataTitle && dataTitle.trim()) {
+                contextText = dataTitle.trim();
+            } else {
+                const parentAriaLabel = parent.getAttribute('aria-label');
+                if (parentAriaLabel && parentAriaLabel.trim()) {
+                    contextText = parentAriaLabel.trim();
+                }
+            }
+            
+            // Procurar em elementos irmãos ou filhos próximos
+            if (!contextText) {
+                // Procurar em overlay de imagem
+                const overlay = parent.querySelector('.image-overlay, .overlay, .caption, .image-title, .image-subtitle');
+                if (overlay) {
+                    const overlayText = overlay.textContent || overlay.innerText;
+                    if (overlayText && overlayText.trim()) {
+                        contextText = overlayText.trim();
+                    }
+                }
+                
+                // Procurar em elementos com classe de título/descrição
+                const titleEl = parent.querySelector('.title, .image-title, .photo-title, .gallery-title');
+                if (titleEl) {
+                    const titleText = titleEl.textContent || titleEl.innerText;
+                    if (titleText && titleText.trim()) {
+                        contextText = (contextText ? contextText + '. ' : '') + titleText.trim();
+                    }
+                }
+                
+                const descEl = parent.querySelector('.description, .image-description, .photo-description, .caption');
+                if (descEl) {
+                    const descText = descEl.textContent || descEl.innerText;
+                    if (descText && descText.trim()) {
+                        contextText = (contextText ? contextText + '. ' : '') + descText.trim();
+                    }
+                }
+            }
+        }
+        
+        // 5. Buscar em elementos próximos (antes ou depois)
+        if (!contextText) {
+            const nextSibling = img.nextElementSibling;
+            if (nextSibling) {
+                const siblingText = nextSibling.textContent || nextSibling.innerText;
+                if (siblingText && siblingText.trim() && siblingText.trim().length < 200) {
+                    contextText = siblingText.trim();
+                }
+            }
+            
+            if (!contextText) {
+                const prevSibling = img.previousElementSibling;
+                if (prevSibling) {
+                    const siblingText = prevSibling.textContent || prevSibling.innerText;
+                    if (siblingText && siblingText.trim() && siblingText.trim().length < 200) {
+                        contextText = siblingText.trim();
+                    }
+                }
+            }
+        }
+        
+        // 6. Informações da imagem (tamanho, tipo)
+        const imgInfo = [];
+        if (img.naturalWidth && img.naturalHeight) {
+            imgInfo.push(`${img.naturalWidth} por ${img.naturalHeight} pixels`);
+        }
+        
+        // Combinar todas as informações
+        if (parts.length > 0) {
+            description += parts.join('. ');
+        } else if (contextText) {
+            description += contextText;
+        } else {
+            // Se não houver nenhuma descrição, criar uma descrição genérica baseada no contexto
+            const src = img.src || '';
+            const fileName = src.split('/').pop().split('?')[0];
+            
+            // Tentar inferir do nome do arquivo
+            if (fileName && fileName !== 'undefined' && !fileName.includes('data:')) {
+                const cleanName = fileName.replace(/\.(jpg|jpeg|png|gif|webp|svg)$/i, '').replace(/[-_]/g, ' ');
+                if (cleanName.length > 3) {
+                    description += cleanName;
+                } else {
+                    description += 'sem descrição disponível';
+                }
+            } else {
+                description += 'sem descrição disponível';
+            }
+        }
+        
+        // Adicionar informações adicionais se disponíveis
+        if (contextText && !parts.includes(contextText)) {
+            description += '. ' + contextText;
+        }
+        
+        if (imgInfo.length > 0) {
+            description += '. Dimensões: ' + imgInfo.join(', ');
+        }
+        
+        return description;
     }
     
     // Obter texto de um elemento para leitura
     function getElementText(element) {
         if (!element) return '';
         
+        // Tratamento especial para imagens - descrição completa
+        if (element.tagName === 'IMG') {
+            return getImageDescription(element);
+        }
+        
         // Priorizar aria-label
         if (element.getAttribute('aria-label')) {
             return element.getAttribute('aria-label');
-        }
-        
-        // Priorizar alt em imagens
-        if (element.tagName === 'IMG' && element.alt) {
-            return element.alt;
         }
         
         // Priorizar title
@@ -141,10 +289,13 @@
         // Se não houver texto, tentar pegar do primeiro filho com texto
         if (!text && element.children.length > 0) {
             for (let child of element.children) {
-                const childText = getElementText(child);
-                if (childText) {
-                    text = childText;
-                    break;
+                // Ignorar imagens nos filhos para evitar loops
+                if (child.tagName !== 'IMG') {
+                    const childText = getElementText(child);
+                    if (childText) {
+                        text = childText;
+                        break;
+                    }
                 }
             }
         }
