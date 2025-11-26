@@ -111,11 +111,9 @@
     function getImageDescription(img) {
         if (!img || img.tagName !== 'IMG') return '';
         
-        const parts = [];
-        
         // 1. Alt text (prioridade máxima - descrição textual fornecida)
-        // SEMPRE usar o alt se ele existir e não for vazio, mesmo que seja curto
-        // O alt pode conter descricao_imagem salva pelo usuário
+        // SEMPRE usar o alt se ele existir e não for vazio, mesmo que seja longo
+        // O alt pode conter descricao_imagem salva pelo usuário (pode ser muito longo)
         if (img.alt && img.alt.trim()) {
             const altText = img.alt.trim();
             // Verificar se não é apenas um nome de arquivo
@@ -123,13 +121,15 @@
             // Verificar se não é apenas "Imagem atual" ou similar (textos genéricos de formulários)
             const isGenericText = /^(imagem atual|imagem|foto atual|foto|logo atual|logo)$/i.test(altText);
             // Se não for nome de arquivo, não for texto genérico, e não for "undefined", usar
-            if (!isFileName && !isGenericText && altText !== 'undefined' && altText.length > 1) {
-                parts.push(altText);
+            // REMOVIDO: verificação de length > 1 para permitir descrições longas
+            if (!isFileName && !isGenericText && altText !== 'undefined' && altText.length > 0) {
                 // Se temos uma descrição válida no alt, retornar imediatamente (não buscar contexto)
-                // Isso garante que descrições salvas pelo usuário sejam sempre lidas
+                // Isso garante que descrições salvas pelo usuário sejam sempre lidas completamente
                 return altText;
             }
         }
+        
+        const parts = [];
         
         // 2. Title
         if (img.title && img.title.trim()) {
@@ -244,24 +244,41 @@
     }
     
     // Obter todo o texto de um elemento e seus filhos (recursivo)
+    // FILTRA código HTML e tags, retornando apenas texto visível
     function getAllTextContent(element, depth = 0) {
         if (!element || depth > 10) return ''; // Limitar profundidade
         
         let text = '';
         
-        // Se for nó de texto, retornar diretamente
+        // Se for nó de texto, retornar diretamente (já é texto puro, sem HTML)
         if (element.nodeType === Node.TEXT_NODE) {
-            return element.textContent || '';
+            const nodeText = element.textContent || '';
+            // Remover caracteres de controle e normalizar espaços
+            return nodeText.replace(/[\x00-\x1F\x7F]/g, '').trim();
         }
         
-        // Ignorar elementos ocultos ou scripts
+        // Ignorar elementos ocultos, scripts, styles e elementos com aria-hidden
         if (element.nodeType === Node.ELEMENT_NODE) {
+            const tagName = element.tagName || '';
+            
+            // SEMPRE ignorar tags de código/script
+            if (tagName === 'SCRIPT' || tagName === 'STYLE' || tagName === 'NOSCRIPT' || 
+                tagName === 'CODE' || tagName === 'PRE' || tagName === 'SVG' || tagName === 'PATH') {
+                return '';
+            }
+            
+            // Ignorar elementos com aria-hidden (exceto se for sr-only)
+            if (element.hasAttribute('aria-hidden') && element.getAttribute('aria-hidden') === 'true') {
+                const isSrOnly = element.classList && element.classList.contains('sr-only');
+                if (!isSrOnly) {
+                    return '';
+                }
+            }
+            
             const style = window.getComputedStyle(element);
             // NÃO ignorar elementos com sr-only (screen reader only) - eles devem ser lidos!
             const isSrOnly = element.classList && element.classList.contains('sr-only');
-            if (!isSrOnly && (style.display === 'none' || style.visibility === 'hidden' || 
-                element.tagName === 'SCRIPT' || element.tagName === 'STYLE' ||
-                element.tagName === 'NOSCRIPT' || element.hasAttribute('aria-hidden'))) {
+            if (!isSrOnly && (style.display === 'none' || style.visibility === 'hidden')) {
                 return '';
             }
         }
@@ -298,17 +315,27 @@
         for (let node = element.firstChild; node; node = node.nextSibling) {
             if (node.nodeType === Node.TEXT_NODE) {
                 const nodeText = node.textContent || '';
-                if (nodeText.trim()) {
-                    text += (text ? ' ' : '') + nodeText.trim();
+                // Remover caracteres de controle e normalizar
+                const cleanText = nodeText.replace(/[\x00-\x1F\x7F]/g, '').trim();
+                if (cleanText) {
+                    text += (text ? ' ' : '') + cleanText;
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName || '';
+                
+                // Ignorar tags de código/script
+                if (tagName === 'SCRIPT' || tagName === 'STYLE' || tagName === 'NOSCRIPT' || 
+                    tagName === 'CODE' || tagName === 'PRE' || tagName === 'SVG' || tagName === 'PATH') {
+                    continue;
+                }
+                
                 // Ignorar imagens para evitar loops, mas incluir seu alt
-                if (node.tagName === 'IMG') {
+                if (tagName === 'IMG') {
                     const imgAlt = node.getAttribute('alt') || node.getAttribute('aria-label');
                     if (imgAlt && imgAlt.trim()) {
                         text += (text ? ' ' : '') + imgAlt.trim();
                     }
-                } else if (node.tagName === 'SVG' && node.hasAttribute('aria-hidden')) {
+                } else if (tagName === 'SVG' && node.hasAttribute('aria-hidden')) {
                     // Ignorar SVGs com aria-hidden, mas tentar pegar aria-label do pai se existir
                     const parentAriaLabel = element.getAttribute('aria-label');
                     if (parentAriaLabel && parentAriaLabel.trim()) {
