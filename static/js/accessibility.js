@@ -56,8 +56,20 @@
             return null;
         }
         
+        // Lista de nomes femininos para evitar (mais completa)
+        const femaleNames = ['maria', 'helena', 'lucia', 'ana', 'sandra', 'patricia', 'julia', 'beatriz', 'fernanda', 'carolina', 'isabela', 'rafaela', 'camila', 'gabriela', 'laura', 'valentina', 'sophia', 'manuela', 'alice', 'luiza'];
+        const femaleKeywords = ['female', 'feminina', 'feminino', 'woman', 'mulher', 'girl', 'menina'];
+        
+        // Função auxiliar para verificar se é voz feminina
+        function isFemaleVoice(voice) {
+            const nameLower = voice.name.toLowerCase();
+            return voice.gender === 'female' ||
+                   femaleNames.some(name => nameLower.includes(name)) ||
+                   femaleKeywords.some(keyword => nameLower.includes(keyword));
+        }
+        
         // Procurar por voz masculina em português (prioridade máxima)
-        // Funciona igual em mobile e desktop
+        // Estratégia mais agressiva para mobile
         maleVoice = voices.find(voice => 
             (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
             (voice.gender === 'male' ||
@@ -69,27 +81,44 @@
              voice.name.toLowerCase().includes('paulo') ||
              voice.name.toLowerCase().includes('ricardo') ||
              voice.name.toLowerCase().includes('thiago') ||
-             voice.name.toLowerCase().includes('felipe'))
+             voice.name.toLowerCase().includes('felipe') ||
+             voice.name.toLowerCase().includes('lucas') ||
+             voice.name.toLowerCase().includes('gabriel') ||
+             voice.name.toLowerCase().includes('rafael') ||
+             voice.name.toLowerCase().includes('bruno') ||
+             voice.name.toLowerCase().includes('daniel'))
         ) || voices.find(voice => 
             (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) &&
             voice.gender !== 'female' &&
-            !voice.name.toLowerCase().includes('female') &&
-            !voice.name.toLowerCase().includes('feminina') &&
-            !voice.name.toLowerCase().includes('maria') &&
-            !voice.name.toLowerCase().includes('helena') &&
-            !voice.name.toLowerCase().includes('lucia') &&
-            !voice.name.toLowerCase().includes('ana') &&
-            !voice.name.toLowerCase().includes('sandra') &&
-            !voice.name.toLowerCase().includes('patricia')
+            !isFemaleVoice(voice)
         ) || voices.find(voice => 
-            voice.gender === 'male'
+            voice.gender === 'male' &&
+            !isFemaleVoice(voice)
         ) || voices.find(voice => 
             voice.lang.startsWith('pt') &&
-            !voice.name.toLowerCase().includes('female') &&
-            !voice.name.toLowerCase().includes('feminina') &&
-            !voice.name.toLowerCase().includes('maria') &&
-            !voice.name.toLowerCase().includes('helena')
+            voice.gender !== 'female' &&
+            !isFemaleVoice(voice)
+        ) || voices.find(voice => 
+            !isFemaleVoice(voice) &&
+            (voice.gender === 'male' || voice.gender === undefined)
+        ) || voices.find(voice => 
+            voice.lang.startsWith('pt') &&
+            !isFemaleVoice(voice)
+        ) || voices.find(voice => 
+            !isFemaleVoice(voice)
         ) || voices.find(voice => voice.lang.startsWith('pt')) || voices[0];
+        
+        // Se ainda não encontrou uma voz claramente masculina, tentar por índice
+        // No mobile, geralmente a primeira voz em pt-BR pode ser masculina
+        if (!maleVoice || isFemaleVoice(maleVoice)) {
+            const ptVoices = voices.filter(voice => 
+                (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) &&
+                !isFemaleVoice(voice)
+            );
+            if (ptVoices.length > 0) {
+                maleVoice = ptVoices[0];
+            }
+        }
         
         return maleVoice;
     }
@@ -104,25 +133,41 @@
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Garantir voz masculina (sempre verificar novamente, igual em mobile e desktop)
-        const voice = ensureMaleVoice();
+        let voice = ensureMaleVoice();
         if (voice) {
             utterance.voice = voice;
-        } else {
-            // Se não encontrou voz masculina, tentar novamente após um pequeno delay
-            // Funciona igual em mobile e desktop
-            setTimeout(() => {
-                const retryVoice = ensureMaleVoice();
-                if (retryVoice && utterance) {
-                    utterance.voice = retryVoice;
-                }
-            }, 100);
         }
         
         // Configurações de voz (iguais para mobile e desktop)
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0; // Velocidade normal
-        utterance.pitch = 0.9; // Tom ligeiramente mais grave (masculino)
+        utterance.pitch = 0.8; // Tom mais grave (masculino) - reduzido para garantir voz mais masculina
         utterance.volume = 1.0; // Volume máximo
+        
+        // Retry agressivo para garantir voz masculina (especialmente no mobile)
+        setTimeout(() => {
+            const retryVoice = ensureMaleVoice();
+            if (retryVoice && utterance && (!voice || voice !== retryVoice)) {
+                utterance.voice = retryVoice;
+                // Se já estava falando, cancelar e refazer com a voz correta
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        }, 50);
+        
+        // Segundo retry após mais tempo (para mobile onde vozes carregam mais tarde)
+        setTimeout(() => {
+            const retryVoice = ensureMaleVoice();
+            if (retryVoice && utterance && (!voice || voice !== retryVoice)) {
+                utterance.voice = retryVoice;
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        }, 200);
         
         speechSynthesis.speak(utterance);
     }
@@ -1062,8 +1107,36 @@
         // Configurações de voz (iguais para mobile e desktop)
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0;
-        utterance.pitch = 0.9; // Tom mais grave (masculino)
+        utterance.pitch = 0.8; // Tom mais grave (masculino) - reduzido para garantir voz mais masculina
         utterance.volume = 1.0;
+        
+        // Retry agressivo para garantir voz masculina (especialmente no mobile)
+        let voice = ensureMaleVoice();
+        if (voice) {
+            utterance.voice = voice;
+        }
+        
+        setTimeout(() => {
+            const retryVoice = ensureMaleVoice();
+            if (retryVoice && utterance && (!voice || voice !== retryVoice)) {
+                utterance.voice = retryVoice;
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        }, 50);
+        
+        setTimeout(() => {
+            const retryVoice = ensureMaleVoice();
+            if (retryVoice && utterance && (!voice || voice !== retryVoice)) {
+                utterance.voice = retryVoice;
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                    speechSynthesis.speak(utterance);
+                }
+            }
+        }, 200);
         
         // Navegar quando a fala terminar
         utterance.onend = function() {
