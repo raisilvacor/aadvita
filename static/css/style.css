@@ -1458,21 +1458,28 @@ body.font-xxlarge {
 
 .hero-action-group .btn-transparency,
 .hero-action-group .btn-associate,
-.hero-action-group .btn-login {
+.hero-action-group .btn-login,
+.hero-action-group .btn-volunteer,
+.hero-action-group .btn-acessibilidade,
+.hero-action-group .btn-certificados,
+.hero-action-group .btn-reciclagem {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 0.75rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
 }
 
 .hero-action-group .btn-transparency {
     background: linear-gradient(135deg, #1d4ed8, #2563eb);
     color: #fff;
-    padding: 0.75rem 1.75rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    text-decoration: none;
     box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
-    transition: var(--transition);
 }
 
 .hero-action-group .btn-transparency:hover,
@@ -1485,6 +1492,44 @@ body.font-xxlarge {
 .hero-action-group .btn-transparency:active {
     transform: translateY(0);
     box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
+}
+
+.hero-action-group .btn-associate {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+}
+
+.hero-action-group .btn-associate:hover,
+.hero-action-group .btn-associate:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.30);
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    color: #fff;
+}
+
+.hero-action-group .btn-associate:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
+}
+
+.hero-action-group .btn-login {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
+}
+
+.hero-action-group .btn-login:hover,
+.hero-action-group .btn-login:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.30);
+    background: linear-gradient(135deg, #059669, #047857);
+    color: #fff;
+}
+
+.hero-action-group .btn-login:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
 }
 
 .hero-action-group .lang-dropdown {
@@ -1531,8 +1576,8 @@ body.font-xxlarge {
 }
 
 .hero-action-link {
-    min-width: 200px;
     text-align: center;
+    white-space: nowrap;
 }
 
 /* Buttons */
@@ -4020,93 +4065,80 @@ body.font-xxlarge {
 /* ===== Homepage Inline Styles (migrated from templates/index.html) ===== */
 
 /* Botões de Ação - Estilos Consistentes com os Outros Botões */
-.hero-action-group .btn-volunteer,
-.hero-action-group .btn-acessibilidade,
-.hero-action-group .btn-certificados,
-.hero-action-group .btn-reciclagem {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0.75rem 1.75rem !important;
-    border-radius: 0.5rem !important;
-    font-weight: 600 !important;
-    text-decoration: none !important;
-    color: white !important;
-    transition: var(--transition) !important;
-    border: none !important;
-    cursor: pointer !important;
-}
-
 .hero-action-group .btn-volunteer {
-    background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
-    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.25) !important;
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.25);
 }
 
 .hero-action-group .btn-volunteer:hover,
 .hero-action-group .btn-volunteer:focus {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 25px rgba(30, 64, 175, 0.30) !important;
-    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
-    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(30, 64, 175, 0.30);
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    color: #fff;
 }
 
 .hero-action-group .btn-volunteer:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 4px 15px rgba(30, 64, 175, 0.25) !important;
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(30, 64, 175, 0.25);
 }
 
 .hero-action-group .btn-acessibilidade {
-    background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
-    box-shadow: 0 6px 20px rgba(127, 29, 29, 0.25) !important;
+    background: linear-gradient(135deg, #7f1d1d, #991b1b);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(127, 29, 29, 0.25);
 }
 
 .hero-action-group .btn-acessibilidade:hover,
 .hero-action-group .btn-acessibilidade:focus {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 25px rgba(127, 29, 29, 0.30) !important;
-    background: linear-gradient(135deg, #991b1b, #7f1d1d) !important;
-    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(127, 29, 29, 0.30);
+    background: linear-gradient(135deg, #991b1b, #7f1d1d);
+    color: #fff;
 }
 
 .hero-action-group .btn-acessibilidade:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 4px 15px rgba(127, 29, 29, 0.25) !important;
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(127, 29, 29, 0.25);
 }
 
 .hero-action-group .btn-certificados {
-    background: linear-gradient(135deg, #312e81, #4338ca) !important;
-    box-shadow: 0 6px 20px rgba(49, 46, 129, 0.25) !important;
+    background: linear-gradient(135deg, #312e81, #4338ca);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(49, 46, 129, 0.25);
 }
 
 .hero-action-group .btn-certificados:hover,
 .hero-action-group .btn-certificados:focus {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 25px rgba(49, 46, 129, 0.30) !important;
-    background: linear-gradient(135deg, #4338ca, #312e81) !important;
-    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(49, 46, 129, 0.30);
+    background: linear-gradient(135deg, #4338ca, #312e81);
+    color: #fff;
 }
 
 .hero-action-group .btn-certificados:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 4px 15px rgba(49, 46, 129, 0.25) !important;
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(49, 46, 129, 0.25);
 }
 
 .hero-action-group .btn-reciclagem {
-    background: linear-gradient(135deg, #059669, #047857) !important;
-    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.25) !important;
+    background: linear-gradient(135deg, #059669, #047857);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.25);
 }
 
 .hero-action-group .btn-reciclagem:hover,
 .hero-action-group .btn-reciclagem:focus {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 25px rgba(5, 150, 105, 0.30) !important;
-    background: linear-gradient(135deg, #047857, #059669) !important;
-    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(5, 150, 105, 0.30);
+    background: linear-gradient(135deg, #047857, #059669);
+    color: #fff;
 }
 
 .hero-action-group .btn-reciclagem:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 4px 15px rgba(5, 150, 105, 0.25) !important;
+    transform: translateY(0);
+    box-shadow: 0 4px 15px rgba(5, 150, 105, 0.25);
 }
 
 /* Banners Section - Estilos Simples */
