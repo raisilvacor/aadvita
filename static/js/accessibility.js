@@ -61,19 +61,59 @@
     // Aplicar contraste
     function applyContrast(enabled) {
         const body = document.body;
+        const html = document.documentElement;
         
         if (enabled) {
             body.classList.add('high-contrast');
+            // Aplicar filter no html ao invés do body para evitar problemas com position: fixed
+            // Mas precisamos aplicar apenas no conteúdo, não nos botões flutuantes
+            // Criar um wrapper se não existir
+            let wrapper = document.getElementById('content-wrapper');
+            if (!wrapper) {
+                // Criar wrapper para o conteúdo principal
+                wrapper = document.createElement('div');
+                wrapper.id = 'content-wrapper';
+                wrapper.style.cssText = 'filter: contrast(1.5); min-height: 100vh;';
+                
+                // Mover todos os filhos do body para o wrapper, exceto os botões flutuantes
+                const children = Array.from(body.children);
+                children.forEach(child => {
+                    if (!child.classList.contains('accessibility-float') && 
+                        !child.classList.contains('language-float') && 
+                        !child.classList.contains('whatsapp-float')) {
+                        wrapper.appendChild(child);
+                    }
+                });
+                body.appendChild(wrapper);
+            } else {
+                wrapper.style.filter = 'contrast(1.5)';
+            }
         } else {
             body.classList.remove('high-contrast');
+            const wrapper = document.getElementById('content-wrapper');
+            if (wrapper) {
+                wrapper.style.filter = '';
+                // Se o wrapper foi criado por nós, restaurar estrutura original
+                if (wrapper.parentNode === body) {
+                    const wrapperChildren = Array.from(wrapper.children);
+                    wrapperChildren.forEach(child => {
+                        body.insertBefore(child, wrapper);
+                    });
+                    wrapper.remove();
+                }
+            }
         }
         
         // Atualizar label
         const labelElement = document.getElementById('contrast-label');
         if (labelElement) {
-            labelElement.textContent = enabled ? 
-                (labelElement.getAttribute('data-on') || 'Alto Contraste Ativo') :
-                (labelElement.getAttribute('data-off') || 'Alto Contraste');
+            const dataOn = labelElement.getAttribute('data-on');
+            const dataOff = labelElement.getAttribute('data-off');
+            if (enabled) {
+                labelElement.textContent = dataOn || labelElement.getAttribute('data-text-on') || 'Alto Contraste Ativo';
+            } else {
+                labelElement.textContent = dataOff || labelElement.getAttribute('data-text-off') || 'Alto Contraste';
+            }
         }
         
         // Salvar preferência
