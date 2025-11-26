@@ -35,9 +35,9 @@
                 Conteúdo
             </label>
             <textarea id="conteudo" name="conteudo" rows="15"
-                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit; line-height: 1.6; resize: vertical;">{% if conteudo and conteudo.conteudo %}{{ conteudo.conteudo }}{% endif %}</textarea>
+                      style="width: 100%; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; font-family: inherit; line-height: 1.6; resize: vertical;">{% if conteudo and conteudo.conteudo %}{{ conteudo.conteudo|html_para_texto }}{% endif %}</textarea>
             <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
-                Conteúdo que será exibido na página. Você pode usar HTML básico para formatação.
+                Conteúdo que será exibido na página. Pressione Enter duas vezes para criar um novo parágrafo.
             </small>
         </div>
         

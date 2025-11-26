@@ -1051,6 +1051,23 @@ def limpar_br_nl2br_filter(text):
     # Aplicar nl2br e marcar como seguro para renderização HTML
     return Markup(text.replace('\n', '<br>'))
 
+# Filtro para converter HTML de volta para texto simples (para edição)
+@app.template_filter('html_para_texto')
+def html_para_texto_filter(html):
+    """Converte HTML de volta para texto simples para edição em textarea"""
+    if not html:
+        return ''
+    import re
+    # Remover tags <p> e </p>, substituindo por quebras duplas
+    texto = html.replace('</p>', '\n\n').replace('<p>', '')
+    # Remover tags <br> e substituir por quebras simples
+    texto = re.sub(r'<br\s*/?>', '\n', texto, flags=re.IGNORECASE)
+    # Remover outras tags HTML
+    texto = re.sub(r'<[^>]+>', '', texto)
+    # Limpar espaços extras e quebras de linha
+    linhas = [p.strip() for p in texto.split('\n\n') if p.strip()]
+    return '\n\n'.join(linhas)
+
 # Modelos de Base de Datos
 # Tabela de associação para Usuario e Permissao
 usuario_permissao = db.Table('usuario_permissao',
@@ -5226,6 +5243,44 @@ def processar_texto_relatorio(texto):
     texto = re.sub(r'<[^>]+>', '', texto)  # Remove qualquer tag HTML restante
     return texto
 
+def processar_texto_paragrafos(texto):
+    """Converte quebras de linha em parágrafos HTML"""
+    if not texto:
+        return ''
+    # Remover tags HTML existentes que possam causar problemas
+    import re
+    texto = re.sub(r'<[^>]+>', '', texto)
+    
+    # Dividir por quebras de linha duplas ou simples
+    # Quebras duplas (\n\n) criam novos parágrafos
+    # Quebras simples (\n) criam <br>
+    paragrafos = []
+    linhas = texto.split('\n\n')
+    
+    for paragrafo in linhas:
+        paragrafo = paragrafo.strip()
+        if paragrafo:
+            # Substituir quebras simples dentro do parágrafo por <br>
+            paragrafo = paragrafo.replace('\n', '<br>')
+            paragrafos.append(f'<p>{paragrafo}</p>')
+    
+    return '\n'.join(paragrafos) if paragrafos else ''
+
+def html_para_texto(html):
+    """Converte HTML de volta para texto simples para edição"""
+    if not html:
+        return ''
+    import re
+    # Remover tags <p> e </p>, substituindo por quebras duplas
+    texto = html.replace('</p>', '\n\n').replace('<p>', '')
+    # Remover tags <br> e substituir por quebras simples
+    texto = re.sub(r'<br\s*/?>', '\n', texto, flags=re.IGNORECASE)
+    # Remover outras tags HTML
+    texto = re.sub(r'<[^>]+>', '', texto)
+    # Limpar espaços extras e quebras de linha
+    texto = '\n\n'.join([p.strip() for p in texto.split('\n\n') if p.strip()])
+    return texto
+
 @app.route('/admin/transparencia/relatorio-atividade/novo', methods=['GET', 'POST'])
 @admin_required
 def admin_relatorio_atividade_novo():
@@ -9052,10 +9107,13 @@ def admin_banner_conteudo_novo(banner_id):
                     flash('Tipo de arquivo não permitido para PDF. Use apenas arquivos .pdf', 'error')
                     return redirect(url_for('admin_banner_conteudo_novo', banner_id=banner_id))
             
+            # Processar conteúdo: converter quebras de linha em parágrafos HTML
+            conteudo_processado = processar_texto_paragrafos(conteudo) if conteudo else None
+            
             novo_conteudo = BannerConteudo(
                 banner_id=banner_id,
                 titulo=titulo,
-                conteudo=conteudo if conteudo else None,
+                conteudo=conteudo_processado,
                 imagem=imagem_path,
                 imagem_base64=imagem_base64_data,
                 arquivo_pdf=pdf_path,
@@ -9193,8 +9251,11 @@ def admin_banner_conteudo_editar(id):
                             pass
                 conteudo.arquivo_pdf = None
             
+            # Processar conteúdo: converter quebras de linha em parágrafos HTML
+            conteudo_processado = processar_texto_paragrafos(conteudo_text) if conteudo_text else None
+            
             conteudo.titulo = titulo
-            conteudo.conteudo = conteudo_text if conteudo_text else None
+            conteudo.conteudo = conteudo_processado
             conteudo.ordem = ordem
             conteudo.ativo = ativo
             
