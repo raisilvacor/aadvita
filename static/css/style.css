@@ -4065,23 +4065,27 @@ body.font-xxlarge {
 /* ===== Homepage Inline Styles (migrated from templates/index.html) ===== */
 
 /* Botões de Ação - Estilos Consistentes com os Outros Botões */
-.hero-action-group .btn-volunteer {
-    background: linear-gradient(135deg, #1e40af, #1d4ed8);
-    color: #fff;
-    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.25);
+.hero-action-group .btn-volunteer,
+.hero-action-group .btn-volunteer.hero-action-link {
+    background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.25) !important;
 }
 
 .hero-action-group .btn-volunteer:hover,
-.hero-action-group .btn-volunteer:focus {
+.hero-action-group .btn-volunteer:focus,
+.hero-action-group .btn-volunteer.hero-action-link:hover,
+.hero-action-group .btn-volunteer.hero-action-link:focus {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(30, 64, 175, 0.30);
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
-    color: #fff;
+    box-shadow: 0 10px 25px rgba(30, 64, 175, 0.30) !important;
+    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+    color: #fff !important;
 }
 
-.hero-action-group .btn-volunteer:active {
+.hero-action-group .btn-volunteer:active,
+.hero-action-group .btn-volunteer.hero-action-link:active {
     transform: translateY(0);
-    box-shadow: 0 4px 15px rgba(30, 64, 175, 0.25);
+    box-shadow: 0 4px 15px rgba(30, 64, 175, 0.25) !important;
 }
 
 .hero-action-group .btn-acessibilidade {
