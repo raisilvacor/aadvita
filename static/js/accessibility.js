@@ -250,9 +250,11 @@
         // Ignorar elementos ocultos ou scripts
         if (element.nodeType === Node.ELEMENT_NODE) {
             const style = window.getComputedStyle(element);
-            if (style.display === 'none' || style.visibility === 'hidden' || 
+            // NÃO ignorar elementos com sr-only (screen reader only) - eles devem ser lidos!
+            const isSrOnly = element.classList && element.classList.contains('sr-only');
+            if (!isSrOnly && (style.display === 'none' || style.visibility === 'hidden' || 
                 element.tagName === 'SCRIPT' || element.tagName === 'STYLE' ||
-                element.tagName === 'NOSCRIPT' || element.hasAttribute('aria-hidden')) {
+                element.tagName === 'NOSCRIPT' || element.hasAttribute('aria-hidden'))) {
                 return '';
             }
         }
@@ -299,7 +301,14 @@
                     if (imgAlt && imgAlt.trim()) {
                         text += (text ? ' ' : '') + imgAlt.trim();
                     }
+                } else if (node.tagName === 'SVG' && node.hasAttribute('aria-hidden')) {
+                    // Ignorar SVGs com aria-hidden, mas tentar pegar aria-label do pai se existir
+                    const parentAriaLabel = element.getAttribute('aria-label');
+                    if (parentAriaLabel && parentAriaLabel.trim()) {
+                        // Não adicionar aqui, será pego pelo aria-label do elemento pai
+                    }
                 } else {
+                    // Incluir elementos sr-only (screen reader only) - eles devem ser lidos!
                     const childText = getAllTextContent(node, depth + 1);
                     if (childText.trim()) {
                         text += (text ? ' ' : '') + childText.trim();
@@ -586,15 +595,42 @@
         enableAudioDesc(!isAudioDescEnabled);
     }
     
+    // Encontrar o elemento pai relevante (link ou botão) se o elemento clicado for um filho
+    function findRelevantElement(element) {
+        if (!element) return element;
+        
+        // Se o elemento já é um link ou botão, retornar ele mesmo
+        if (element.tagName === 'A' || element.tagName === 'BUTTON') {
+            return element;
+        }
+        
+        // Verificar se está dentro de um link ou botão flutuante
+        const parentLink = element.closest('a.whatsapp-float, a.language-float, button.accessibility-float-btn, a.accessibility-float-btn');
+        if (parentLink) {
+            return parentLink;
+        }
+        
+        // Verificar se está dentro de qualquer link ou botão
+        const parentButton = element.closest('a, button');
+        if (parentButton) {
+            return parentButton;
+        }
+        
+        return element;
+    }
+    
     // Manipular clique com áudio descrição
     function handleClickWithAudioDesc(e) {
         const target = e.target;
+        
+        // Encontrar o elemento relevante (pode ser o próprio target ou um pai link/botão)
+        const relevantElement = findRelevantElement(target);
         
         // NÃO ignorar botões flutuantes - eles também devem ser lidos!
         // Removido: if (e.target.closest('.accessibility-float') || ...)
         
         // Verificar se é o mesmo elemento clicado anteriormente
-        if (lastClickedElement === target && clickTimeout) {
+        if (lastClickedElement === relevantElement && clickTimeout) {
             // Segundo clique - executar ação normal
             clearTimeout(clickTimeout);
             clickTimeout = null;
@@ -612,15 +648,15 @@
             speechSynthesis.cancel();
         }
         
-        // Obter texto do elemento
-        const text = getElementText(target);
+        // Obter texto do elemento relevante (pode ser o link/botão pai)
+        const text = getElementText(relevantElement);
         
         if (text) {
             speakText(text);
         }
         
-        // Armazenar elemento clicado
-        lastClickedElement = target;
+        // Armazenar elemento clicado (usar o relevante)
+        lastClickedElement = relevantElement;
         
         // Limpar timeout anterior se existir
         if (clickTimeout) {
@@ -638,11 +674,14 @@
     function handleTouchWithAudioDesc(e) {
         const target = e.target;
         
+        // Encontrar o elemento relevante (pode ser o próprio target ou um pai link/botão)
+        const relevantElement = findRelevantElement(target);
+        
         // NÃO ignorar botões flutuantes - eles também devem ser lidos!
         // Removido: if (e.target.closest('.accessibility-float') || ...)
         
         // Verificar se é o mesmo elemento tocado anteriormente
-        if (lastClickedElement === target && clickTimeout) {
+        if (lastClickedElement === relevantElement && clickTimeout) {
             // Segundo toque - executar ação normal
             clearTimeout(clickTimeout);
             clickTimeout = null;
@@ -660,15 +699,15 @@
             speechSynthesis.cancel();
         }
         
-        // Obter texto do elemento
-        const text = getElementText(target);
+        // Obter texto do elemento relevante (pode ser o link/botão pai)
+        const text = getElementText(relevantElement);
         
         if (text) {
             speakText(text);
         }
         
-        // Armazenar elemento tocado
-        lastClickedElement = target;
+        // Armazenar elemento tocado (usar o relevante)
+        lastClickedElement = relevantElement;
         
         // Limpar timeout anterior se existir
         if (clickTimeout) {
