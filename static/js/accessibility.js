@@ -701,6 +701,43 @@
         'edital': { url: '/editais', text: 'Abrindo página de editais' },
         'login': { url: '/login', text: 'Abrindo página de login' },
         'entrar': { url: '/login', text: 'Abrindo página de login' },
+        
+        // Comandos de botões flutuantes - Acessibilidade
+        'abrir acessibilidade': { type: 'accessibility_toggle', open: true },
+        'fechar acessibilidade': { type: 'accessibility_toggle', open: false },
+        'menu acessibilidade': { type: 'accessibility_toggle', open: true },
+        'aumentar fonte': { type: 'font_increase' },
+        'diminuir fonte': { type: 'font_decrease' },
+        'fonte maior': { type: 'font_increase' },
+        'fonte menor': { type: 'font_decrease' },
+        'alto contraste': { type: 'contrast_toggle' },
+        'ativar contraste': { type: 'contrast_toggle' },
+        'desativar contraste': { type: 'contrast_toggle' },
+        'áudio descrição': { type: 'audio_desc_toggle' },
+        'ativar áudio descrição': { type: 'audio_desc_toggle' },
+        'desativar áudio descrição': { type: 'audio_desc_toggle' },
+        'comando de voz': { type: 'voice_command_toggle' },
+        'ativar comando de voz': { type: 'voice_command_toggle' },
+        'desativar comando de voz': { type: 'voice_command_toggle' },
+        'redefinir acessibilidade': { type: 'accessibility_reset' },
+        'reset acessibilidade': { type: 'accessibility_reset' },
+        
+        // Comandos de idioma
+        'abrir idioma': { type: 'language_toggle' },
+        'menu idioma': { type: 'language_toggle' },
+        'mudar idioma': { type: 'language_toggle' },
+        'português': { type: 'language_set', lang: 'pt', langName: 'Português' },
+        'portugues': { type: 'language_set', lang: 'pt', langName: 'Português' },
+        'espanhol': { type: 'language_set', lang: 'es', langName: 'Espanhol' },
+        'español': { type: 'language_set', lang: 'es', langName: 'Espanhol' },
+        'inglês': { type: 'language_set', lang: 'en', langName: 'Inglês' },
+        'ingles': { type: 'language_set', lang: 'en', langName: 'Inglês' },
+        'english': { type: 'language_set', lang: 'en', langName: 'Inglês' },
+        
+        // Comando WhatsApp
+        'whatsapp': { type: 'whatsapp' },
+        'abrir whatsapp': { type: 'whatsapp' },
+        'abrir whats app': { type: 'whatsapp' },
     };
     
     // Processar comando de voz
@@ -746,6 +783,11 @@
             'edital': { url: '/editais', text: 'Abrindo página de editais' },
             'inicio': { url: '/', text: 'Voltando para a página inicial' },
             'início': { url: '/', text: 'Voltando para a página inicial' },
+            'acessibilidade': { type: 'accessibility_toggle', open: true },
+            'fonte': { type: 'font_increase' },
+            'contraste': { type: 'contrast_toggle' },
+            'idioma': { type: 'language_toggle' },
+            'whatsapp': { type: 'whatsapp' },
         };
         
         for (const [keyword, value] of Object.entries(keywords)) {
@@ -755,6 +797,106 @@
         }
         
         return null;
+    }
+    
+    // Executar ação de botão flutuante
+    function executeFloatingButtonAction(action) {
+        if (!action || !action.type) return false;
+        
+        let element = null;
+        let response = '';
+        
+        switch(action.type) {
+            case 'accessibility_toggle':
+                element = document.getElementById('accessibility-float-btn');
+                if (element) {
+                    element.click();
+                    response = action.open ? 'Abrindo menu de acessibilidade' : 'Fechando menu de acessibilidade';
+                }
+                break;
+                
+            case 'font_increase':
+                element = document.getElementById('font-increase');
+                if (element) {
+                    element.click();
+                    response = 'Aumentando tamanho da fonte';
+                }
+                break;
+                
+            case 'font_decrease':
+                element = document.getElementById('font-decrease');
+                if (element) {
+                    element.click();
+                    response = 'Diminuindo tamanho da fonte';
+                }
+                break;
+                
+            case 'contrast_toggle':
+                element = document.getElementById('contrast-toggle');
+                if (element) {
+                    element.click();
+                    response = isHighContrast ? 'Desativando alto contraste' : 'Ativando alto contraste';
+                }
+                break;
+                
+            case 'audio_desc_toggle':
+                element = document.getElementById('audio-desc-toggle');
+                if (element) {
+                    element.click();
+                    response = isAudioDescEnabled ? 'Desativando áudio descrição' : 'Ativando áudio descrição';
+                }
+                break;
+                
+            case 'voice_command_toggle':
+                element = document.getElementById('voice-command-toggle');
+                if (element) {
+                    element.click();
+                    response = isVoiceCommandEnabled ? 'Desativando comando de voz' : 'Ativando comando de voz';
+                }
+                break;
+                
+            case 'accessibility_reset':
+                element = document.getElementById('accessibility-reset');
+                if (element) {
+                    element.click();
+                    response = 'Redefinindo configurações de acessibilidade';
+                }
+                break;
+                
+            case 'language_toggle':
+                element = document.getElementById('selected-lang-float');
+                if (element) {
+                    element.click();
+                    response = 'Abrindo menu de idioma';
+                }
+                break;
+                
+            case 'language_set':
+                // Buscar link do idioma
+                const langLinks = document.querySelectorAll(`a[href="/set-language/${action.lang}"]`);
+                if (langLinks.length > 0) {
+                    response = `Mudando idioma para ${action.langName}`;
+                    setTimeout(() => {
+                        window.location.href = langLinks[0].href;
+                    }, 500);
+                }
+                break;
+                
+            case 'whatsapp':
+                element = document.querySelector('.whatsapp-float');
+                if (element) {
+                    element.click();
+                    response = 'Abrindo WhatsApp';
+                }
+                break;
+        }
+        
+        if (response) {
+            speakText(response);
+            return true;
+        }
+        
+        return false;
     }
     
     // Executar comando
@@ -767,10 +909,22 @@
                 speechSynthesis.cancel();
             }
             
-            // Responder com áudio e aguardar terminar antes de navegar
-            speakTextAndNavigate(action.text, action.url);
+            // Se for ação de botão flutuante, executar diretamente
+            if (action.type) {
+                return executeFloatingButtonAction(action);
+            }
             
-            return true;
+            // Se for navegação, usar speakTextAndNavigate
+            if (action.url) {
+                speakTextAndNavigate(action.text, action.url);
+                return true;
+            }
+            
+            // Se for apenas texto (sem navegação)
+            if (action.text) {
+                speakText(action.text);
+                return true;
+            }
         }
         
         // Comando não reconhecido
