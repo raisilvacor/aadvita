@@ -834,24 +834,45 @@
             case 'contrast_toggle':
                 element = document.getElementById('contrast-toggle');
                 if (element) {
+                    // Verificar estado atual antes de clicar
+                    const currentState = isHighContrast;
                     element.click();
-                    response = isHighContrast ? 'Desativando alto contraste' : 'Ativando alto contraste';
+                    // Aguardar um pouco para o estado atualizar
+                    setTimeout(() => {
+                        response = currentState ? 'Desativando alto contraste' : 'Ativando alto contraste';
+                        speakText(response);
+                    }, 100);
+                    return true; // Retornar imediatamente, a resposta será falada no setTimeout
                 }
                 break;
                 
             case 'audio_desc_toggle':
                 element = document.getElementById('audio-desc-toggle');
                 if (element) {
+                    // Verificar estado atual antes de clicar
+                    const currentState = isAudioDescEnabled;
                     element.click();
-                    response = isAudioDescEnabled ? 'Desativando áudio descrição' : 'Ativando áudio descrição';
+                    // Aguardar um pouco para o estado atualizar
+                    setTimeout(() => {
+                        response = currentState ? 'Desativando áudio descrição' : 'Ativando áudio descrição';
+                        speakText(response);
+                    }, 100);
+                    return true; // Retornar imediatamente, a resposta será falada no setTimeout
                 }
                 break;
                 
             case 'voice_command_toggle':
                 element = document.getElementById('voice-command-toggle');
                 if (element) {
+                    // Verificar estado atual antes de clicar
+                    const currentState = isVoiceCommandEnabled;
                     element.click();
-                    response = isVoiceCommandEnabled ? 'Desativando comando de voz' : 'Ativando comando de voz';
+                    // Aguardar um pouco para o estado atualizar
+                    setTimeout(() => {
+                        response = currentState ? 'Desativando comando de voz' : 'Ativando comando de voz';
+                        speakText(response);
+                    }, 100);
+                    return true; // Retornar imediatamente, a resposta será falada no setTimeout
                 }
                 break;
                 
