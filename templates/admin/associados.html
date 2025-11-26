@@ -61,6 +61,7 @@
                     <th>Foto</th>
                     <th>Nome Completo</th>
                     <th>CPF</th>
+                    <th>Tipo</th>
                     <th>Data de Nascimento</th>
                     <th>Telefone</th>
                     <th>Status</th>
@@ -91,6 +92,17 @@
                         </td>
                         <td>{{ associado.nome_completo }}</td>
                         <td class="cpf-cell">{{ associado.cpf }}</td>
+                        <td>
+                            {% if associado.tipo_associado == 'regular' %}
+                                <span class="status-badge" style="background: #6366f1; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    👤 Regular
+                                </span>
+                            {% else %}
+                                <span class="status-badge" style="background: #059669; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600;">
+                                    💰 Contribuinte
+                                </span>
+                            {% endif %}
+                        </td>
                         <td>{{ associado.data_nascimento.strftime('%d/%m/%Y') }}</td>
                         <td>{{ associado.telefone }}</td>
                         <td>
@@ -149,7 +161,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                        <td colspan="8" style="text-align: center; padding: 2rem;">
                             Nenhum associado encontrado.
                         </td>
                     </tr>

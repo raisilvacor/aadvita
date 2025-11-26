@@ -80,6 +80,17 @@
         </div>
         
         <div class="form-group">
+            <label for="tipo_associado">Tipo de Associado *</label>
+            <select id="tipo_associado" name="tipo_associado" required>
+                <option value="regular" {% if associado and associado.tipo_associado == 'regular' %}selected{% endif %}>👤 Associado Regular (não paga mensalidade)</option>
+                <option value="contribuinte" {% if not associado or associado.tipo_associado == 'contribuinte' %}selected{% endif %}>💰 Associado Contribuinte (paga mensalidade)</option>
+            </select>
+            <small style="color: var(--text-light);">
+                Associados Regulares não pagam mensalidade. Associados Contribuintes pagam mensalidade conforme valor configurado.
+            </small>
+        </div>
+        
+        <div class="form-group" id="valor_mensalidade_group">
             <label for="valor_mensalidade">Valor da Mensalidade (R$)</label>
             <input type="number" 
                    id="valor_mensalidade" 
@@ -153,6 +164,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.target.value = value;
             }
         });
+    }
+    
+    // Mostrar/ocultar campo de valor de mensalidade baseado no tipo de associado
+    const tipoAssociadoSelect = document.getElementById('tipo_associado');
+    const valorMensalidadeGroup = document.getElementById('valor_mensalidade_group');
+    const valorMensalidadeInput = document.getElementById('valor_mensalidade');
+    
+    function atualizarVisibilidadeMensalidade() {
+        if (tipoAssociadoSelect.value === 'regular') {
+            valorMensalidadeGroup.style.display = 'none';
+            valorMensalidadeInput.value = '0';
+        } else {
+            valorMensalidadeGroup.style.display = 'block';
+        }
+    }
+    
+    if (tipoAssociadoSelect) {
+        atualizarVisibilidadeMensalidade();
+        tipoAssociadoSelect.addEventListener('change', atualizarVisibilidadeMensalidade);
     }
 });
 </script>

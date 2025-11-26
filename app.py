@@ -100,10 +100,38 @@ def _ensure_associado_foto_base64():
         print('Startup: error while ensuring associado.foto_base64:', e)
 
 
+def _ensure_associado_tipo_associado():
+    try:
+        # Only attempt for Postgres-like DBs
+        uri = app.config.get('SQLALCHEMY_DATABASE_URI', '') or ''
+        if uri.startswith('sqlite') or uri == '':
+            return
+
+        # Reflect columns and add the column if it is missing
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        if 'associado' in tables:
+            cols = [c['name'] for c in inspector.get_columns('associado')]
+            if 'tipo_associado' not in cols:
+                print('Startup: tipo_associado column missing — issuing ALTER TABLE')
+                with db.engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE associado ADD COLUMN IF NOT EXISTS tipo_associado VARCHAR(20) DEFAULT 'contribuinte'"))
+                    # commit if using transactional DDL
+                    try:
+                        conn.commit()
+                    except Exception:
+                        pass
+                print('Startup: tipo_associado column ensured')
+    except Exception as e:
+        print('Startup: error while ensuring associado.tipo_associado:', e)
+
+
 # Run safety-net migration now (before model classes are declared)
 try:
     with app.app_context():
         _ensure_associado_foto_base64()
+        _ensure_associado_tipo_associado()
 except Exception as _:
     # Swallow errors to avoid preventing app import — errors logged above
     pass
@@ -1531,6 +1559,7 @@ class Associado(db.Model):
     telefone = db.Column(db.String(20), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='pendente')  # pendente, aprovado, negado
+    tipo_associado = db.Column(db.String(20), nullable=False, default='contribuinte')  # 'regular' ou 'contribuinte'
     # Campos para mensalidade
     valor_mensalidade = db.Column(db.Numeric(10, 2), default=0.00)
     desconto_tipo = db.Column(db.String(10), default=None)  # 'real' ou 'porcentagem'
@@ -5976,12 +6005,15 @@ def admin_associados_novo():
                         flash('Formato de arquivo não permitido. Use JPG, PNG ou GIF.', 'error')
                         return redirect(url_for('admin_associados_novo'))
             
+            tipo_associado = request.form.get('tipo_associado', 'contribuinte')
+            
             associado = Associado(
                 nome_completo=request.form.get('nome_completo'),
                 cpf=request.form.get('cpf'),
                 data_nascimento=datetime.strptime(data_nascimento_str, "%Y-%m-%d").date(),
                 endereco=request.form.get('endereco'),
                 telefone=request.form.get('telefone'),
+                tipo_associado=tipo_associado,
                 valor_mensalidade=float(valor_mensalidade) if valor_mensalidade else 0.0,
                 status='aprovado',  # Cadastro pelo admin é aprovado automaticamente
                 foto=foto_path,
@@ -5992,8 +6024,8 @@ def admin_associados_novo():
             db.session.add(associado)
             db.session.commit()
             
-            # Gerar primeira mensalidade se o associado tiver valor configurado
-            if associado.valor_mensalidade and associado.valor_mensalidade > 0:
+            # Gerar primeira mensalidade apenas se for Contribuinte e tiver valor configurado
+            if tipo_associado == 'contribuinte' and associado.valor_mensalidade and associado.valor_mensalidade > 0:
                 try:
                     gerar_primeira_mensalidade(associado)
                     flash('Associado cadastrado e aprovado com sucesso! Mensalidades geradas automaticamente.', 'success')
@@ -6026,6 +6058,10 @@ def admin_associados_editar(id):
             associado.data_nascimento = datetime.strptime(data_nascimento_str, "%Y-%m-%d").date()
             associado.endereco = request.form.get('endereco')
             associado.telefone = request.form.get('telefone')
+            
+            # Atualizar tipo de associado
+            tipo_associado = request.form.get('tipo_associado', 'contribuinte')
+            associado.tipo_associado = tipo_associado
             
             # Upload da foto se fornecida
             if 'foto' in request.files:
@@ -6095,9 +6131,9 @@ def admin_associados_editar(id):
             
             associado.valor_mensalidade = novo_valor_mensalidade
             
-            # Se o valor foi alterado, atualizar todas as mensalidades não pagas
+            # Se o valor foi alterado, atualizar todas as mensalidades não pagas (apenas para Contribuintes)
             mensalidades_atualizadas = 0
-            if valor_alterado and novo_valor_mensalidade > 0:
+            if tipo_associado == 'contribuinte' and valor_alterado and novo_valor_mensalidade > 0:
                 # Buscar todas as mensalidades não pagas (pendentes, atrasadas, canceladas)
                 mensalidades_nao_pagas = Mensalidade.query.filter_by(
                     associado_id=associado.id
@@ -6748,6 +6784,10 @@ def gerar_primeira_mensalidade(associado):
     - Primeira mensalidade: vencimento em 3 dias úteis após cadastro/aprovação
     - Próximas 11 mensalidades: vencimento fixo no mesmo dia do mês do cadastro/aprovação
     """
+    # Verificar se é Associado Regular (não paga mensalidade)
+    if associado.tipo_associado == 'regular':
+        return  # Associados Regulares não pagam mensalidade
+    
     # Verificar se já existe alguma mensalidade para este associado
     mensalidade_existente = Mensalidade.query.filter_by(associado_id=associado.id).first()
     if mensalidade_existente:
@@ -6847,10 +6887,11 @@ def gerar_mensalidades_automaticas():
     mes_atual = hoje.month
     ano_atual = hoje.year
     
-    # Buscar todos os associados aprovados e ativos com valor de mensalidade definido
+    # Buscar todos os associados aprovados, ativos, Contribuintes (não Regulares) com valor de mensalidade definido
     associados = Associado.query.filter_by(
         status='aprovado',
-        ativo=True
+        ativo=True,
+        tipo_associado='contribuinte'
     ).filter(Associado.valor_mensalidade > 0).all()
     
     mensalidades_geradas = 0
@@ -11194,6 +11235,7 @@ def associe_se():
                 data_nascimento=datetime.strptime(data_nascimento_str, "%Y-%m-%d").date(),
                 endereco=request.form.get('endereco'),
                 telefone=request.form.get('telefone'),
+                tipo_associado='contribuinte',  # Padrão para cadastros públicos (admin pode alterar na aprovação)
                 status='pendente',  # Cadastro público fica pendente de aprovação
                 created_at=datetime.now()
             )
