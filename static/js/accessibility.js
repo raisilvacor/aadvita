@@ -662,9 +662,9 @@
     // Mapeamento de comandos para ações
     const voiceCommands = {
         // Navegação principal
-        'inicio': { url: '/', text: 'Abrindo página inicial' },
-        'página inicial': { url: '/', text: 'Abrindo página inicial' },
-        'home': { url: '/', text: 'Abrindo página inicial' },
+        'inicio': { url: '/', text: 'Voltando para a página inicial' },
+        'página inicial': { url: '/', text: 'Voltando para a página inicial' },
+        'home': { url: '/', text: 'Voltando para a página inicial' },
         'sobre': { url: '/sobre', text: 'Abrindo página sobre' },
         'projetos': { url: '/projetos', text: 'Abrindo projetos' },
         'projeto': { url: '/projetos', text: 'Abrindo projetos' },
@@ -760,13 +760,13 @@
         const action = processVoiceCommand(command);
         
         if (action) {
-            // Responder com áudio
-            speakText(action.text);
+            // Parar qualquer fala anterior
+            if (speechSynthesis) {
+                speechSynthesis.cancel();
+            }
             
-            // Aguardar um pouco antes de navegar para o áudio ser ouvido
-            setTimeout(() => {
-                window.location.href = action.url;
-            }, 500);
+            // Responder com áudio e aguardar terminar antes de navegar
+            speakTextAndNavigate(action.text, action.url);
             
             return true;
         }
@@ -774,6 +774,46 @@
         // Comando não reconhecido
         speakText('Desculpe, não entendi o comando. Por favor, tente novamente.');
         return false;
+    }
+    
+    // Falar texto e navegar após terminar
+    function speakTextAndNavigate(text, url) {
+        if (!speechSynthesis) {
+            // Se não houver speech synthesis, navegar imediatamente
+            window.location.href = url;
+            return;
+        }
+        
+        // Criar utterance
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Usar voz masculina se disponível
+        if (maleVoice) {
+            utterance.voice = maleVoice;
+        }
+        
+        // Configurações de voz
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0;
+        utterance.pitch = 0.9;
+        utterance.volume = 1.0;
+        
+        // Navegar quando a fala terminar
+        utterance.onend = function() {
+            setTimeout(() => {
+                window.location.href = url;
+            }, 200); // Pequeno delay para garantir que o áudio terminou
+        };
+        
+        // Em caso de erro, navegar mesmo assim
+        utterance.onerror = function() {
+            setTimeout(() => {
+                window.location.href = url;
+            }, 200);
+        };
+        
+        // Falar
+        speechSynthesis.speak(utterance);
     }
     
     // Habilitar/desabilitar comando de voz
