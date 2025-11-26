@@ -829,6 +829,9 @@ TRANSLATIONS = {
         'Alternar contraste': 'Alternar contraste',
         'Alto Contraste': 'Alto Contraste',
         'Alto Contraste Ativo': 'Alto Contraste Activo',
+        'Áudio Descrição': 'Descripción de Audio',
+        'Áudio Descrição Ativa': 'Descripción de Audio Activa',
+        'Alternar áudio descrição': 'Alternar descripción de audio',
         'Redefinir': 'Restablecer',
     },
     'en': {
@@ -1216,6 +1219,9 @@ TRANSLATIONS = {
         'Alternar contraste': 'Toggle contrast',
         'Alto Contraste': 'High Contrast',
         'Alto Contraste Ativo': 'High Contrast Active',
+        'Áudio Descrição': 'Audio Description',
+        'Áudio Descrição Ativa': 'Audio Description Active',
+        'Alternar áudio descrição': 'Toggle audio description',
         'Redefinir': 'Reset',
     }
 }

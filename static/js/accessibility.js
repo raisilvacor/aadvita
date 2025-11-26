@@ -11,11 +11,152 @@
     // Estado atual
     let currentFontSize = DEFAULT_FONT_SIZE;
     let isHighContrast = false;
+    let isAudioDescEnabled = false;
+    let clickTimeout = null;
+    let lastClickedElement = null;
+    let speechSynthesis = null;
+    let femaleVoice = null;
+    
+    // Inicializar Speech Synthesis e encontrar voz feminina
+    function initSpeechSynthesis() {
+        if ('speechSynthesis' in window) {
+            speechSynthesis = window.speechSynthesis;
+            
+            // Aguardar vozes carregarem
+            function loadVoices() {
+                const voices = speechSynthesis.getVoices();
+                
+                // Procurar por voz feminina em português
+                // Prioridade: português brasileiro feminina > português feminina > qualquer feminina
+                femaleVoice = voices.find(voice => 
+                    (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
+                    (voice.name.toLowerCase().includes('female') || 
+                     voice.name.toLowerCase().includes('feminina') ||
+                     voice.name.toLowerCase().includes('maria') ||
+                     voice.name.toLowerCase().includes('helena') ||
+                     voice.name.toLowerCase().includes('lucia') ||
+                     voice.gender === 'female')
+                ) || voices.find(voice => 
+                    voice.lang.startsWith('pt')
+                ) || voices.find(voice => 
+                    voice.gender === 'female'
+                ) || voices.find(voice => 
+                    voice.name.toLowerCase().includes('female') || 
+                    voice.name.toLowerCase().includes('feminina')
+                ) || voices[0]; // Fallback para primeira voz disponível
+            }
+            
+            // Carregar vozes (pode ser assíncrono)
+            if (speechSynthesis.getVoices().length > 0) {
+                loadVoices();
+            } else {
+                speechSynthesis.addEventListener('voiceschanged', loadVoices);
+            }
+        }
+    }
+    
+    // Ler texto usando síntese de voz
+    function speakText(text) {
+        if (!speechSynthesis || !text || !isAudioDescEnabled) return;
+        
+        // Parar qualquer fala anterior
+        speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Configurar voz feminina se disponível
+        if (femaleVoice) {
+            utterance.voice = femaleVoice;
+        } else {
+            // Tentar encontrar voz novamente
+            const voices = speechSynthesis.getVoices();
+            femaleVoice = voices.find(voice => 
+                (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
+                (voice.name.toLowerCase().includes('female') || 
+                 voice.name.toLowerCase().includes('feminina') ||
+                 voice.gender === 'female')
+            ) || voices.find(voice => voice.lang.startsWith('pt')) || voices[0];
+            
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            }
+        }
+        
+        // Configurações de voz
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0; // Velocidade normal
+        utterance.pitch = 1.0; // Tom normal
+        utterance.volume = 1.0; // Volume máximo
+        
+        speechSynthesis.speak(utterance);
+    }
+    
+    // Obter texto de um elemento para leitura
+    function getElementText(element) {
+        if (!element) return '';
+        
+        // Priorizar aria-label
+        if (element.getAttribute('aria-label')) {
+            return element.getAttribute('aria-label');
+        }
+        
+        // Priorizar alt em imagens
+        if (element.tagName === 'IMG' && element.alt) {
+            return element.alt;
+        }
+        
+        // Priorizar title
+        if (element.title) {
+            return element.title;
+        }
+        
+        // Obter texto visível
+        let text = '';
+        
+        // Se for input, textarea ou select, usar value ou selected option
+        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+            if (element.type === 'button' || element.type === 'submit' || element.type === 'reset') {
+                text = element.value || element.textContent || '';
+            } else if (element.type === 'checkbox' || element.type === 'radio') {
+                const label = element.closest('label') || document.querySelector(`label[for="${element.id}"]`);
+                if (label) {
+                    text = label.textContent.trim();
+                } else {
+                    text = element.value || element.getAttribute('aria-label') || '';
+                }
+            } else {
+                text = element.value || element.placeholder || '';
+            }
+        } else if (element.tagName === 'SELECT') {
+            const selectedOption = element.options[element.selectedIndex];
+            text = selectedOption ? selectedOption.text : '';
+        } else {
+            // Para outros elementos, pegar texto visível
+            text = element.textContent || element.innerText || '';
+        }
+        
+        // Limpar texto (remover espaços extras, quebras de linha, etc)
+        text = text.trim().replace(/\s+/g, ' ').replace(/\n+/g, ' ');
+        
+        // Se não houver texto, tentar pegar do primeiro filho com texto
+        if (!text && element.children.length > 0) {
+            for (let child of element.children) {
+                const childText = getElementText(child);
+                if (childText) {
+                    text = childText;
+                    break;
+                }
+            }
+        }
+        
+        return text;
+    }
     
     // Carregar preferências do localStorage
     function loadPreferences() {
         const savedFontSize = localStorage.getItem('accessibility_font_size');
         const savedContrast = localStorage.getItem('accessibility_high_contrast');
+        const savedAudioDesc = localStorage.getItem('accessibility_audio_desc');
         
         if (savedFontSize) {
             currentFontSize = parseInt(savedFontSize, 10);
@@ -25,6 +166,11 @@
         if (savedContrast === 'true') {
             isHighContrast = true;
             applyContrast(true);
+        }
+        
+        if (savedAudioDesc === 'true') {
+            isAudioDescEnabled = true;
+            enableAudioDesc(true);
         }
     }
     
@@ -119,18 +265,173 @@
         applyContrast(isHighContrast);
     }
     
+    // Habilitar/desabilitar áudio descrição
+    function enableAudioDesc(enabled) {
+        isAudioDescEnabled = enabled;
+        
+        if (enabled) {
+            document.body.classList.add('audio-desc-enabled');
+            // Adicionar listeners para cliques
+            document.addEventListener('click', handleClickWithAudioDesc, true);
+            document.addEventListener('touchstart', handleTouchWithAudioDesc, true);
+        } else {
+            document.body.classList.remove('audio-desc-enabled');
+            // Remover listeners
+            document.removeEventListener('click', handleClickWithAudioDesc, true);
+            document.removeEventListener('touchstart', handleTouchWithAudioDesc, true);
+            // Parar qualquer fala em andamento
+            if (speechSynthesis) {
+                speechSynthesis.cancel();
+            }
+            // Limpar timeouts
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+            }
+            lastClickedElement = null;
+        }
+        
+        // Atualizar label
+        const labelElement = document.getElementById('audio-desc-label');
+        if (labelElement) {
+            if (enabled) {
+                labelElement.textContent = labelElement.getAttribute('data-on') || 'Áudio Descrição Ativa';
+            } else {
+                labelElement.textContent = labelElement.getAttribute('data-off') || 'Áudio Descrição';
+            }
+        }
+        
+        // Salvar preferência
+        localStorage.setItem('accessibility_audio_desc', enabled.toString());
+    }
+    
+    // Alternar áudio descrição
+    function toggleAudioDesc() {
+        enableAudioDesc(!isAudioDescEnabled);
+    }
+    
+    // Manipular clique com áudio descrição
+    function handleClickWithAudioDesc(e) {
+        // Ignorar cliques nos botões de acessibilidade
+        if (e.target.closest('.accessibility-float') || 
+            e.target.closest('.language-float') || 
+            e.target.closest('.whatsapp-float')) {
+            return;
+        }
+        
+        const target = e.target;
+        
+        // Verificar se é o mesmo elemento clicado anteriormente
+        if (lastClickedElement === target && clickTimeout) {
+            // Segundo clique - executar ação normal
+            clearTimeout(clickTimeout);
+            clickTimeout = null;
+            lastClickedElement = null;
+            // Permitir que o evento continue normalmente
+            return;
+        }
+        
+        // Primeiro clique - ler o texto
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Parar qualquer fala anterior
+        if (speechSynthesis) {
+            speechSynthesis.cancel();
+        }
+        
+        // Obter texto do elemento
+        const text = getElementText(target);
+        
+        if (text) {
+            speakText(text);
+        }
+        
+        // Armazenar elemento clicado
+        lastClickedElement = target;
+        
+        // Limpar timeout anterior se existir
+        if (clickTimeout) {
+            clearTimeout(clickTimeout);
+        }
+        
+        // Definir timeout para resetar após 2 segundos
+        clickTimeout = setTimeout(() => {
+            lastClickedElement = null;
+            clickTimeout = null;
+        }, 2000);
+    }
+    
+    // Manipular touch com áudio descrição
+    function handleTouchWithAudioDesc(e) {
+        // Ignorar toques nos botões de acessibilidade
+        if (e.target.closest('.accessibility-float') || 
+            e.target.closest('.language-float') || 
+            e.target.closest('.whatsapp-float')) {
+            return;
+        }
+        
+        const target = e.target;
+        
+        // Verificar se é o mesmo elemento tocado anteriormente
+        if (lastClickedElement === target && clickTimeout) {
+            // Segundo toque - executar ação normal
+            clearTimeout(clickTimeout);
+            clickTimeout = null;
+            lastClickedElement = null;
+            // Permitir que o evento continue normalmente
+            return;
+        }
+        
+        // Primeiro toque - ler o texto
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Parar qualquer fala anterior
+        if (speechSynthesis) {
+            speechSynthesis.cancel();
+        }
+        
+        // Obter texto do elemento
+        const text = getElementText(target);
+        
+        if (text) {
+            speakText(text);
+        }
+        
+        // Armazenar elemento tocado
+        lastClickedElement = target;
+        
+        // Limpar timeout anterior se existir
+        if (clickTimeout) {
+            clearTimeout(clickTimeout);
+        }
+        
+        // Definir timeout para resetar após 2 segundos
+        clickTimeout = setTimeout(() => {
+            lastClickedElement = null;
+            clickTimeout = null;
+        }, 2000);
+    }
+    
     // Redefinir tudo
     function resetAccessibility() {
         currentFontSize = DEFAULT_FONT_SIZE;
         isHighContrast = false;
+        isAudioDescEnabled = false;
         applyFontSize(currentFontSize);
         applyContrast(false);
+        enableAudioDesc(false);
         localStorage.removeItem('accessibility_font_size');
         localStorage.removeItem('accessibility_high_contrast');
+        localStorage.removeItem('accessibility_audio_desc');
     }
     
     // Inicializar quando DOM estiver pronto
     function init() {
+        // Inicializar Speech Synthesis
+        initSpeechSynthesis();
+        
         // Carregar preferências salvas
         loadPreferences();
         
@@ -140,6 +441,7 @@
         const fontIncrease = document.getElementById('font-increase');
         const fontDecrease = document.getElementById('font-decrease');
         const contrastToggle = document.getElementById('contrast-toggle');
+        const audioDescToggle = document.getElementById('audio-desc-toggle');
         const resetBtn = document.getElementById('accessibility-reset');
         
         if (!btn || !dropdown) return;
@@ -194,6 +496,15 @@
                 e.preventDefault();
                 e.stopPropagation();
                 toggleContrast();
+            });
+        }
+        
+        // Controle de áudio descrição
+        if (audioDescToggle) {
+            audioDescToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleAudioDesc();
             });
         }
         
