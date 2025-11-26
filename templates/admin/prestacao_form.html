@@ -8,67 +8,27 @@
 <div class="admin-card">
     <form method="POST" class="admin-form" enctype="multipart/form-data">
         <div class="form-group">
-            <label for="titulo_pt">Título (Português) *</label>
+            <label for="titulo_pt">Título *</label>
             <input type="text" id="titulo_pt" name="titulo_pt" value="{% if prestacao %}{{ prestacao.titulo_pt }}{% endif %}" required>
         </div>
         
         <div class="form-group">
-            <label for="titulo_es">Título (Espanhol)</label>
-            <input type="text" id="titulo_es" name="titulo_es" value="{% if prestacao %}{{ prestacao.titulo_es }}{% endif %}">
-        </div>
-        
-        <div class="form-group">
-            <label for="titulo_en">Título (Inglês)</label>
-            <input type="text" id="titulo_en" name="titulo_en" value="{% if prestacao %}{{ prestacao.titulo_en }}{% endif %}">
-        </div>
-        
-        <div class="form-group">
-            <label for="descricao_pt">Descrição (Português)</label>
+            <label for="descricao_pt">Descrição</label>
             <textarea id="descricao_pt" name="descricao_pt" rows="4">{% if prestacao %}{{ prestacao.descricao_pt }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="descricao_es">Descrição (Espanhol)</label>
-            <textarea id="descricao_es" name="descricao_es" rows="4">{% if prestacao %}{{ prestacao.descricao_es }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="descricao_en">Descrição (Inglês)</label>
-            <textarea id="descricao_en" name="descricao_en" rows="4">{% if prestacao %}{{ prestacao.descricao_en }}{% endif %}</textarea>
         </div>
         
         <h3 style="margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">Recursos Recebidos</h3>
         
         <div class="form-group">
-            <label for="recursos_recebidos_pt">Recursos Recebidos (Português)</label>
+            <label for="recursos_recebidos_pt">Recursos Recebidos</label>
             <textarea id="recursos_recebidos_pt" name="recursos_recebidos_pt" rows="6">{% if prestacao %}{{ prestacao.recursos_recebidos_pt }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="recursos_recebidos_es">Recursos Recebidos (Espanhol)</label>
-            <textarea id="recursos_recebidos_es" name="recursos_recebidos_es" rows="6">{% if prestacao %}{{ prestacao.recursos_recebidos_es }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="recursos_recebidos_en">Recursos Recebidos (Inglês)</label>
-            <textarea id="recursos_recebidos_en" name="recursos_recebidos_en" rows="6">{% if prestacao %}{{ prestacao.recursos_recebidos_en }}{% endif %}</textarea>
         </div>
         
         <h3 style="margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">Resultados Alcançados</h3>
         
         <div class="form-group">
-            <label for="resultados_pt">Resultados (Português)</label>
+            <label for="resultados_pt">Resultados</label>
             <textarea id="resultados_pt" name="resultados_pt" rows="6">{% if prestacao %}{{ prestacao.resultados_pt }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="resultados_es">Resultados (Espanhol)</label>
-            <textarea id="resultados_es" name="resultados_es" rows="6">{% if prestacao %}{{ prestacao.resultados_es }}{% endif %}</textarea>
-        </div>
-        
-        <div class="form-group">
-            <label for="resultados_en">Resultados (Inglês)</label>
-            <textarea id="resultados_en" name="resultados_en" rows="6">{% if prestacao %}{{ prestacao.resultados_en }}{% endif %}</textarea>
         </div>
         
         <div class="form-row">
