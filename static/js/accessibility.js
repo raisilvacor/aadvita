@@ -26,43 +26,20 @@
             
             // Aguardar vozes carregarem
             function loadVoices() {
-                const voices = speechSynthesis.getVoices();
-                
-                // Procurar por voz masculina em português
-                // Prioridade: português brasileiro masculina > português masculina > qualquer masculina
-                maleVoice = voices.find(voice => 
-                    (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) && 
-                    (voice.name.toLowerCase().includes('male') || 
-                     voice.name.toLowerCase().includes('masculina') ||
-                     voice.name.toLowerCase().includes('masculino') ||
-                     voice.name.toLowerCase().includes('joão') ||
-                     voice.name.toLowerCase().includes('carlos') ||
-                     voice.name.toLowerCase().includes('paulo') ||
-                     voice.name.toLowerCase().includes('ricardo') ||
-                     voice.gender === 'male')
-                ) || voices.find(voice => 
-                    (voice.lang.startsWith('pt') || voice.lang.startsWith('pt-BR')) &&
-                    !voice.name.toLowerCase().includes('female') &&
-                    !voice.name.toLowerCase().includes('feminina') &&
-                    !voice.name.toLowerCase().includes('maria') &&
-                    !voice.name.toLowerCase().includes('helena') &&
-                    !voice.name.toLowerCase().includes('lucia') &&
-                    voice.gender !== 'female'
-                ) || voices.find(voice => 
-                    voice.lang.startsWith('pt')
-                ) || voices.find(voice => 
-                    voice.gender === 'male'
-                ) || voices.find(voice => 
-                    voice.name.toLowerCase().includes('male') || 
-                    voice.name.toLowerCase().includes('masculina')
-                ) || voices[0]; // Fallback para primeira voz disponível
+                // Usar a função ensureMaleVoice para garantir voz masculina
+                ensureMaleVoice();
             }
             
             // Carregar vozes (pode ser assíncrono)
+            // No mobile, as vozes podem demorar mais para carregar
             if (speechSynthesis.getVoices().length > 0) {
                 loadVoices();
             } else {
                 speechSynthesis.addEventListener('voiceschanged', loadVoices);
+                // Também tentar após delays para mobile (vozes podem carregar mais tarde)
+                setTimeout(loadVoices, 500);
+                setTimeout(loadVoices, 1000);
+                setTimeout(loadVoices, 2000);
             }
         }
     }
