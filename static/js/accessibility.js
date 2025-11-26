@@ -835,12 +835,21 @@
             
             // Configurar eventos
             recognition.onstart = function() {
-                speakText('Ouvindo...');
+                // Não falar "Ouvindo..." para evitar duplicação
+                // O usuário já sabe que está ouvindo quando ativa o comando
             };
             
             recognition.onresult = function(event) {
                 const command = event.results[0][0].transcript;
                 console.log('Comando reconhecido:', command);
+                
+                // Parar reconhecimento antes de processar para evitar duplicação
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    // Ignorar erros ao parar
+                }
+                
                 executeVoiceCommand(command);
             };
             
@@ -857,13 +866,15 @@
             };
             
             recognition.onend = function() {
-                // Reiniciar se ainda estiver ativo
+                // Reiniciar se ainda estiver ativo (mas aguardar um pouco para evitar loop)
                 if (isVoiceCommandEnabled) {
-                    try {
-                        recognition.start();
-                    } catch (e) {
-                        // Já está ouvindo ou erro
-                    }
+                    setTimeout(() => {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            // Já está ouvindo ou erro - ignorar
+                        }
+                    }, 500); // Aguardar 500ms antes de reiniciar
                 }
             };
             
