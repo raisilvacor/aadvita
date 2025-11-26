@@ -11233,13 +11233,15 @@ def associe_se():
                 flash('Este CPF já está cadastrado. Entre em contato conosco se precisar de ajuda.', 'error')
                 return redirect(url_for('associe_se'))
             
+            tipo_associado = request.form.get('tipo_associado', 'contribuinte')
+            
             associado = Associado(
                 nome_completo=request.form.get('nome_completo'),
                 cpf=cpf,
                 data_nascimento=datetime.strptime(data_nascimento_str, "%Y-%m-%d").date(),
                 endereco=request.form.get('endereco'),
                 telefone=request.form.get('telefone'),
-                tipo_associado='contribuinte',  # Padrão para cadastros públicos (admin pode alterar na aprovação)
+                tipo_associado=tipo_associado,
                 status='pendente',  # Cadastro público fica pendente de aprovação
                 created_at=datetime.now()
             )

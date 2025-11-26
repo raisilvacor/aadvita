@@ -55,6 +55,19 @@
                 </div>
                 
                 <div class="form-group">
+                    <label for="tipo_associado">{{ _('Tipo de Associado') }} *</label>
+                    <select id="tipo_associado" name="tipo_associado" required
+                            aria-required="true"
+                            aria-describedby="tipo-associado-help">
+                        <option value="regular">{{ _('👤 Associado Regular (não paga mensalidade)') }}</option>
+                        <option value="contribuinte" selected>{{ _('💰 Associado Contribuinte (paga mensalidade)') }}</option>
+                    </select>
+                    <small id="tipo-associado-help" class="form-help">
+                        {{ _('Associados Regulares não pagam mensalidade. Associados Contribuintes pagam mensalidade conforme valor configurado pela administração.') }}
+                    </small>
+                </div>
+                
+                <div class="form-group">
                     <label for="senha">{{ _('Senha') }} *</label>
                     <input type="password" id="senha" name="senha" 
                            placeholder="{{ _('Mínimo 6 caracteres') }}" required
