@@ -740,6 +740,30 @@ textarea:focus {
     .menu-toggle {
         display: none !important;
     }
+    
+    /* Garantir que o language-selector no desktop não ocupe toda a largura */
+    .nav-menu .language-selector {
+        width: auto !important;
+        margin-top: 0 !important;
+        margin-left: 0.5rem !important;
+        display: inline-block !important;
+    }
+    
+    .nav-menu .language-selector .lang-btn {
+        width: auto !important;
+        max-width: none !important;
+        padding: 6px 10px !important;
+        justify-content: flex-start !important;
+    }
+    
+    .nav-menu .language-selector .lang-dropdown {
+        position: absolute !important;
+        width: 150px !important;
+        max-width: 150px !important;
+        margin-top: 4px !important;
+        right: 0 !important;
+        left: auto !important;
+    }
 }
 
 .menu-close-btn {
@@ -3855,18 +3879,7 @@ textarea:focus {
 
 }
 
-.nav-menu .language-selector {
-    margin-top: 0.5rem;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.nav-menu .language-selector .lang-btn,
-.nav-menu .language-selector .lang-dropdown {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
+/* Regra removida - usando apenas media queries específicas para mobile */
 
 .o-que-fazemos-column {
     display: flex !important;
