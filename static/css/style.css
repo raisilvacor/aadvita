@@ -430,6 +430,10 @@ textarea:focus {
 .accessibility-float-btn {
     width: 56px;
     height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    max-width: 56px;
+    max-height: 56px;
     background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
     border: none;
     border-radius: 50%;
@@ -440,6 +444,7 @@ textarea:focus {
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     padding: 0;
+    box-sizing: border-box;
 }
 
 .accessibility-float-btn:hover,
@@ -649,6 +654,10 @@ body.font-xxlarge {
 .lang-float-btn {
     width: 56px;
     height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    max-width: 56px;
+    max-height: 56px;
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     border: none;
     border-radius: 50%;
@@ -659,6 +668,7 @@ body.font-xxlarge {
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     padding: 0;
+    box-sizing: border-box;
 }
 
 .lang-float-btn:hover,
@@ -732,6 +742,10 @@ body.font-xxlarge {
     bottom: 1rem;
     width: 56px;
     height: 56px;
+    min-width: 56px;
+    min-height: 56px;
+    max-width: 56px;
+    max-height: 56px;
     background: #25D366; /* WhatsApp green */
     border-radius: 50%;
     display: inline-flex;
@@ -741,6 +755,8 @@ body.font-xxlarge {
     z-index: 1200;
     text-decoration: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .whatsapp-float:hover,
@@ -758,13 +774,20 @@ body.font-xxlarge {
     }
     
     .accessibility-float-btn {
-        width: 50px;
-        height: 50px;
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        max-width: 50px !important;
+        max-height: 50px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
     }
     
     .accessibility-float-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 20px !important;
+        height: 20px !important;
     }
     
     .accessibility-float-dropdown {
@@ -779,20 +802,34 @@ body.font-xxlarge {
     }
     
     .lang-float-btn {
-        width: 50px;
-        height: 50px;
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        max-width: 50px !important;
+        max-height: 50px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
     }
     
     .lang-flag-icon {
-        width: 24px;
-        height: 18px;
+        width: 24px !important;
+        height: 18px !important;
     }
     
     .whatsapp-float { 
-        right: 0.75rem; 
-        bottom: 0.75rem; 
-        width: 50px; 
-        height: 50px; 
+        right: 0.75rem !important; 
+        bottom: 0.75rem !important; 
+        width: 50px !important; 
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        max-width: 50px !important;
+        max-height: 50px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
     }
 }
 
