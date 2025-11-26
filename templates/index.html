@@ -30,12 +30,12 @@
             
             <!-- Botões de Navegação (Setas) -->
             {% if slider_images|length > 1 %}
-            <button class="slider-nav slider-prev" aria-label="Imagem anterior" id="slider-prev">
+            <button class="slider-nav slider-prev" aria-label="{{ _('Imagem anterior') }}" id="slider-prev">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
-            <button class="slider-nav slider-next" aria-label="Próxima imagem" id="slider-next">
+            <button class="slider-nav slider-next" aria-label="{{ _('Próxima imagem') }}" id="slider-next">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -46,7 +46,7 @@
                 {% for imagem in slider_images %}
                 <button class="slider-indicator {% if loop.index == 1 %}active{% endif %}" 
                         data-slide="{{ loop.index0 }}" 
-                        aria-label="Ir para imagem {{ loop.index }}"
+                        aria-label="{{ _('Ir para imagem') }} {{ loop.index }}"
                         aria-current="{% if loop.index == 1 %}true{% else %}false{% endif %}">
                 </button>
                 {% endfor %}
@@ -77,17 +77,17 @@
             </div>
             <div class="acessibilidade-btn-wrapper">
                 <a href="{{ url_for('problema_acessibilidade_registrar') }}" class="btn-acessibilidade hero-action-link" style="display:inline-block; background: #7f1d1d; color: white; padding: 0.9rem 1.6rem; border-radius: 0.6rem; text-decoration: none; font-weight: 700; box-shadow: 0 6px 18px rgba(127,29,29,0.18); transition: transform 0.12s ease;">
-                    🚨 Radar de Acessibilidade
+                    🚨 {{ _('Radar de Acessibilidade') }}
                 </a>
             </div>
             <div class="certificados-btn-wrapper" style="margin-top: 1rem;">
                 <a href="{{ url_for('certificado_validar_form') }}" class="btn-certificados hero-action-link" style="display:inline-block; background: #312e81; color: white; padding: 0.9rem 1.6rem; border-radius: 0.6rem; text-decoration: none; font-weight: 700; box-shadow: 0 6px 18px rgba(49,46,129,0.18); transition: transform 0.12s ease;">
-                    📜 Validar Certificados
+                    📜 {{ _('Validar Certificados') }}
                 </a>
             </div>
             <div class="reciclagem-btn-wrapper" style="margin-top: 1rem;">
                 <a href="{{ url_for('reciclagem_form') }}" class="btn-reciclagem hero-action-link" style="display:inline-block; background: #059669; color: white; padding: 0.9rem 1.6rem; border-radius: 0.6rem; text-decoration: none; font-weight: 700; box-shadow: 0 6px 18px rgba(5,150,105,0.18); transition: transform 0.12s ease;">
-                    ♻️ Reciclagem
+                    ♻️ {{ _('Reciclagem') }}
                 </a>
             </div>
         </div>
@@ -113,7 +113,7 @@
                         {{ banner.titulo }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
-                        Conheça nossas campanhas e participe.
+                        {{ _('Conheça nossas campanhas e participe.') }}
                     </p>
                 </div>
             </a>
@@ -133,7 +133,7 @@
                         {{ banner.titulo }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
-                        Sua contribuição transforma vidas!
+                        {{ _('Sua contribuição transforma vidas!') }}
                     </p>
                 </div>
             </a>
@@ -153,7 +153,7 @@
                         {{ banner.titulo }}
                     </h3>
                     <p style="font-size: 1rem; opacity: 0.95; line-height: 1.6; margin: 0;">
-                        Confira nossos editais e oportunidades.
+                        {{ _('Confira nossos editais e oportunidades.') }}
                     </p>
                 </div>
             </a>
@@ -167,16 +167,16 @@
 <section class="o-que-fazemos-section" aria-labelledby="o-que-fazemos-title" style="padding: 4rem 0; background: white;">
     <div class="container">
         <h2 id="o-que-fazemos-title" class="o-que-fazemos-title" style="text-align: center; font-size: 2.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
-            O que fazemos
+            {{ _('O que fazemos') }}
         </h2>
         <div style="width: 80px; height: 4px; background: #eab308; margin: 0 auto 2rem; border-radius: 2px;"></div>
         
         <div style="text-align: center; margin-bottom: 3rem;">
             <h3 style="font-size: 1.75rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; font-family: 'Inter', sans-serif;">
-                Bem-vindo à AADVITA
+                {{ _('Bem-vindo à AADVITA') }}
             </h3>
             <p style="font-size: 1.1rem; color: #6b7280; margin: 0; font-family: 'Inter', sans-serif;">
-                Associação dos Deficientes Visuais Tapuienses
+                {{ _('Associação dos Deficientes Visuais Tapuienses') }}
             </p>
         </div>
         

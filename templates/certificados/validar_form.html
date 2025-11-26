@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Validar Certificado - AADVITA{% endblock %}
+{% block title %}{{ _('Validar Certificado') }} - AADVITA{% endblock %}
 
 {% block content %}
 <section class="hero" style="padding:4rem 0; background: var(--bg-light);">
     <div class="container" style="max-width:600px; margin:0 auto; text-align:center;">
-        <h1 class="section-title">Validar Certificado</h1>
+        <h1 class="section-title">{{ _('Validar Certificado') }}</h1>
         <p style="color: var(--text-light); margin-bottom: 2rem;">
-            Informe o número do certificado (ex: <strong>CERT-7B062C2604</strong>) para verificar a autenticidade.
+            {{ _('Informe o número do certificado (ex: <strong>CERT-7B062C2604</strong>) para verificar a autenticidade.')|safe }}
         </p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -22,12 +22,12 @@
 
         <form method="POST" class="associate-form" style="text-align:left;">
             <div class="form-group">
-                <label for="codigo">Número do Certificado</label>
+                <label for="codigo">{{ _('Número do Certificado') }}</label>
                 <input type="text" id="codigo" name="codigo" placeholder="Ex: CERT-7B062C2604" required>
             </div>
             <div class="form-actions" style="display:flex; gap:1rem;">
-                <button type="submit" class="btn btn-primary" style="background:#7f1d1d; border-color:#7f1d1d;">Validar</button>
-                <a href="{{ url_for('index') }}" class="btn btn-secondary">Voltar</a>
+                <button type="submit" class="btn btn-primary" style="background:#7f1d1d; border-color:#7f1d1d;">{{ _('Validar') }}</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">{{ _('Voltar') }}</a>
             </div>
         </form>
     </div>
