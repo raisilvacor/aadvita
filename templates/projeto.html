@@ -2,6 +2,14 @@
 
 {% block title %}{{ projeto.titulo }} - {{ _('Projetos') }} - AADVITA{% endblock %}
 
+{% block og_title %}{{ projeto.titulo }} - AADVITA{% endblock %}
+{% block og_description %}{{ projeto.descripcion[:200] }}{% if projeto.descripcion|length > 200 %}...{% endif %}{% endblock %}
+{% block og_image %}{{ projeto_imagem_url(projeto, external=True) or url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
+{% block twitter_title %}{{ projeto.titulo }} - AADVITA{% endblock %}
+{% block twitter_description %}{{ projeto.descripcion[:200] }}{% if projeto.descripcion|length > 200 %}...{% endif %}{% endblock %}
+{% block twitter_image %}{{ projeto_imagem_url(projeto, external=True) or url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
 {% block content %}
 <section class="page-header" aria-labelledby="page-title">
     <div class="container">

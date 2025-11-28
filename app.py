@@ -12065,7 +12065,7 @@ def inject_conf():
                 pass
             return None
     
-    def projeto_imagem_url(projeto):
+    def projeto_imagem_url(projeto, external=False):
         """Helper function para obter URL da imagem do projeto de forma segura"""
         if not projeto:
             return None
@@ -12078,20 +12078,25 @@ def inject_conf():
                 pass
             
             if imagen_base64:
-                return f"/projeto/{projeto.id}/imagem"
+                slug_or_id = projeto.slug if projeto.slug else projeto.id
+                if external:
+                    return url_for('projeto_imagem', slug=slug_or_id, _external=True) if projeto.slug else url_for('projeto_imagem', id=projeto.id, _external=True)
+                return f"/projeto/{slug_or_id}/imagem" if projeto.slug else f"/projeto/{projeto.id}/imagem"
             
             # Verificar se imagen começa com base64:
             try:
                 if projeto.imagen and 'base64:' in str(projeto.imagen):
-                    return f"/projeto/{projeto.id}/imagem"
+                    slug_or_id = projeto.slug if projeto.slug else projeto.id
+                    if external:
+                        return url_for('projeto_imagem', slug=slug_or_id, _external=True) if projeto.slug else url_for('projeto_imagem', id=projeto.id, _external=True)
+                    return f"/projeto/{slug_or_id}/imagem" if projeto.slug else f"/projeto/{projeto.id}/imagem"
             except (AttributeError, KeyError):
                 pass
             
             # Fallback para arquivo estático
             try:
                 if projeto.imagen:
-                    from flask import url_for
-                    return url_for('static', filename=projeto.imagen)
+                    return url_for('static', filename=projeto.imagen, _external=external)
             except (AttributeError, KeyError, Exception):
                 pass
             
@@ -12100,8 +12105,7 @@ def inject_conf():
             print(f"Erro ao obter URL da imagem do projeto: {e}")
             try:
                 if hasattr(projeto, 'imagen') and projeto.imagen:
-                    from flask import url_for
-                    return url_for('static', filename=projeto.imagen)
+                    return url_for('static', filename=projeto.imagen, _external=external)
             except:
                 pass
             return None
@@ -12147,7 +12151,7 @@ def inject_conf():
                 pass
             return None
     
-    def acao_imagem_url(acao):
+    def acao_imagem_url(acao, external=False):
         """Helper function para obter URL da imagem da ação de forma segura"""
         if not acao:
             return None
@@ -12160,20 +12164,25 @@ def inject_conf():
                 pass
             
             if imagem_base64:
-                return f"/acao/{acao.id}/imagem"
+                slug_or_id = acao.slug if acao.slug else acao.id
+                if external:
+                    return url_for('acao_imagem', slug=slug_or_id, _external=True) if acao.slug else url_for('acao_imagem', id=acao.id, _external=True)
+                return f"/acao/{slug_or_id}/imagem" if acao.slug else f"/acao/{acao.id}/imagem"
             
             # Verificar se imagem começa com base64:
             try:
                 if acao.imagem and 'base64:' in str(acao.imagem):
-                    return f"/acao/{acao.id}/imagem"
+                    slug_or_id = acao.slug if acao.slug else acao.id
+                    if external:
+                        return url_for('acao_imagem', slug=slug_or_id, _external=True) if acao.slug else url_for('acao_imagem', id=acao.id, _external=True)
+                    return f"/acao/{slug_or_id}/imagem" if acao.slug else f"/acao/{acao.id}/imagem"
             except (AttributeError, KeyError):
                 pass
             
             # Fallback para arquivo estático
             try:
                 if acao.imagem:
-                    from flask import url_for
-                    return url_for('static', filename=acao.imagem)
+                    return url_for('static', filename=acao.imagem, _external=external)
             except (AttributeError, KeyError, Exception):
                 pass
             
@@ -12182,8 +12191,7 @@ def inject_conf():
             print(f"Erro ao obter URL da imagem da ação: {e}")
             try:
                 if hasattr(acao, 'imagem') and acao.imagem:
-                    from flask import url_for
-                    return url_for('static', filename=acao.imagem)
+                    return url_for('static', filename=acao.imagem, _external=external)
             except:
                 pass
             return None

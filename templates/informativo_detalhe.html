@@ -2,6 +2,14 @@
 
 {% block title %}{{ informativo.titulo }} - {{ _('Informativo') }} - AADVITA{% endblock %}
 
+{% block og_title %}{{ informativo.titulo }} - AADVITA{% endblock %}
+{% block og_description %}{{ informativo.subtitulo or (informativo.conteudo[:200] if informativo.conteudo else '') }}{% if informativo.conteudo and informativo.conteudo|length > 200 %}...{% endif %}{% endblock %}
+{% block og_image %}{{ informativo_imagem_url(informativo, external=True) or url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
+{% block twitter_title %}{{ informativo.titulo }} - AADVITA{% endblock %}
+{% block twitter_description %}{{ informativo.subtitulo or (informativo.conteudo[:200] if informativo.conteudo else '') }}{% if informativo.conteudo and informativo.conteudo|length > 200 %}...{% endif %}{% endblock %}
+{% block twitter_image %}{{ informativo_imagem_url(informativo, external=True) or url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
 {% block content %}
 <section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem;">
     <div class="container">
