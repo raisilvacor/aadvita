@@ -13298,18 +13298,22 @@ def _ensure_informativo_slug_column():
             db.session.commit()
             print("✅ Coluna 'slug' adicionada com sucesso!")
             
-            # Gerar slugs para informativos existentes que não têm
-            informativos = Informativo.query.filter(
-                (Informativo.slug == None) | (Informativo.slug == '')
-            ).all()
+            # Gerar slugs para informativos existentes que não têm (usar query raw para evitar problemas)
+            result = db.session.execute(text("SELECT id, titulo FROM informativo WHERE slug IS NULL OR slug = ''"))
+            informativos_raw = result.fetchall()
             
-            if informativos:
-                print(f"Gerando slugs para {len(informativos)} informativo(s) existente(s)...")
-                for informativo in informativos:
-                    slug = gerar_slug_unico(informativo.titulo, informativo.id)
-                    informativo.slug = slug
+            if informativos_raw:
+                print(f"Gerando slugs para {len(informativos_raw)} informativo(s) existente(s)...")
+                for row in informativos_raw:
+                    informativo_id = row[0]
+                    titulo = row[1]
+                    slug = gerar_slug_unico(titulo, informativo_id)
+                    db.session.execute(
+                        text("UPDATE informativo SET slug = :slug WHERE id = :id"),
+                        {"slug": slug, "id": informativo_id}
+                    )
                 db.session.commit()
-                print(f"✅ {len(informativos)} slug(s) gerado(s) com sucesso!")
+                print(f"✅ {len(informativos_raw)} slug(s) gerado(s) com sucesso!")
     except Exception as e:
         db.session.rollback()
         print(f"⚠️ Erro ao verificar/adicionar coluna slug: {e}")
