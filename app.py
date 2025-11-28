@@ -13415,6 +13415,59 @@ def _ensure_informativo_slug_column():
         db.session.rollback()
         print(f"⚠️ Erro ao verificar/adicionar coluna slug: {e}")
 
+def _ensure_slug_columns():
+    """Garante que as colunas slug existem nas tabelas necessárias"""
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        
+        # Tabelas que precisam de slug
+        tables_with_slug = [
+            ('projeto', 'Projeto'),
+            ('acao', 'Acao'),
+            ('evento', 'Evento'),
+            ('reunion_presencial', 'ReunionPresencial'),
+            ('reunion_virtual', 'ReunionVirtual')
+        ]
+        
+        for table_name, model_name in tables_with_slug:
+            # Verificar se a tabela existe
+            if table_name not in inspector.get_table_names():
+                continue
+            
+            # Verificar se a coluna slug existe
+            columns = [col['name'] for col in inspector.get_columns(table_name)]
+            if 'slug' not in columns:
+                print(f"Adicionando coluna 'slug' à tabela '{table_name}'...")
+                db_type = db.engine.url.drivername
+                if db_type == 'postgresql':
+                    db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS slug VARCHAR(250)"))
+                else:
+                    # SQLite
+                    db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN slug VARCHAR(250)"))
+                db.session.commit()
+                print(f"✅ Coluna 'slug' adicionada à tabela '{table_name}'!")
+                
+                # Gerar slugs para registros existentes que não têm (usar query raw)
+                result = db.session.execute(text(f"SELECT id, titulo FROM {table_name} WHERE slug IS NULL OR slug = ''"))
+                records_raw = result.fetchall()
+                
+                if records_raw:
+                    print(f"Gerando slugs para {len(records_raw)} registro(s) existente(s) em '{table_name}'...")
+                    for row in records_raw:
+                        record_id = row[0]
+                        titulo = row[1]
+                        slug = gerar_slug_unico(titulo, record_id)
+                        db.session.execute(
+                            text(f"UPDATE {table_name} SET slug = :slug WHERE id = :id"),
+                            {"slug": slug, "id": record_id}
+                        )
+                    db.session.commit()
+                    print(f"✅ {len(records_raw)} slug(s) gerado(s) para '{table_name}'!")
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ Erro ao verificar/adicionar colunas slug: {e}")
+
 # Garantir que migrações sejam executadas ANTES de cada requisição
 # Isso é CRÍTICO para evitar erros de coluna não encontrada
 @app.before_request
