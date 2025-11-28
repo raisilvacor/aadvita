@@ -11,6 +11,7 @@ import qrcode
 import re
 import base64
 import requests
+import unicodedata
 from bs4 import BeautifulSoup
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib import colors
@@ -1889,6 +1890,7 @@ class Informativo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tipo = db.Column(db.String(50), nullable=False)  # 'Noticia' ou 'Podcast'
     titulo = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(250), unique=True, nullable=True)  # URL amigável
     subtitulo = db.Column(db.String(300))  # Subtítulo opcional
     conteudo = db.Column(db.Text)  # Texto para notícias
     url_soundcloud = db.Column(db.String(500))  # URL do SoundCloud para podcasts
@@ -8272,6 +8274,43 @@ def admin_slider_excluir(id):
 # CRUD - INFORMATIVOS
 # ============================================
 
+def gerar_slug(titulo):
+    """Gera um slug amigável a partir do título"""
+    # Converter para minúsculas
+    slug = titulo.lower()
+    # Remover acentos
+    slug = unicodedata.normalize('NFKD', slug).encode('ascii', 'ignore').decode('ascii')
+    # Substituir espaços e caracteres especiais por hífen
+    slug = re.sub(r'[^\w\s-]', '', slug)
+    slug = re.sub(r'[-\s]+', '-', slug)
+    # Remover hífens no início e fim
+    slug = slug.strip('-')
+    # Limitar tamanho
+    if len(slug) > 200:
+        slug = slug[:200].rstrip('-')
+    return slug
+
+def gerar_slug_unico(titulo, informativo_id=None):
+    """Gera um slug único, adicionando número se necessário"""
+    base_slug = gerar_slug(titulo)
+    slug = base_slug
+    
+    # Verificar se já existe um informativo com esse slug (exceto o atual)
+    contador = 1
+    while True:
+        query = Informativo.query.filter_by(slug=slug)
+        if informativo_id:
+            query = query.filter(Informativo.id != informativo_id)
+        if not query.first():
+            break
+        slug = f"{base_slug}-{contador}"
+        contador += 1
+        if contador > 1000:  # Limite de segurança
+            slug = f"{base_slug}-{uuid.uuid4().hex[:8]}"
+            break
+    
+    return slug
+
 @app.route('/admin/informativos')
 @admin_required
 def admin_informativos():
@@ -8467,6 +8506,10 @@ def admin_informativos_editar(id):
                 informativo.imagem_base64 = None
             
             informativo.tipo = tipo
+            # Atualizar slug se o título mudou
+            if informativo.titulo != titulo:
+                informativo.slug = gerar_slug_unico(titulo, informativo.id)
+            
             informativo.titulo = titulo
             informativo.subtitulo = subtitulo if subtitulo else None
             informativo.conteudo = conteudo if tipo == 'Noticia' else None
@@ -10801,8 +10844,13 @@ def informativo():
     return render_template('informativo.html', informativos=informativos, noticias=noticias, podcasts=podcasts, tipo_filtro=tipo_filtro)
 
 @app.route('/informativo/<int:id>')
-def informativo_detalhe(id):
-    informativo = Informativo.query.get_or_404(id)
+@app.route('/informativo/<slug>')
+def informativo_detalhe(id=None, slug=None):
+    # Suportar tanto ID quanto slug para compatibilidade
+    if slug:
+        informativo = Informativo.query.filter_by(slug=slug).first_or_404()
+    else:
+        informativo = Informativo.query.get_or_404(id)
     return render_template('informativo_detalhe.html', informativo=informativo)
 
 @app.route('/radio')
@@ -13227,12 +13275,52 @@ def ensure_base64_columns(force=False):
     finally:
         _migration_lock = False
 
+def _ensure_informativo_slug_column():
+    """Garante que a coluna slug existe na tabela informativo"""
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        
+        # Verificar se a tabela existe
+        if 'informativo' not in inspector.get_table_names():
+            return
+        
+        # Verificar se a coluna slug existe
+        columns = [col['name'] for col in inspector.get_columns('informativo')]
+        if 'slug' not in columns:
+            print("Adicionando coluna 'slug' à tabela 'informativo'...")
+            db_type = db.engine.url.drivername
+            if db_type == 'postgresql':
+                db.session.execute(text("ALTER TABLE informativo ADD COLUMN IF NOT EXISTS slug VARCHAR(250)"))
+            else:
+                # SQLite
+                db.session.execute(text("ALTER TABLE informativo ADD COLUMN slug VARCHAR(250)"))
+            db.session.commit()
+            print("✅ Coluna 'slug' adicionada com sucesso!")
+            
+            # Gerar slugs para informativos existentes que não têm
+            informativos = Informativo.query.filter(
+                (Informativo.slug == None) | (Informativo.slug == '')
+            ).all()
+            
+            if informativos:
+                print(f"Gerando slugs para {len(informativos)} informativo(s) existente(s)...")
+                for informativo in informativos:
+                    slug = gerar_slug_unico(informativo.titulo, informativo.id)
+                    informativo.slug = slug
+                db.session.commit()
+                print(f"✅ {len(informativos)} slug(s) gerado(s) com sucesso!")
+    except Exception as e:
+        db.session.rollback()
+        print(f"⚠️ Erro ao verificar/adicionar coluna slug: {e}")
+
 # Garantir que migrações sejam executadas ANTES de cada requisição
 # Isso é CRÍTICO para evitar erros de coluna não encontrada
 @app.before_request
 def before_request():
     """Executa migrações antes de cada requisição se necessário"""
     ensure_base64_columns()
+    _ensure_informativo_slug_column()
 
 # ============================================
 # SEO: Sitemap e Robots.txt
@@ -13278,7 +13366,9 @@ def sitemap():
     informativos = Informativo.query.filter_by(ativo=True).all()
     for info in informativos:
         url_elem = SubElement(urlset, 'url')
-        SubElement(url_elem, 'loc').text = f"{url_root}/informativo/{info.id}"
+        # Usar slug se disponível, senão usar ID
+        url_slug = info.slug if info.slug else str(info.id)
+        SubElement(url_elem, 'loc').text = f"{url_root}/informativo/{url_slug}"
         SubElement(url_elem, 'changefreq').text = 'weekly'
         SubElement(url_elem, 'priority').text = '0.8'
         if info.created_at:

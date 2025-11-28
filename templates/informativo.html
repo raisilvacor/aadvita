@@ -76,7 +76,7 @@
                         </div>
                         
                         <div style="margin-top: 1rem;">
-                            <a href="{{ url_for('informativo_detalhe', id=informativo.id) }}" class="btn btn-primary" style="display: inline-block; width: 100%; text-align: center;">
+                            <a href="{{ url_for('informativo_detalhe', slug=informativo.slug) if informativo.slug else url_for('informativo_detalhe', id=informativo.id) }}" class="btn btn-primary" style="display: inline-block; width: 100%; text-align: center;">
                                 {% if informativo.tipo == 'Noticia' %}
                                     {{ _('Ler Notícia') }}
                                 {% else %}
