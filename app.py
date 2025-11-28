@@ -12245,6 +12245,35 @@ def inject_conf():
                 pass
             return None
     
+    def evento_imagem_url(evento, external=False):
+        """Helper function para obter URL da imagem do evento de forma segura"""
+        if not evento:
+            return None
+        try:
+            # Verificar se tem imagem_base64 usando getattr (seguro se coluna não existir)
+            imagem_base64 = None
+            try:
+                imagem_base64 = getattr(evento, 'imagem_base64', None)
+            except (AttributeError, KeyError):
+                pass
+            
+            # Fallback para arquivo estático
+            try:
+                if evento.imagem:
+                    return url_for('static', filename=evento.imagem, _external=external)
+            except (AttributeError, KeyError, Exception):
+                pass
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao obter URL da imagem do evento: {e}")
+            try:
+                if hasattr(evento, 'imagem') and evento.imagem:
+                    return url_for('static', filename=evento.imagem, _external=external)
+            except:
+                pass
+            return None
+    
     def qrcode_url():
         """Helper function para obter URL do QR code de forma segura"""
         try:
