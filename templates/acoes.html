@@ -28,7 +28,7 @@
                         </time>
                     </div>
                     <div class="card-body">
-                        <p>{{ acao.descricao }}</p>
+                        <p>{{ acao.descricao[:200] }}{% if acao.descricao|length > 200 %}...{% endif %}</p>
                         {% if acao.categoria %}
                         <span class="badge">{{ acao.categoria }}</span>
                         {% endif %}
@@ -46,6 +46,11 @@
                             </div>
                         </div>
                         {% endif %}
+                        <div style="margin-top: 1rem;">
+                            <a href="{{ url_for('acao_detalhe', slug=acao.slug) if acao.slug else url_for('acao_detalhe', id=acao.id) }}" class="btn btn-primary" style="display: inline-block; width: 100%; text-align: center;">
+                                {{ _('Ver Detalhes') }}
+                            </a>
+                        </div>
                     </div>
                 </article>
                 {% endfor %}

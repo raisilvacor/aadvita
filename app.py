@@ -1370,6 +1370,7 @@ class Configuracao(db.Model):
 class ReunionPresencial(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(250), unique=True, nullable=True)  # URL amigável
     descripcion = db.Column(db.Text)
     fecha = db.Column(db.DateTime, nullable=False)
     hora = db.Column(db.String(10), nullable=False)
@@ -1380,6 +1381,7 @@ class ReunionPresencial(db.Model):
 class ReunionVirtual(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(250), unique=True, nullable=True)  # URL amigável
     descripcion = db.Column(db.Text)
     fecha = db.Column(db.DateTime, nullable=False)
     hora = db.Column(db.String(10), nullable=False)
@@ -1390,6 +1392,7 @@ class ReunionVirtual(db.Model):
 class Projeto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(250), unique=True, nullable=True)  # URL amigável
     descripcion = db.Column(db.Text, nullable=False)
     identificacao = db.Column(db.Text)
     contexto_justificativa = db.Column(db.Text)
@@ -1427,6 +1430,7 @@ acao_album = db.Table('acao_album',
 class Acao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(250), unique=True, nullable=True)  # URL amigável
     descricao = db.Column(db.Text, nullable=False)
     data = db.Column(db.Date, nullable=False)
     categoria = db.Column(db.String(100))
@@ -1544,6 +1548,7 @@ class AlbumFoto(db.Model):
 class Evento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(250), unique=True, nullable=True)  # URL amigável
     descricao = db.Column(db.Text)
     data = db.Column(db.DateTime, nullable=False)
     hora = db.Column(db.String(10))
@@ -2542,8 +2547,12 @@ def admin_reuniones_presenciales_novo():
             hora = request.form.get('hora')
             fecha_datetime = datetime.strptime(f"{fecha_str} {hora}", "%Y-%m-%d %H:%M")
             
+            titulo = request.form.get('titulo')
+            slug = gerar_slug_unico(titulo)
+            
             reunion = ReunionPresencial(
-                titulo=request.form.get('titulo'),
+                titulo=titulo,
+                slug=slug,
                 descripcion=request.form.get('descripcion'),
                 fecha=fecha_datetime,
                 hora=hora,
@@ -2571,7 +2580,12 @@ def admin_reuniones_presenciales_editar(id):
             hora = request.form.get('hora')
             fecha_datetime = datetime.strptime(f"{fecha_str} {hora}", "%Y-%m-%d %H:%M")
             
-            reunion.titulo = request.form.get('titulo')
+            titulo = request.form.get('titulo')
+            # Atualizar slug se o título mudou
+            if reunion.titulo != titulo:
+                reunion.slug = gerar_slug_unico(titulo, reunion.id)
+            
+            reunion.titulo = titulo
             reunion.descripcion = request.form.get('descripcion')
             reunion.fecha = fecha_datetime
             reunion.hora = hora
@@ -2651,7 +2665,12 @@ def admin_reuniones_virtuales_editar(id):
             hora = request.form.get('hora')
             fecha_datetime = datetime.strptime(f"{fecha_str} {hora}", "%Y-%m-%d %H:%M")
             
-            reunion.titulo = request.form.get('titulo')
+            titulo = request.form.get('titulo')
+            # Atualizar slug se o título mudou
+            if reunion.titulo != titulo:
+                reunion.slug = gerar_slug_unico(titulo, reunion.id)
+            
+            reunion.titulo = titulo
             reunion.descripcion = request.form.get('descripcion')
             reunion.fecha = fecha_datetime
             reunion.hora = hora
@@ -2772,8 +2791,12 @@ def admin_projetos_novo():
                     flash('Tipo de arquivo não permitido para PDF. Use apenas arquivos .pdf', 'error')
                     return redirect(url_for('admin_projetos_novo'))
             
+            titulo = request.form.get('titulo')
+            slug = gerar_slug_unico(titulo)
+            
             projeto = Projeto(
-                titulo=request.form.get('titulo'),
+                titulo=titulo,
+                slug=slug,
                 descripcion=request.form.get('descripcion'),
                 identificacao=request.form.get('identificacao'),
                 contexto_justificativa=request.form.get('contexto_justificativa'),
@@ -2915,7 +2938,12 @@ def admin_projetos_editar(id):
                 projeto.arquivo_pdf = None
                 projeto.arquivo_pdf_base64 = None
             
-            projeto.titulo = request.form.get('titulo')
+            titulo = request.form.get('titulo')
+            # Atualizar slug se o título mudou
+            if projeto.titulo != titulo:
+                projeto.slug = gerar_slug_unico(titulo, projeto.id)
+            
+            projeto.titulo = titulo
             projeto.descripcion = request.form.get('descripcion')
             projeto.descricao_imagem = request.form.get('descricao_imagem', '').strip() or None
             projeto.identificacao = request.form.get('identificacao')
@@ -3005,8 +3033,12 @@ def admin_eventos_novo():
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_eventos_novo'))
             
+            titulo = request.form.get('titulo')
+            slug = gerar_slug_unico(titulo)
+            
             evento = Evento(
-                titulo=request.form.get('titulo'),
+                titulo=titulo,
+                slug=slug,
                 descricao=request.form.get('descricao'),
                 data=data_datetime,
                 hora=hora,
@@ -3073,7 +3105,12 @@ def admin_eventos_editar(id):
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_eventos_editar', id=id))
             
-            evento.titulo = request.form.get('titulo')
+            titulo = request.form.get('titulo')
+            # Atualizar slug se o título mudou
+            if evento.titulo != titulo:
+                evento.slug = gerar_slug_unico(titulo, evento.id)
+            
+            evento.titulo = titulo
             evento.descricao = request.form.get('descricao')
             evento.data = data_datetime
             evento.hora = hora
@@ -3338,7 +3375,12 @@ def admin_acoes_editar(id):
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_acoes_editar', id=id))
             
-            acao.titulo = request.form.get('titulo')
+            titulo = request.form.get('titulo')
+            # Atualizar slug se o título mudou
+            if acao.titulo != titulo:
+                acao.slug = gerar_slug_unico(titulo, acao.id)
+            
+            acao.titulo = titulo
             acao.descricao = request.form.get('descricao')
             acao.data = datetime.strptime(data_str, "%Y-%m-%d").date()
             acao.categoria = request.form.get('categoria')
@@ -7857,10 +7899,14 @@ def slider_imagem(id):
         abort(404)
 
 @app.route('/projeto/<int:id>/imagem')
-def projeto_imagem(id):
+@app.route('/projeto/<slug>/imagem')
+def projeto_imagem(id=None, slug=None):
     """Rota para servir imagens de projetos do banco de dados (base64)"""
     try:
-        projeto = Projeto.query.get_or_404(id)
+        if slug:
+            projeto = Projeto.query.filter_by(slug=slug).first_or_404()
+        else:
+            projeto = Projeto.query.get_or_404(id)
         
         # Verificar se tem imagen_base64 (usando getattr para evitar erro se coluna não existir)
         imagen_base64 = getattr(projeto, 'imagen_base64', None)
@@ -7955,10 +8001,14 @@ def radio_programa_imagem(id):
         abort(404)
 
 @app.route('/acao/<int:id>/imagem')
-def acao_imagem(id):
+@app.route('/acao/<slug>/imagem')
+def acao_imagem(id=None, slug=None):
     """Rota para servir imagens de ações do banco de dados (base64)"""
     try:
-        acao = Acao.query.get_or_404(id)
+        if slug:
+            acao = Acao.query.filter_by(slug=slug).first_or_404()
+        else:
+            acao = Acao.query.get_or_404(id)
         
         # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
         imagem_base64 = getattr(acao, 'imagem_base64', None)
@@ -8290,17 +8340,17 @@ def gerar_slug(titulo):
         slug = slug[:200].rstrip('-')
     return slug
 
-def gerar_slug_unico(titulo, informativo_id=None):
-    """Gera um slug único, adicionando número se necessário"""
+def gerar_slug_unico(titulo, model_class, item_id=None):
+    """Gera um slug único para qualquer modelo, adicionando número se necessário"""
     base_slug = gerar_slug(titulo)
     slug = base_slug
     
-    # Verificar se já existe um informativo com esse slug (exceto o atual)
+    # Verificar se já existe um item com esse slug (exceto o atual)
     contador = 1
     while True:
-        query = Informativo.query.filter_by(slug=slug)
-        if informativo_id:
-            query = query.filter(Informativo.id != informativo_id)
+        query = model_class.query.filter_by(slug=slug)
+        if item_id:
+            query = query.filter(model_class.id != item_id)
         if not query.first():
             break
         slug = f"{base_slug}-{contador}"
@@ -8508,7 +8558,7 @@ def admin_informativos_editar(id):
             informativo.tipo = tipo
             # Atualizar slug se o título mudou
             if informativo.titulo != titulo:
-                informativo.slug = gerar_slug_unico(titulo, informativo.id)
+                informativo.slug = gerar_slug_unico(titulo, Informativo, informativo.id)
             
             informativo.titulo = titulo
             informativo.subtitulo = subtitulo if subtitulo else None
@@ -10748,9 +10798,14 @@ def projetos():
     return render_template('projetos.html', projetos=projetos)
 
 @app.route('/projetos/<int:id>')
-def projeto(id):
+@app.route('/projetos/<slug>')
+def projeto(id=None, slug=None):
     ensure_base64_columns()
-    projeto = Projeto.query.get_or_404(id)
+    # Suportar tanto ID quanto slug para compatibilidade
+    if slug:
+        projeto = Projeto.query.filter_by(slug=slug).first_or_404()
+    else:
+        projeto = Projeto.query.get_or_404(id)
     return render_template('projeto.html', projeto=projeto)
 
 @app.route('/projetos/<int:id>/download')
@@ -11346,6 +11401,48 @@ def eventos():
         return album.titulo_pt
     
     return render_template('eventos.html', eventos=eventos, get_titulo_album=get_titulo_album, current_lang=current_lang)
+
+@app.route('/evento/<int:id>')
+@app.route('/evento/<slug>')
+def evento_detalhe(id=None, slug=None):
+    """Rota para página de detalhe do evento"""
+    ensure_base64_columns()
+    if slug:
+        evento = Evento.query.filter_by(slug=slug).first_or_404()
+    else:
+        evento = Evento.query.get_or_404(id)
+    return render_template('evento.html', evento=evento)
+
+@app.route('/acao/<int:id>')
+@app.route('/acao/<slug>')
+def acao_detalhe(id=None, slug=None):
+    """Rota para página de detalhe da ação"""
+    ensure_base64_columns()
+    if slug:
+        acao = Acao.query.filter_by(slug=slug).first_or_404()
+    else:
+        acao = Acao.query.get_or_404(id)
+    return render_template('acao.html', acao=acao)
+
+@app.route('/agenda-presencial/<int:id>')
+@app.route('/agenda-presencial/<slug>')
+def agenda_presencial_detalhe(id=None, slug=None):
+    """Rota para página de detalhe da reunião presencial"""
+    if slug:
+        reunion = ReunionPresencial.query.filter_by(slug=slug).first_or_404()
+    else:
+        reunion = ReunionPresencial.query.get_or_404(id)
+    return render_template('agenda_presencial_detalhe.html', reunion=reunion)
+
+@app.route('/agenda-virtual/<int:id>')
+@app.route('/agenda-virtual/<slug>')
+def agenda_virtual_detalhe(id=None, slug=None):
+    """Rota para página de detalhe da reunião virtual"""
+    if slug:
+        reunion = ReunionVirtual.query.filter_by(slug=slug).first_or_404()
+    else:
+        reunion = ReunionVirtual.query.get_or_404(id)
+    return render_template('agenda_virtual_detalhe.html', reunion=reunion)
 
 @app.route('/associe-se', methods=['GET', 'POST'])
 def associe_se():
@@ -13324,6 +13421,7 @@ def _ensure_informativo_slug_column():
 def before_request():
     """Executa migrações antes de cada requisição se necessário"""
     ensure_base64_columns()
+    _ensure_slug_columns()
     _ensure_informativo_slug_column()
 
 # ============================================

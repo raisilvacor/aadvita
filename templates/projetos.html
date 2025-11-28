@@ -37,7 +37,7 @@
                         </div>
                         {% endif %}
                         <div style="margin-top: 1rem;">
-                            <a href="{{ url_for('projeto', id=projeto.id) }}" class="btn btn-primary" style="display: inline-block;">
+                            <a href="{{ url_for('projeto', slug=projeto.slug) if projeto.slug else url_for('projeto', id=projeto.id) }}" class="btn btn-primary" style="display: inline-block;">
                                 {{ _('Ver Detalhes') }}
                             </a>
                         </div>

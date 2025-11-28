@@ -46,6 +46,11 @@
                             </div>
                             {% endif %}
                         </div>
+                        <div style="margin-top: 1rem;">
+                            <a href="{{ url_for('agenda_virtual_detalhe', slug=reunion.slug) if reunion.slug else url_for('agenda_virtual_detalhe', id=reunion.id) }}" class="btn btn-primary" style="display: inline-block; width: 100%; text-align: center;">
+                                {{ _('Ver Detalhes') }}
+                            </a>
+                        </div>
                     </div>
                 </article>
                 {% endfor %}

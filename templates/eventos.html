@@ -28,7 +28,7 @@
                         </span>
                     </div>
                     <div class="card-body">
-                        <p>{{ evento.descricao }}</p>
+                        <p>{{ evento.descricao[:200] }}{% if evento.descricao|length > 200 %}...{% endif %}</p>
                         <div class="evento-meta">
                             <time datetime="{{ evento.data.strftime('%Y-%m-%d') }}">
                                 <strong>Data:</strong> {{ evento.data.strftime('%d/%m/%Y') }}
@@ -63,6 +63,11 @@
                                 </div>
                             </div>
                             {% endif %}
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <a href="{{ url_for('evento_detalhe', slug=evento.slug) if evento.slug else url_for('evento_detalhe', id=evento.id) }}" class="btn btn-primary" style="display: inline-block; width: 100%; text-align: center;">
+                                {{ _('Ver Detalhes') }}
+                            </a>
                         </div>
                     </div>
                 </article>
