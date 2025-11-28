@@ -8054,10 +8054,14 @@ def acao_imagem(id=None, slug=None):
         abort(404)
 
 @app.route('/informativo/<int:id>/imagem')
-def informativo_imagem(id):
+@app.route('/informativo/<slug>/imagem')
+def informativo_imagem(id=None, slug=None):
     """Rota para servir imagens de informativos do banco de dados (base64)"""
     try:
-        informativo = Informativo.query.get_or_404(id)
+        if slug:
+            informativo = Informativo.query.filter_by(slug=slug).first_or_404()
+        else:
+            informativo = Informativo.query.get_or_404(id)
         
         # Verificar se tem imagem_base64 (usando getattr para evitar erro se coluna não existir)
         imagem_base64 = getattr(informativo, 'imagem_base64', None)
@@ -12196,7 +12200,7 @@ def inject_conf():
                 pass
             return None
     
-    def informativo_imagem_url(informativo):
+    def informativo_imagem_url(informativo, external=False):
         """Helper function para obter URL da imagem do informativo de forma segura"""
         if not informativo:
             return None
@@ -12209,20 +12213,25 @@ def inject_conf():
                 pass
             
             if imagem_base64:
-                return f"/informativo/{informativo.id}/imagem"
+                slug_or_id = informativo.slug if informativo.slug else informativo.id
+                if external:
+                    return url_for('informativo_imagem', slug=slug_or_id, _external=True) if informativo.slug else url_for('informativo_imagem', id=informativo.id, _external=True)
+                return f"/informativo/{slug_or_id}/imagem" if informativo.slug else f"/informativo/{informativo.id}/imagem"
             
             # Verificar se imagem começa com base64:
             try:
                 if informativo.imagem and 'base64:' in str(informativo.imagem):
-                    return f"/informativo/{informativo.id}/imagem"
+                    slug_or_id = informativo.slug if informativo.slug else informativo.id
+                    if external:
+                        return url_for('informativo_imagem', slug=slug_or_id, _external=True) if informativo.slug else url_for('informativo_imagem', id=informativo.id, _external=True)
+                    return f"/informativo/{slug_or_id}/imagem" if informativo.slug else f"/informativo/{informativo.id}/imagem"
             except (AttributeError, KeyError):
                 pass
             
             # Fallback para arquivo estático
             try:
                 if informativo.imagem:
-                    from flask import url_for
-                    return url_for('static', filename=informativo.imagem)
+                    return url_for('static', filename=informativo.imagem, _external=external)
             except (AttributeError, KeyError, Exception):
                 pass
             
@@ -12231,8 +12240,7 @@ def inject_conf():
             print(f"Erro ao obter URL da imagem do informativo: {e}")
             try:
                 if hasattr(informativo, 'imagem') and informativo.imagem:
-                    from flask import url_for
-                    return url_for('static', filename=informativo.imagem)
+                    return url_for('static', filename=informativo.imagem, _external=external)
             except:
                 pass
             return None
