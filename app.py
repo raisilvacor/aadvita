@@ -2548,7 +2548,7 @@ def admin_reuniones_presenciales_novo():
             fecha_datetime = datetime.strptime(f"{fecha_str} {hora}", "%Y-%m-%d %H:%M")
             
             titulo = request.form.get('titulo')
-            slug = gerar_slug_unico(titulo)
+            slug = gerar_slug_unico(titulo, ReunionPresencial)
             
             reunion = ReunionPresencial(
                 titulo=titulo,
@@ -2583,7 +2583,7 @@ def admin_reuniones_presenciales_editar(id):
             titulo = request.form.get('titulo')
             # Atualizar slug se o título mudou
             if reunion.titulo != titulo:
-                reunion.slug = gerar_slug_unico(titulo, reunion.id)
+                reunion.slug = gerar_slug_unico(titulo, ReunionPresencial, reunion.id)
             
             reunion.titulo = titulo
             reunion.descripcion = request.form.get('descripcion')
@@ -2636,8 +2636,12 @@ def admin_reuniones_virtuales_novo():
             hora = request.form.get('hora')
             fecha_datetime = datetime.strptime(f"{fecha_str} {hora}", "%Y-%m-%d %H:%M")
             
+            titulo = request.form.get('titulo')
+            slug = gerar_slug_unico(titulo, ReunionVirtual)
+            
             reunion = ReunionVirtual(
-                titulo=request.form.get('titulo'),
+                titulo=titulo,
+                slug=slug,
                 descripcion=request.form.get('descripcion'),
                 fecha=fecha_datetime,
                 hora=hora,
@@ -2668,7 +2672,7 @@ def admin_reuniones_virtuales_editar(id):
             titulo = request.form.get('titulo')
             # Atualizar slug se o título mudou
             if reunion.titulo != titulo:
-                reunion.slug = gerar_slug_unico(titulo, reunion.id)
+                reunion.slug = gerar_slug_unico(titulo, ReunionVirtual, reunion.id)
             
             reunion.titulo = titulo
             reunion.descripcion = request.form.get('descripcion')
@@ -2792,7 +2796,7 @@ def admin_projetos_novo():
                     return redirect(url_for('admin_projetos_novo'))
             
             titulo = request.form.get('titulo')
-            slug = gerar_slug_unico(titulo)
+            slug = gerar_slug_unico(titulo, Projeto)
             
             projeto = Projeto(
                 titulo=titulo,
@@ -2941,7 +2945,7 @@ def admin_projetos_editar(id):
             titulo = request.form.get('titulo')
             # Atualizar slug se o título mudou
             if projeto.titulo != titulo:
-                projeto.slug = gerar_slug_unico(titulo, projeto.id)
+                projeto.slug = gerar_slug_unico(titulo, Projeto, projeto.id)
             
             projeto.titulo = titulo
             projeto.descripcion = request.form.get('descripcion')
@@ -3034,7 +3038,7 @@ def admin_eventos_novo():
                     return redirect(url_for('admin_eventos_novo'))
             
             titulo = request.form.get('titulo')
-            slug = gerar_slug_unico(titulo)
+            slug = gerar_slug_unico(titulo, Evento)
             
             evento = Evento(
                 titulo=titulo,
@@ -3108,7 +3112,7 @@ def admin_eventos_editar(id):
             titulo = request.form.get('titulo')
             # Atualizar slug se o título mudou
             if evento.titulo != titulo:
-                evento.slug = gerar_slug_unico(titulo, evento.id)
+                evento.slug = gerar_slug_unico(titulo, Evento, evento.id)
             
             evento.titulo = titulo
             evento.descricao = request.form.get('descricao')
@@ -3297,8 +3301,12 @@ def admin_acoes_novo():
                     flash('Tipo de arquivo não permitido. Use: PNG, JPG, JPEG, GIF ou WEBP', 'error')
                     return redirect(url_for('admin_acoes_novo'))
             
+            titulo = request.form.get('titulo')
+            slug = gerar_slug_unico(titulo, Acao)
+            
             acao = Acao(
-                titulo=request.form.get('titulo'),
+                titulo=titulo,
+                slug=slug,
                 descricao=request.form.get('descricao'),
                 data=datetime.strptime(data_str, "%Y-%m-%d").date(),
                 categoria=request.form.get('categoria'),
@@ -3378,7 +3386,7 @@ def admin_acoes_editar(id):
             titulo = request.form.get('titulo')
             # Atualizar slug se o título mudou
             if acao.titulo != titulo:
-                acao.slug = gerar_slug_unico(titulo, acao.id)
+                acao.slug = gerar_slug_unico(titulo, Acao, acao.id)
             
             acao.titulo = titulo
             acao.descricao = request.form.get('descricao')
@@ -13449,7 +13457,7 @@ def _ensure_informativo_slug_column():
                 for row in informativos_raw:
                     informativo_id = row[0]
                     titulo = row[1]
-                    slug = gerar_slug_unico(titulo, informativo_id)
+                    slug = gerar_slug_unico(titulo, Informativo, informativo_id)
                     db.session.execute(
                         text("UPDATE informativo SET slug = :slug WHERE id = :id"),
                         {"slug": slug, "id": informativo_id}
@@ -13466,16 +13474,16 @@ def _ensure_slug_columns():
         from sqlalchemy import inspect, text
         inspector = inspect(db.engine)
         
-        # Tabelas que precisam de slug
+        # Tabelas que precisam de slug - mapeamento table_name -> model_class
         tables_with_slug = [
-            ('projeto', 'Projeto'),
-            ('acao', 'Acao'),
-            ('evento', 'Evento'),
-            ('reunion_presencial', 'ReunionPresencial'),
-            ('reunion_virtual', 'ReunionVirtual')
+            ('projeto', Projeto),
+            ('acao', Acao),
+            ('evento', Evento),
+            ('reunion_presencial', ReunionPresencial),
+            ('reunion_virtual', ReunionVirtual)
         ]
         
-        for table_name, model_name in tables_with_slug:
+        for table_name, model_class in tables_with_slug:
             # Verificar se a tabela existe
             if table_name not in inspector.get_table_names():
                 continue
@@ -13492,23 +13500,23 @@ def _ensure_slug_columns():
                     db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN slug VARCHAR(250)"))
                 db.session.commit()
                 print(f"✅ Coluna 'slug' adicionada à tabela '{table_name}'!")
-                
-                # Gerar slugs para registros existentes que não têm (usar query raw)
-                result = db.session.execute(text(f"SELECT id, titulo FROM {table_name} WHERE slug IS NULL OR slug = ''"))
-                records_raw = result.fetchall()
-                
-                if records_raw:
-                    print(f"Gerando slugs para {len(records_raw)} registro(s) existente(s) em '{table_name}'...")
-                    for row in records_raw:
-                        record_id = row[0]
-                        titulo = row[1]
-                        slug = gerar_slug_unico(titulo, record_id)
-                        db.session.execute(
-                            text(f"UPDATE {table_name} SET slug = :slug WHERE id = :id"),
-                            {"slug": slug, "id": record_id}
-                        )
-                    db.session.commit()
-                    print(f"✅ {len(records_raw)} slug(s) gerado(s) para '{table_name}'!")
+            
+            # Gerar slugs para registros existentes que não têm (usar query raw)
+            result = db.session.execute(text(f"SELECT id, titulo FROM {table_name} WHERE slug IS NULL OR slug = ''"))
+            records_raw = result.fetchall()
+            
+            if records_raw:
+                print(f"Gerando slugs para {len(records_raw)} registro(s) existente(s) em '{table_name}'...")
+                for row in records_raw:
+                    record_id = row[0]
+                    titulo = row[1]
+                    slug = gerar_slug_unico(titulo, model_class, record_id)
+                    db.session.execute(
+                        text(f"UPDATE {table_name} SET slug = :slug WHERE id = :id"),
+                        {"slug": slug, "id": record_id}
+                    )
+                db.session.commit()
+                print(f"✅ {len(records_raw)} slug(s) gerado(s) para '{table_name}'!")
     except Exception as e:
         db.session.rollback()
         print(f"⚠️ Erro ao verificar/adicionar colunas slug: {e}")
