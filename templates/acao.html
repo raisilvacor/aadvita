@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}{{ acao.titulo }} - {{ _('Ações') }} - AADVITA{% endblock %}
+
+{% block og_title %}{{ acao.titulo }} - AADVITA{% endblock %}
+{% block og_description %}{{ acao.descricao[:200] }}{% if acao.descricao|length > 200 %}...{% endif %}{% endblock %}
+{% block og_image %}{{ acao_imagem_url(acao, external=True) or url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
+{% block twitter_title %}{{ acao.titulo }} - AADVITA{% endblock %}
+{% block twitter_description %}{{ acao.descricao[:200] }}{% if acao.descricao|length > 200 %}...{% endif %}{% endblock %}
+{% block twitter_image %}{{ acao_imagem_url(acao, external=True) or url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem;">
+    <div class="container">
+        <nav aria-label="breadcrumb" style="margin-bottom: 1rem;">
+            <ol style="list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <li><a href="{{ url_for('index') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Início') }}</a></li>
+                <li aria-hidden="true" style="color: var(--text-light);">/</li>
+                <li><a href="{{ url_for('acoes') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Ações') }}</a></li>
+                <li aria-hidden="true" style="color: var(--text-light);">/</li>
+                <li style="color: var(--text-color);">{{ acao.titulo }}</li>
+            </ol>
+        </nav>
+        <h1 id="page-title" class="page-title">{{ acao.titulo }}</h1>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;">
+            <time datetime="{{ acao.data.strftime('%Y-%m-%d') }}" style="color: var(--text-light);">
+                <strong>{{ _('Data:') }}</strong> {{ acao.data.strftime('%d/%m/%Y') }}
+            </time>
+            {% if acao.categoria %}
+            <span class="badge badge-primary">{{ acao.categoria }}</span>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="acao-detail-section" style="padding: 3rem 0;">
+    <div class="container">
+        <div style="max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; padding: 0 1rem;">
+            {% if acao.imagem %}
+            <div style="margin-bottom: 2rem; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 100%;">
+                <img src="{{ acao_imagem_url(acao) or url_for('static', filename=acao.imagem) }}" 
+                     alt="{{ acao.descricao_imagem or acao.titulo }}" 
+                     style="width: 100%; max-width: 100%; height: auto; display: block; max-height: 500px; object-fit: cover;">
+            </div>
+            {% endif %}
+            
+            <article style="background: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); overflow: hidden; word-wrap: break-word; overflow-wrap: break-word;">
+                <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color); font-size: 1.1rem; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 100%; overflow-x: hidden;">
+                    {{ acao.descricao }}
+                </div>
+                
+                {% if acao.albuns %}
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-color); margin-bottom: 1rem;">
+                        {{ _('Álbuns de Fotos') }}
+                    </h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                        {% for album in acao.albuns %}
+                        <a href="{{ url_for('galeria_album', id=album.id) }}" 
+                           class="btn btn-secondary"
+                           style="text-decoration: none;">
+                            📁 {{ get_titulo_album(album) }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </article>
+            
+            <div style="margin-top: 2rem; text-align: center;">
+                <a href="{{ url_for('acoes') }}" class="btn btn-secondary">
+                    {{ _('Voltar para Ações') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
