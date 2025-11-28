@@ -15,23 +15,23 @@
     <div class="container">
         <nav aria-label="breadcrumb" style="margin-bottom: 1rem;">
             <ol style="list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                <li><a href="{{ url_for('index') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Início') }}</a></li>
-                <li aria-hidden="true" style="color: var(--text-light);">/</li>
-                <li><a href="{{ url_for('eventos') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Eventos') }}</a></li>
-                <li aria-hidden="true" style="color: var(--text-light);">/</li>
-                <li style="color: var(--text-color);">{{ evento.titulo }}</li>
+                <li><a href="{{ url_for('index') }}" style="color: white; text-decoration: none;">{{ _('Início') }}</a></li>
+                <li aria-hidden="true" style="color: rgba(255, 255, 255, 0.7);">/</li>
+                <li><a href="{{ url_for('eventos') }}" style="color: white; text-decoration: none;">{{ _('Eventos') }}</a></li>
+                <li aria-hidden="true" style="color: rgba(255, 255, 255, 0.7);">/</li>
+                <li style="color: white;">{{ evento.titulo }}</li>
             </ol>
         </nav>
-        <h1 id="page-title" class="page-title">{{ evento.titulo }}</h1>
+        <h1 id="page-title" class="page-title" style="color: white;">{{ evento.titulo }}</h1>
         <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;">
-            <span class="badge badge-{{ 'primary' if evento.tipo == 'Presencial' else 'secondary' }}" style="font-size: 1rem;">
+            <span class="badge badge-{{ 'primary' if evento.tipo == 'Presencial' else 'secondary' }}" style="font-size: 1rem; background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3);">
                 {{ evento.tipo }}
             </span>
-            <time datetime="{{ evento.data.strftime('%Y-%m-%d') }}" style="color: var(--text-light);">
+            <time datetime="{{ evento.data.strftime('%Y-%m-%d') }}" style="color: white;">
                 <strong>{{ _('Data:') }}</strong> {{ evento.data.strftime('%d/%m/%Y') }}
             </time>
             {% if evento.hora %}
-            <time datetime="{{ evento.hora }}" style="color: var(--text-light);">
+            <time datetime="{{ evento.hora }}" style="color: white;">
                 <strong>{{ _('Horário:') }}</strong> {{ evento.hora }}
             </time>
             {% endif %}

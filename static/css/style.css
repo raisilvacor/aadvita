@@ -1886,11 +1886,35 @@ body.font-xxlarge {
 /* Page Header */
 .page-header {
     background: var(--gradient-hero);
-    color: white;
+    color: white !important;
     padding: 4rem 0;
     text-align: center;
     position: relative;
     overflow: hidden;
+}
+
+/* Garantir que todos os textos dentro de page-header sejam brancos */
+.page-header * {
+    color: white !important;
+}
+
+.page-header a {
+    color: white !important;
+    text-decoration: none;
+}
+
+.page-header a:hover,
+.page-header a:focus {
+    color: rgba(255, 255, 255, 0.9) !important;
+    text-decoration: underline;
+}
+
+.page-header time,
+.page-header span,
+.page-header p,
+.page-header li,
+.page-header strong {
+    color: white !important;
 }
 
 .page-header::before {
@@ -1911,6 +1935,7 @@ body.font-xxlarge {
     letter-spacing: -0.5px;
     position: relative;
     z-index: 1;
+    color: white !important;
 }
 
 .page-description {
@@ -1919,6 +1944,7 @@ body.font-xxlarge {
     font-weight: 400;
     position: relative;
     z-index: 1;
+    color: white !important;
 }
 
 /* Agenda */
