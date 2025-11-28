@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ reunion.titulo }} - {{ _('Agenda Presencial') }} - AADVITA{% endblock %}
+
+{% block og_title %}{{ reunion.titulo }} - AADVITA{% endblock %}
+{% block og_description %}{{ reunion.descripcion[:200] if reunion.descripcion else '' }}{% if reunion.descripcion and reunion.descripcion|length > 200 %}...{% endif %}{% endblock %}
+{% block og_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
+{% block twitter_title %}{{ reunion.titulo }} - AADVITA{% endblock %}
+{% block twitter_description %}{{ reunion.descripcion[:200] if reunion.descripcion else '' }}{% if reunion.descripcion and reunion.descripcion|length > 200 %}...{% endif %}{% endblock %}
+{% block twitter_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}
+
+{% block content %}
+<section class="page-header" aria-labelledby="page-title" style="padding-bottom: 3rem;">
+    <div class="container">
+        <nav aria-label="breadcrumb" style="margin-bottom: 1rem;">
+            <ol style="list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <li><a href="{{ url_for('index') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Início') }}</a></li>
+                <li aria-hidden="true" style="color: var(--text-light);">/</li>
+                <li><a href="{{ url_for('agenda_presencial') }}" style="color: var(--primary-color); text-decoration: none;">{{ _('Agenda Presencial') }}</a></li>
+                <li aria-hidden="true" style="color: var(--text-light);">/</li>
+                <li style="color: var(--text-color);">{{ reunion.titulo }}</li>
+            </ol>
+        </nav>
+        <h1 id="page-title" class="page-title">{{ reunion.titulo }}</h1>
+        <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;">
+            <time datetime="{{ reunion.fecha.strftime('%Y-%m-%d') }}" style="color: var(--text-light);">
+                <strong>{{ _('Data:') }}</strong> {{ reunion.fecha.strftime('%d/%m/%Y') }}
+            </time>
+            <time datetime="{{ reunion.hora }}" style="color: var(--text-light);">
+                <strong>{{ _('Hora:') }}</strong> {{ reunion.hora }}
+            </time>
+        </div>
+    </div>
+</section>
+
+<section class="agenda-detail-section" style="padding: 3rem 0;">
+    <div class="container">
+        <div style="max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; padding: 0 1rem;">
+            <article style="background: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); overflow: hidden; word-wrap: break-word; overflow-wrap: break-word;">
+                {% if reunion.descripcion %}
+                <div style="white-space: pre-line; line-height: 1.8; color: var(--text-color); font-size: 1.1rem; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 100%; overflow-x: hidden; margin-bottom: 2rem;">
+                    {{ reunion.descripcion }}
+                </div>
+                {% endif %}
+                
+                <div class="agenda-details" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb;">
+                    <div style="margin-bottom: 1rem;">
+                        <strong>{{ _('Local:') }}</strong> {{ reunion.lugar }}
+                    </div>
+                    {% if reunion.direccion %}
+                    <div style="margin-bottom: 1rem;">
+                        <strong>{{ _('Endereço:') }}</strong> {{ reunion.direccion }}
+                    </div>
+                    {% endif %}
+                </div>
+            </article>
+            
+            <div style="margin-top: 2rem; text-align: center;">
+                <a href="{{ url_for('agenda_presencial') }}" class="btn btn-secondary">
+                    {{ _('Voltar para Agenda Presencial') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
