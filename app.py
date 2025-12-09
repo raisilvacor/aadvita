@@ -10671,62 +10671,6 @@ def index():
         print(f"[ERROR] Erro ao buscar slider: {e}")
         slider_images = []
     
-    try:
-        # Buscar URL do Instagram para widget
-        footer_configs = {}
-        for config in Configuracao.query.filter(Configuracao.chave.like('footer_%')).all():
-            footer_configs[config.chave] = config.valor
-        instagram_url = footer_configs.get('footer_instagram', '')
-    except Exception as e:
-        print(f"[ERROR] Erro ao buscar configurações: {e}")
-        instagram_url = ''
-    
-    # Extrair username do Instagram para o widget
-    instagram_username = ''
-    if instagram_url:
-        username_match = re.search(r'instagram\.com/([^/?]+)', instagram_url)
-        if username_match:
-            instagram_username = username_match.group(1)
-    
-    try:
-        # Buscar posts do Instagram ativos (últimos 6)
-        instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
-    except Exception as e:
-        print(f"[ERROR] Erro ao buscar posts do Instagram: {e}")
-        instagram_posts = []
-    
-    # Se houver URL do Instagram configurada, tentar atualizar posts periodicamente
-    if instagram_url and instagram_username:
-        # Verificar se precisa atualizar (posts antigos ou não existem)
-        precisa_atualizar = False
-        if not instagram_posts or len(instagram_posts) == 0:
-            precisa_atualizar = True
-        elif instagram_posts and len(instagram_posts) > 0:
-            # Verificar se o post mais recente tem mais de 3 dias
-            try:
-                post_mais_recente = instagram_posts[0]
-                if post_mais_recente.data_post and post_mais_recente.data_post < datetime.utcnow() - timedelta(days=3):
-                    precisa_atualizar = True
-            except:
-                # Se houver erro ao verificar data, tentar atualizar
-                precisa_atualizar = True
-        
-        # Tentar atualizar em background (não bloquear a página)
-        # IMPORTANTE: Throttling para evitar múltiplas atualizações simultâneas
-        if precisa_atualizar:
-            global _instagram_update_lock, _instagram_last_update_time, _instagram_update_interval
-            
-            # Verificar se já existe uma atualização em andamento
-            if _instagram_update_lock:
-                print(f"[Instagram] Atualização já em andamento, pulando...")
-            # Verificar se a última atualização foi há menos de 6 horas
-            elif _instagram_last_update_time and (datetime.utcnow() - _instagram_last_update_time) < _instagram_update_interval:
-                print(f"[Instagram] Última atualização foi há menos de 6 horas, pulando...")
-            else:
-                # Marcar como em atualização e iniciar thread
-                _instagram_update_lock = True
-                threading.Thread(target=start_instagram_updater, args=(instagram_username, instagram_url), daemon=True).start()
-    
     # Funções helper para tradução de conteúdos dinâmicos
     current_lang = session.get('language', 'pt')
     
@@ -10857,9 +10801,6 @@ def index():
                          projetos=projetos,
                          eventos=eventos,
                          acoes=acoes,
-                         instagram_url=instagram_url,
-                         instagram_username=instagram_username,
-                         instagram_posts=instagram_posts,
                          videos=videos,
                          apoiadores=apoiadores,
                          banners=banners_dict,
