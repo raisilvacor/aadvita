@@ -12,6 +12,7 @@ import re
 import base64
 import requests
 import unicodedata
+import threading
 from bs4 import BeautifulSoup
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib import colors
@@ -4763,6 +4764,17 @@ def buscar_posts_instagram(username, instagram_url_base):
             pass
         # Re-raise a exceção com mensagem mais clara
         raise Exception(str(e))
+
+def start_instagram_updater(username, instagram_url):
+    """Executa a atualização de posts do Instagram em thread separada"""
+    try:
+        print(f"[Instagram] Iniciando atualização em background para @{username}...")
+        posts_cadastrados = buscar_posts_instagram(username, instagram_url)
+        print(f"[Instagram] Posts atualizados em background: {posts_cadastrados}")
+    except Exception as e:
+        print(f"[Instagram] Erro ao atualizar: {e}")
+        import traceback
+        traceback.print_exc()
 
 # ============================================
 # GERENCIAMENTO DA PÁGINA SOBRE
@@ -10628,24 +10640,8 @@ def index():
         
         # Tentar atualizar em background (não bloquear a página)
         if precisa_atualizar:
-            try:
-                # Buscar posts do Instagram automaticamente
-                print(f"[Instagram] Atualizando posts para @{instagram_username}...")
-                posts_cadastrados = buscar_posts_instagram(instagram_username, instagram_url)
-                print(f"[Instagram] Posts atualizados: {posts_cadastrados}")
-                # Buscar novamente após atualizar
-                instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
-                print(f"[Instagram] Total de posts recuperados: {len(instagram_posts)}")
-            except Exception as e:
-                # Log do erro mas não bloquear a página - usar posts existentes
-                error_msg = str(e)
-                print(f"[Instagram] ERRO ao atualizar posts: {error_msg}")
-                import traceback
-                traceback.print_exc()
-                # Garantir que sempre tenha posts para exibir (mesmo que antigos)
-                if not instagram_posts or len(instagram_posts) == 0:
-                    instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
-                    print(f"[Instagram] Usando posts existentes: {len(instagram_posts)} posts")
+            # Executar atualização em thread separada para não bloquear a resposta
+            threading.Thread(target=start_instagram_updater, args=(instagram_username, instagram_url), daemon=True).start()
     
     # Funções helper para tradução de conteúdos dinâmicos
     current_lang = session.get('language', 'pt')
@@ -13295,17 +13291,6 @@ def ensure_db_initialized():
         # Não falhar a importação se houver erro no banco
         # O banco será inicializado na primeira requisição
 
-# Inicializar banco quando o módulo for importado (para gunicorn)
-# Isso garante que as tabelas existam antes do servidor iniciar
-# Mas não falha a importação se houver problemas
-try:
-    ensure_db_initialized()
-    # Garantir que as colunas base64 existem logo após a inicialização
-    ensure_base64_columns(force=True)
-except Exception as e:
-    print(f"Nota: Banco será inicializado na primeira requisição: {e}")
-    pass
-
 # Cache para evitar verificar migrações em todas as requisições
 # Incluir TODOS os modelos que têm colunas base64
 # Usar tupla (table, column) como chave para permitir múltiplas colunas por tabela
@@ -13424,6 +13409,17 @@ def ensure_base64_columns(force=False):
         return False
     finally:
         _migration_lock = False
+
+# Inicializar banco quando o módulo for importado (para gunicorn)
+# Isso garante que as tabelas existam antes do servidor iniciar
+# Mas não falha a importação se houver problemas
+try:
+    ensure_db_initialized()
+    # Garantir que as colunas base64 existem logo após a inicialização
+    ensure_base64_columns(force=True)
+except Exception as e:
+    print(f"Nota: Banco será inicializado na primeira requisição: {e}")
+    pass
 
 def _ensure_informativo_slug_column():
     """Garante que a coluna slug existe na tabela informativo"""
