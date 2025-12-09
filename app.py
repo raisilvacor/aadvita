@@ -4767,6 +4767,8 @@ def buscar_posts_instagram(username, instagram_url_base):
 
 def start_instagram_updater(username, instagram_url):
     """Executa a atualização de posts do Instagram em thread separada"""
+    global _instagram_update_lock, _instagram_last_update_time
+    
     # Importante: threads precisam do contexto da aplicação para acessar o banco
     with app.app_context():
         try:
@@ -4777,6 +4779,10 @@ def start_instagram_updater(username, instagram_url):
             print(f"[Instagram] Erro ao atualizar: {e}")
             import traceback
             traceback.print_exc()
+        finally:
+            # Liberar o lock e atualizar timestamp
+            _instagram_update_lock = False
+            _instagram_last_update_time = datetime.utcnow()
 
 # ============================================
 # GERENCIAMENTO DA PÁGINA SOBRE
@@ -10626,7 +10632,7 @@ def index():
     
     # Se houver URL do Instagram configurada, tentar atualizar posts periodicamente
     if instagram_url and instagram_username:
-        # Se não houver posts OU se os posts são antigos (mais de 3 dias), tentar atualizar
+        # Verificar se precisa atualizar (posts antigos ou não existem)
         precisa_atualizar = False
         if not instagram_posts or len(instagram_posts) == 0:
             precisa_atualizar = True
@@ -10641,9 +10647,20 @@ def index():
                 precisa_atualizar = True
         
         # Tentar atualizar em background (não bloquear a página)
+        # IMPORTANTE: Throttling para evitar múltiplas atualizações simultâneas
         if precisa_atualizar:
-            # Executar atualização em thread separada para não bloquear a resposta
-            threading.Thread(target=start_instagram_updater, args=(instagram_username, instagram_url), daemon=True).start()
+            global _instagram_update_lock, _instagram_last_update_time, _instagram_update_interval
+            
+            # Verificar se já existe uma atualização em andamento
+            if _instagram_update_lock:
+                print(f"[Instagram] Atualização já em andamento, pulando...")
+            # Verificar se a última atualização foi há menos de 6 horas
+            elif _instagram_last_update_time and (datetime.utcnow() - _instagram_last_update_time) < _instagram_update_interval:
+                print(f"[Instagram] Última atualização foi há menos de 6 horas, pulando...")
+            else:
+                # Marcar como em atualização e iniciar thread
+                _instagram_update_lock = True
+                threading.Thread(target=start_instagram_updater, args=(instagram_username, instagram_url), daemon=True).start()
     
     # Funções helper para tradução de conteúdos dinâmicos
     current_lang = session.get('language', 'pt')
@@ -13299,6 +13316,11 @@ def ensure_db_initialized():
 _migration_cache = {}
 _migration_lock = False
 _migration_initialized = False
+
+# Controle de atualização do Instagram para evitar múltiplas threads simultâneas
+_instagram_update_lock = False
+_instagram_last_update_time = None
+_instagram_update_interval = timedelta(hours=6)  # Atualizar no máximo a cada 6 horas
 
 def _add_base64_column(inspector, conn, table_name, column_name, is_sqlite):
     """Função auxiliar para adicionar coluna base64 a uma tabela (alias para _add_column)"""
