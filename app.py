@@ -10539,86 +10539,147 @@ def admin_financeiro_excluir_lote():
 
 @app.route('/')
 def index():
-    # CRÍTICO: Garantir que colunas base64 existem ANTES de qualquer query
-    # Isso deve ser feito PRIMEIRO, antes de qualquer query que use modelos com essas colunas
-    ensure_base64_columns()
+    # NOTA: ensure_base64_columns() já roda no startup, não precisa chamar aqui a cada requisição
     
-    # Buscar as reuniões presenciais ordenadas pela data mais atual primeiro
-    reuniones_presenciales = ReunionPresencial.query.order_by(
-        ReunionPresencial.fecha.desc()
-    ).limit(3).all()
+    try:
+        # Buscar as reuniões presenciais ordenadas pela data mais atual primeiro
+        reuniones_presenciales = ReunionPresencial.query.order_by(
+            ReunionPresencial.fecha.desc()
+        ).limit(3).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar reuniões presenciais: {e}")
+        reuniones_presenciales = []
     
-    # Buscar as próximas reuniões virtuais ordenadas pela mais recente cadastrada primeiro
-    reuniones_virtuales = ReunionVirtual.query.order_by(
-        ReunionVirtual.created_at.desc()
-    ).limit(3).all()
+    try:
+        # Buscar as próximas reuniões virtuais ordenadas pela mais recente cadastrada primeiro
+        reuniones_virtuales = ReunionVirtual.query.order_by(
+            ReunionVirtual.created_at.desc()
+        ).limit(3).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar reuniões virtuais: {e}")
+        reuniones_virtuales = []
     
-    projetos = Projeto.query.order_by(Projeto.created_at.desc()).limit(3).all()
-    acoes = Acao.query.order_by(Acao.data.desc()).limit(3).all()
-    videos = Video.query.order_by(Video.ordem.desc(), Video.created_at.desc()).limit(3).all()
-    # Buscar eventos ordenados pela data do evento (mais recentes primeiro)
-    eventos = Evento.query.order_by(Evento.data.desc()).limit(3).all()
-    # Buscar apoiadores com logo
-    apoiadores = Apoiador.query.filter(Apoiador.logo != None, Apoiador.logo != '').order_by(Apoiador.nome.asc()).all()
+    try:
+        projetos = Projeto.query.order_by(Projeto.created_at.desc()).limit(3).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar projetos: {e}")
+        projetos = []
     
-    # Buscar banners ativos
-    banners = Banner.query.filter_by(ativo=True).order_by(Banner.ordem.asc()).all()
-    # Criar dicionário para facilitar acesso
-    banners_dict = {banner.tipo: banner for banner in banners}
+    try:
+        acoes = Acao.query.order_by(Acao.data.desc()).limit(3).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar ações: {e}")
+        acoes = []
     
-    # Buscar serviços "O que fazemos" ativos, organizados por coluna e ordem
-    servicos_o_que_fazemos = OQueFazemosServico.query.filter_by(ativo=True).order_by(
-        OQueFazemosServico.coluna.asc(), 
-        OQueFazemosServico.ordem.asc()
-    ).all()
-    # Organizar serviços por coluna
-    servicos_por_coluna = {1: [], 2: [], 3: []}
-    for servico in servicos_o_que_fazemos:
-        # Garantir que a coluna está entre 1 e 3
-        coluna = servico.coluna if servico.coluna in [1, 2, 3] else 1
-        if coluna in servicos_por_coluna:
-            servicos_por_coluna[coluna].append(servico)
+    try:
+        videos = Video.query.order_by(Video.ordem.desc(), Video.created_at.desc()).limit(3).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar vídeos: {e}")
+        videos = []
     
-    # Debug: verificar distribuição de serviços por coluna
-    total_servicos = len(servicos_por_coluna[1]) + len(servicos_por_coluna[2]) + len(servicos_por_coluna[3])
-    print(f"[DEBUG] Total de serviços: {total_servicos}")
-    print(f"[DEBUG] Serviços por coluna - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
+    try:
+        # Buscar eventos ordenados pela data do evento (mais recentes primeiro)
+        eventos = Evento.query.order_by(Evento.data.desc()).limit(3).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar eventos: {e}")
+        eventos = []
     
-    # Redistribuir automaticamente os serviços entre as 3 colunas de forma equilibrada
-    # Isso garante que os serviços sejam distribuídos horizontalmente (1, 2, 3, 1, 2, 3...)
-    if total_servicos > 0:
-        # Verificar se a distribuição está desequilibrada (diferença maior que 1 entre colunas)
-        tamanhos = [len(servicos_por_coluna[1]), len(servicos_por_coluna[2]), len(servicos_por_coluna[3])]
-        max_tamanho = max(tamanhos)
-        min_tamanho = min(tamanhos)
-        
-        # Se a diferença for maior que 1, redistribuir
-        if max_tamanho - min_tamanho > 1:
-            print(f"[DEBUG] Distribuição desequilibrada detectada. Redistribuindo automaticamente...")
-            # Coletar todos os serviços ordenados
-            todos_servicos = []
-            for col in [1, 2, 3]:
-                todos_servicos.extend(servicos_por_coluna[col])
-            
-            # Redistribuir em round-robin: 1, 2, 3, 1, 2, 3...
-            servicos_por_coluna = {1: [], 2: [], 3: []}
-            for idx, servico in enumerate(todos_servicos):
-                coluna = (idx % 3) + 1
+    try:
+        # Buscar apoiadores com logo (limitado para performance)
+        apoiadores = Apoiador.query.filter(Apoiador.logo != None, Apoiador.logo != '').order_by(Apoiador.nome.asc()).limit(50).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar apoiadores: {e}")
+        apoiadores = []
+    
+    try:
+        # Buscar banners ativos
+        banners = Banner.query.filter_by(ativo=True).order_by(Banner.ordem.asc()).all()
+        # Criar dicionário para facilitar acesso
+        banners_dict = {banner.tipo: banner for banner in banners}
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar banners: {e}")
+        banners_dict = {}
+    
+    try:
+        # Buscar serviços "O que fazemos" ativos, organizados por coluna e ordem
+        servicos_o_que_fazemos = OQueFazemosServico.query.filter_by(ativo=True).order_by(
+            OQueFazemosServico.coluna.asc(), 
+            OQueFazemosServico.ordem.asc()
+        ).all()
+        # Organizar serviços por coluna
+        servicos_por_coluna = {1: [], 2: [], 3: []}
+        for servico in servicos_o_que_fazemos:
+            # Garantir que a coluna está entre 1 e 3
+            coluna = servico.coluna if servico.coluna in [1, 2, 3] else 1
+            if coluna in servicos_por_coluna:
                 servicos_por_coluna[coluna].append(servico)
-                # Atualizar no banco também
-                if servico.coluna != coluna:
-                    servico.coluna = coluna
-            db.session.commit()
-            print(f"[DEBUG] Redistribuição concluída - Coluna 1: {len(servicos_por_coluna[1])}, Coluna 2: {len(servicos_por_coluna[2])}, Coluna 3: {len(servicos_por_coluna[3])}")
+        
+        # Redistribuir automaticamente os serviços entre as 3 colunas de forma equilibrada
+        # OTIMIZAÇÃO: Evitar commit em cada requisição - fazer apenas uma vez se necessário
+        total_servicos = len(servicos_por_coluna[1]) + len(servicos_por_coluna[2]) + len(servicos_por_coluna[3])
+        if total_servicos > 0:
+            # Verificar se a distribuição está desequilibrada (diferença maior que 1 entre colunas)
+            tamanhos = [len(servicos_por_coluna[1]), len(servicos_por_coluna[2]), len(servicos_por_coluna[3])]
+            max_tamanho = max(tamanhos)
+            min_tamanho = min(tamanhos)
+            
+            # Se a diferença for maior que 1, redistribuir (mas apenas em memória, não no banco a cada request)
+            # O commit deve ser feito apenas uma vez, não a cada requisição
+            if max_tamanho - min_tamanho > 1:
+                print(f"[DEBUG] Distribuição desequilibrada detectada. Redistribuindo...")
+                # Coletar todos os serviços ordenados
+                todos_servicos = []
+                for col in [1, 2, 3]:
+                    todos_servicos.extend(servicos_por_coluna[col])
+                
+                # Redistribuir em round-robin: 1, 2, 3, 1, 2, 3...
+                servicos_por_coluna_temp = {1: [], 2: [], 3: []}
+                precisa_salvar = False
+                for idx, servico in enumerate(todos_servicos):
+                    coluna = (idx % 3) + 1
+                    servicos_por_coluna_temp[coluna].append(servico)
+                    # Verificar se precisa atualizar no banco
+                    if servico.coluna != coluna:
+                        servico.coluna = coluna
+                        precisa_salvar = True
+                
+                # Aplicar redistribuição apenas se houver mudanças
+                if precisa_salvar:
+                    servicos_por_coluna = servicos_por_coluna_temp
+                    try:
+                        db.session.commit()
+                        print(f"[DEBUG] Redistribuição salva no banco")
+                    except Exception as e:
+                        db.session.rollback()
+                        print(f"[ERROR] Erro ao salvar redistribuição: {e}")
+                        # Usar distribuição original em caso de erro
+                        servicos_por_coluna = {1: [], 2: [], 3: []}
+                        for servico in servicos_o_que_fazemos:
+                            coluna = servico.coluna if servico.coluna in [1, 2, 3] else 1
+                            if coluna in servicos_por_coluna:
+                                servicos_por_coluna[coluna].append(servico)
+                else:
+                    servicos_por_coluna = servicos_por_coluna_temp
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar serviços: {e}")
+        servicos_por_coluna = {1: [], 2: [], 3: []}
     
-    # Buscar imagens do slider ativas, ordenadas por ordem
-    slider_images = SliderImage.query.filter_by(ativo=True).order_by(SliderImage.ordem.asc(), SliderImage.created_at.asc()).all()
+    try:
+        # Buscar imagens do slider ativas, ordenadas por ordem
+        slider_images = SliderImage.query.filter_by(ativo=True).order_by(SliderImage.ordem.asc(), SliderImage.created_at.asc()).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar slider: {e}")
+        slider_images = []
     
-    # Buscar URL do Instagram para widget
-    footer_configs = {}
-    for config in Configuracao.query.filter(Configuracao.chave.like('footer_%')).all():
-        footer_configs[config.chave] = config.valor
-    instagram_url = footer_configs.get('footer_instagram', '')
+    try:
+        # Buscar URL do Instagram para widget
+        footer_configs = {}
+        for config in Configuracao.query.filter(Configuracao.chave.like('footer_%')).all():
+            footer_configs[config.chave] = config.valor
+        instagram_url = footer_configs.get('footer_instagram', '')
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar configurações: {e}")
+        instagram_url = ''
     
     # Extrair username do Instagram para o widget
     instagram_username = ''
@@ -10627,8 +10688,12 @@ def index():
         if username_match:
             instagram_username = username_match.group(1)
     
-    # Buscar posts do Instagram ativos (últimos 6)
-    instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
+    try:
+        # Buscar posts do Instagram ativos (últimos 6)
+        instagram_posts = InstagramPost.query.filter_by(ativo=True).order_by(InstagramPost.data_post.desc(), InstagramPost.ordem.asc()).limit(6).all()
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar posts do Instagram: {e}")
+        instagram_posts = []
     
     # Se houver URL do Instagram configurada, tentar atualizar posts periodicamente
     if instagram_url and instagram_username:
