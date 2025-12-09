@@ -4767,14 +4767,16 @@ def buscar_posts_instagram(username, instagram_url_base):
 
 def start_instagram_updater(username, instagram_url):
     """Executa a atualização de posts do Instagram em thread separada"""
-    try:
-        print(f"[Instagram] Iniciando atualização em background para @{username}...")
-        posts_cadastrados = buscar_posts_instagram(username, instagram_url)
-        print(f"[Instagram] Posts atualizados em background: {posts_cadastrados}")
-    except Exception as e:
-        print(f"[Instagram] Erro ao atualizar: {e}")
-        import traceback
-        traceback.print_exc()
+    # Importante: threads precisam do contexto da aplicação para acessar o banco
+    with app.app_context():
+        try:
+            print(f"[Instagram] Iniciando atualização em background para @{username}...")
+            posts_cadastrados = buscar_posts_instagram(username, instagram_url)
+            print(f"[Instagram] Posts atualizados em background: {posts_cadastrados}")
+        except Exception as e:
+            print(f"[Instagram] Erro ao atualizar: {e}")
+            import traceback
+            traceback.print_exc()
 
 # ============================================
 # GERENCIAMENTO DA PÁGINA SOBRE
@@ -13414,9 +13416,10 @@ def ensure_base64_columns(force=False):
 # Isso garante que as tabelas existam antes do servidor iniciar
 # Mas não falha a importação se houver problemas
 try:
-    ensure_db_initialized()
-    # Garantir que as colunas base64 existem logo após a inicialização
-    ensure_base64_columns(force=True)
+    with app.app_context():
+        ensure_db_initialized()
+        # Garantir que as colunas base64 existem logo após a inicialização
+        ensure_base64_columns(force=True)
 except Exception as e:
     print(f"Nota: Banco será inicializado na primeira requisição: {e}")
     pass
