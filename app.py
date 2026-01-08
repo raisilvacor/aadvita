@@ -13615,6 +13615,84 @@ def sitemap():
     return Response(xml_str, mimetype='application/xml')
 
 
+@app.route('/admin/export-database')
+@admin_required
+def admin_export_database():
+    """Exporta o banco de dados completo para download"""
+    from flask import Response
+    from sqlalchemy import inspect as sql_inspect
+    from io import StringIO
+    
+    try:
+        output = StringIO()
+        inspector = sql_inspect(db.engine)
+        tables = inspector.get_table_names()
+        
+        # Cabeçalho
+        output.write(f"-- Database Export\n")
+        output.write(f"-- Export Date: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        output.write(f"-- Tables: {len(tables)}\n")
+        output.write(f"--\n\n")
+        
+        # Exportar cada tabela
+        for table in tables:
+            output.write(f"\n-- Table: {table}\n")
+            output.write(f"DROP TABLE IF EXISTS {table} CASCADE;\n")
+            
+            # Obter estrutura
+            columns = inspector.get_columns(table)
+            col_defs = []
+            for col in columns:
+                col_name = col['name']
+                col_type = str(col['type'])
+                nullable = "" if col.get('nullable', True) else "NOT NULL"
+                default = f" DEFAULT {col['default']}" if col.get('default') else ""
+                col_def = f"    {col_name} {col_type} {nullable} {default}".strip()
+                col_defs.append(col_def)
+            
+            output.write(f"CREATE TABLE {table} (\n")
+            output.write(",\n".join(col_defs))
+            output.write("\n);\n\n")
+            
+            # Exportar dados
+            result = db.session.execute(db.text(f"SELECT * FROM {table}"))
+            rows = result.fetchall()
+            
+            if rows:
+                col_names = [col['name'] for col in columns]
+                output.write(f"-- Data for table: {table}\n")
+                
+                for row in rows:
+                    values = []
+                    for val in row:
+                        if val is None:
+                            values.append("NULL")
+                        elif isinstance(val, str):
+                            val_escaped = val.replace("'", "''").replace("\\", "\\\\")
+                            values.append(f"'{val_escaped}'")
+                        elif isinstance(val, (int, float)):
+                            values.append(str(val))
+                        elif isinstance(val, bool):
+                            values.append("TRUE" if val else "FALSE")
+                        elif hasattr(val, 'isoformat'):
+                            values.append(f"'{val.isoformat()}'")
+                        else:
+                            val_str = str(val).replace("'", "''")
+                            values.append(f"'{val_str}'")
+                    
+                    output.write(f"INSERT INTO {table} ({', '.join(col_names)}) VALUES ({', '.join(values)});\n")
+                output.write("\n")
+        
+        filename = f"database_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.sql"
+        return Response(
+            output.getvalue(),
+            mimetype='application/sql',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+    except Exception as e:
+        flash(f'Erro ao exportar banco: {str(e)}', 'error')
+        return redirect(url_for('admin_dashboard'))
+
 @app.route('/robots.txt')
 def robots():
     """Gera robots.txt para SEO"""
