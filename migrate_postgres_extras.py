@@ -25,7 +25,7 @@ def migrate(retries=8, delay=3.0):
     last_exc = None
     for attempt in range(1, retries + 1):
         try:
-            print(f"[{attempt}/{retries}] Tentando conectar ao banco para migração album/apoiador...")
+            print(f"[{attempt}/{retries}] Tentando conectar ao banco para migração album/apoiador/configuracao...")
             conn = psycopg.connect(database_url)
             conn.autocommit = True
             cur = conn.cursor()
@@ -77,6 +77,23 @@ def migrate(retries=8, delay=3.0):
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
+            
+            # Ensure columns for apoiador
+            apoiador_cols = [
+                ("logo_base64", "TEXT"),
+                ("descricao_imagem", "TEXT"),
+                ("tipo", "VARCHAR(100)"),
+                ("website", "VARCHAR(500)"),
+                ("descricao", "TEXT")
+            ]
+            for col_name, col_def in apoiador_cols:
+                try:
+                    cur.execute(f"ALTER TABLE apoiador ADD COLUMN IF NOT EXISTS {col_name} {col_def};")
+                except Exception:
+                    try:
+                        cur.execute(f"ALTER TABLE apoiador ADD COLUMN {col_name} {col_def};")
+                    except:
+                        pass
 
             # Tabelas de associação
             print("Executando: CREATE TABLE IF NOT EXISTS evento_album ...")
@@ -96,8 +113,19 @@ def migrate(retries=8, delay=3.0):
                     PRIMARY KEY (acao_id, album_id)
                 );
             """)
+
+            print("Executando: CREATE TABLE IF NOT EXISTS configuracao ...")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS configuracao (
+                    id SERIAL PRIMARY KEY,
+                    chave VARCHAR(100) NOT NULL UNIQUE,
+                    valor TEXT,
+                    tipo VARCHAR(50),
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
             
-            print("Migração album/apoiador executada com sucesso (Postgres).")
+            print("Migração album/apoiador/configuracao executada com sucesso (Postgres).")
             cur.close()
             conn.close()
             return 0

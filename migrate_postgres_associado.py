@@ -1,5 +1,5 @@
 """
-Migração para Postgres: cria tabela `associado` completa se não existir, ou adiciona coluna `foto_base64` caso contrário.
+Migração para Postgres: cria tabela `associado` completa se não existir, e garante que TODAS as colunas existam.
 Uso: python migrate_postgres_associado.py
 """
 import os
@@ -26,8 +26,6 @@ def migrate(retries: int = 8, delay: float = 3.0) -> int:
     database_url = normalize_url(database_url)
 
     try:
-        # Import optional Postgres driver (psycopg v3). Use type ignore so static
-        # analyzers don't raise import errors in environments without the package.
         import psycopg  # type: ignore
     except Exception as e:
         print('Erro ao importar psycopg:', e)
@@ -36,13 +34,13 @@ def migrate(retries: int = 8, delay: float = 3.0) -> int:
     last_exc = None
     for attempt in range(1, retries + 1):
         try:
-            print(f'[{attempt}/{retries}] Tentando conectar ao banco...')
+            print(f'[{attempt}/{retries}] Tentando conectar ao banco para corrigir schema associado...')
             conn = psycopg.connect(database_url)
             conn.autocommit = True
             cur = conn.cursor()
 
             print('Executando: CREATE TABLE IF NOT EXISTS associado ...')
-            # Create table with all fields from app.py
+            # Tenta criar a tabela com todas as colunas se ela não existir
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS associado (
                     id SERIAL PRIMARY KEY,
@@ -66,20 +64,45 @@ def migrate(retries: int = 8, delay: float = 3.0) -> int:
                 );
             ''')
 
-            # Ensure columns exist even if table existed before
-            alters = [
-                "ALTER TABLE associado ADD COLUMN IF NOT EXISTS foto_base64 TEXT;",
-                "ALTER TABLE associado ADD COLUMN IF NOT EXISTS carteira_pdf_base64 TEXT;",
-                "ALTER TABLE associado ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT TRUE;",
-                "ALTER TABLE associado ADD COLUMN IF NOT EXISTS valor_mensalidade NUMERIC(10, 2) DEFAULT 0.00;",
+            # Lista de colunas para garantir que existem (caso a tabela tenha sido criada parcialmente antes)
+            columns_to_ensure = [
+                ("nome_completo", "VARCHAR(200)"),
+                ("cpf", "VARCHAR(14)"),
+                ("data_nascimento", "DATE"),
+                ("endereco", "TEXT"),
+                ("telefone", "VARCHAR(20)"),
+                ("password_hash", "VARCHAR(255)"),
+                ("status", "VARCHAR(20) DEFAULT 'pendente'"),
+                ("tipo_associado", "VARCHAR(20) DEFAULT 'contribuinte'"),
+                ("valor_mensalidade", "NUMERIC(10, 2) DEFAULT 0.00"),
+                ("desconto_tipo", "VARCHAR(10)"),
+                ("desconto_valor", "NUMERIC(10, 2) DEFAULT 0.00"),
+                ("ativo", "BOOLEAN DEFAULT TRUE"),
+                ("carteira_pdf", "VARCHAR(300)"),
+                ("carteira_pdf_base64", "TEXT"),
+                ("foto", "VARCHAR(300)"),
+                ("foto_base64", "TEXT"),
+                ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
             ]
-            for stmt in alters:
-                try:
-                    cur.execute(stmt)
-                except Exception as e:
-                    print(f'Aviso ao aplicar {stmt}: {e}')
 
-            print('Migração associado executada com sucesso (Postgres).')
+            print('Verificando colunas da tabela associado...')
+            for col_name, col_def in columns_to_ensure:
+                try:
+                    # Postgres support "ADD COLUMN IF NOT EXISTS" since 9.6
+                    # Se falhar em versões antigas, o except captura
+                    sql = f"ALTER TABLE associado ADD COLUMN IF NOT EXISTS {col_name} {col_def};"
+                    cur.execute(sql)
+                except Exception as e:
+                    print(f"Aviso ao tentar adicionar coluna {col_name}: {e}")
+                    # Tentar fallback sem IF NOT EXISTS (vai falhar se ja existir, mas ok)
+                    try:
+                        sql_fallback = f"ALTER TABLE associado ADD COLUMN {col_name} {col_def};"
+                        cur.execute(sql_fallback)
+                    except Exception as e2:
+                        # Ignorar erro se coluna já existe (DuplicateColumn)
+                        pass
+
+            print('Migração associado (correção de colunas) executada com sucesso.')
             cur.close()
             conn.close()
             return 0

@@ -56,6 +56,41 @@ def migrate(retries=8, delay=3.0):
                 );
             """)
 
+            # Ensure columns exist for voluntario
+            voluntario_cols = [
+                ("nome_completo", "VARCHAR(200)"),
+                ("email", "VARCHAR(200)"),
+                ("telefone", "VARCHAR(50)"),
+                ("cpf", "VARCHAR(20)"),
+                ("password_hash", "VARCHAR(255)"),
+                ("endereco", "TEXT"),
+                ("cidade", "VARCHAR(100)"),
+                ("estado", "VARCHAR(50)"),
+                ("cep", "VARCHAR(20)"),
+                ("data_nascimento", "DATE"),
+                ("profissao", "VARCHAR(200)"),
+                ("habilidades", "TEXT"),
+                ("disponibilidade", "TEXT"),
+                ("area_interesse", "VARCHAR(200)"),
+                ("observacoes", "TEXT"),
+                ("status", "VARCHAR(50) DEFAULT 'pendente'"),
+                ("ativo", "BOOLEAN DEFAULT TRUE"),
+                ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+                ("updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            ]
+            
+            for col_name, col_def in voluntario_cols:
+                try:
+                    sql = f"ALTER TABLE voluntario ADD COLUMN IF NOT EXISTS {col_name} {col_def};"
+                    cur.execute(sql)
+                except Exception as e:
+                    print(f"Aviso: erro ao adicionar coluna {col_name} em voluntario (tentando fallback): {e}")
+                    try:
+                        cur.execute(f"ALTER TABLE voluntario ADD COLUMN {col_name} {col_def};")
+                    except:
+                        pass
+
+
             print("Executando: CREATE TABLE IF NOT EXISTS oferta_horas ...")
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS oferta_horas (

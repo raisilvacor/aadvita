@@ -193,6 +193,19 @@ def run_migration():
         print('Não foi possível importar/rodar migrate_postgres_eventos:', e)
         # continuar
 
+    # Tentar executar migração para usuario/permissao
+    try:
+        import migrate_postgres_usuario as mig_usuario
+        print('Executando migração usuario (se aplicável)...')
+        code15 = mig_usuario.migrate()
+        if code15 != 0:
+            print(f'Migração usuario retornou código {code15} (continuando startup).')
+        else:
+            print('Migração usuario finalizada com sucesso.')
+    except Exception as e:
+        print('Não foi possível importar/rodar migrate_postgres_usuario:', e)
+        # continuar
+
     # Tentar executar migração para extras (album, apoiador, tabelas associativas)
     try:
         import migrate_postgres_extras as mig_extras
