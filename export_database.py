@@ -1,280 +1,324 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
-Script para exportar o banco de dados PostgreSQL do Render
+Database Export Tool
+Exporta banco de dados PostgreSQL para arquivo SQL
+Usa apenas bibliotecas já instaladas no projeto
 """
+
 import os
 import sys
-import subprocess
 from datetime import datetime
+from typing import Optional, List, Tuple
 
-# URL do banco de dados
+# Configuração do banco de dados
 DATABASE_URL = "postgresql://clinica_db_cxsq_user:1GJkXP0EOQYis7RA7bfY3PwmB5OtjUX2@dpg-d4s4dkeuk2gs73a52mug-a.oregon-postgres.render.com/clinica_db_cxsq"
 
-def export_with_pg_dump():
-    """Tenta exportar usando pg_dump (método mais rápido)"""
-    try:
-        # Parse da URL
-        # postgresql://user:password@host:port/database
-        url_parts = DATABASE_URL.replace("postgresql://", "").split("@")
-        user_pass = url_parts[0].split(":")
-        host_db = url_parts[1].split("/")
-        
-        username = user_pass[0]
-        password = user_pass[1]
-        host_port = host_db[0].split(":")
-        host = host_port[0]
-        port = host_port[1] if len(host_port) > 1 else "5432"
-        database = host_db[1]
-        
-        # Nome do arquivo de saída
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = f"database_export_{timestamp}.sql"
-        
-        print(f"[*] Exportando banco de dados...")
-        print(f"   Host: {host}")
-        print(f"   Database: {database}")
-        print(f"   Output: {output_file}")
-        
-        # Configurar variável de ambiente para senha
-        env = os.environ.copy()
-        env['PGPASSWORD'] = password
-        
-        # Comando pg_dump
-        cmd = [
-            'pg_dump',
-            f'--host={host}',
-            f'--port={port}',
-            f'--username={username}',
-            '--no-password',  # Usa PGPASSWORD da env
-            '--verbose',
-            '--clean',  # Inclui comandos DROP
-            '--if-exists',  # IF EXISTS nos DROP
-            '--create',  # Inclui CREATE DATABASE
-            '--format=plain',  # Formato SQL texto
-            '--encoding=UTF8',
-            database
-        ]
-        
-        # Executar pg_dump
-        with open(output_file, 'w', encoding='utf-8') as f:
-            result = subprocess.run(
-                cmd,
-                env=env,
-                stdout=f,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-        
-        if result.returncode == 0:
-            file_size = os.path.getsize(output_file) / (1024 * 1024)  # MB
-            print(f"[OK] Exportacao concluida com sucesso!")
-            print(f"   Arquivo: {output_file}")
-            print(f"   Tamanho: {file_size:.2f} MB")
-            return True
-        else:
-            print(f"[ERRO] Erro ao executar pg_dump:")
-            print(result.stderr)
-            return False
-            
-    except FileNotFoundError:
-        print("[AVISO] pg_dump nao encontrado. Tentando metodo alternativo...")
-        return False
-    except Exception as e:
-        print(f"[ERRO] Erro: {e}")
-        return False
 
-def export_with_psycopg():
-    """Exporta usando psycopg (método alternativo)"""
-    try:
-        import psycopg
-        from psycopg.types.json import Json
+class DatabaseExporter:
+    """Classe para exportar banco de dados PostgreSQL"""
+    
+    def __init__(self, database_url: str):
+        self.database_url = database_url
+        self.engine = None
+        self.output_file = None
         
-        print(f"[*] Exportando banco de dados usando psycopg...")
-        
-        # Parse da URL para conexão explícita
-        url_parts = DATABASE_URL.replace("postgresql://", "").split("@")
-        user_pass = url_parts[0].split(":")
-        host_db = url_parts[1].split("/")
-        
-        username = user_pass[0]
-        password = user_pass[1]
-        host_port = host_db[0].split(":")
-        host = host_port[0]
-        port = int(host_port[1]) if len(host_port) > 1 else 5432
-        database = host_db[1].split("?")[0]  # Remover query params se houver
-        
-        # Conectar ao banco com SSL explícito
-        # Tentar diferentes modos SSL
-        print(f"   Conectando a {host}:{port}...")
-        
-        ssl_modes = ['require', 'prefer', 'allow']
-        conn = None
-        
-        for ssl_mode in ssl_modes:
-            try:
-                print(f"   Tentando SSL mode: {ssl_mode}...")
-                conn = psycopg.connect(
-                    host=host,
-                    port=port,
-                    dbname=database,
-                    user=username,
-                    password=password,
-                    sslmode=ssl_mode,
-                    connect_timeout=10
-                )
-                print(f"   Conexao estabelecida com SSL mode: {ssl_mode}")
-                break
-            except Exception as e:
-                if ssl_mode == ssl_modes[-1]:  # Última tentativa
-                    raise e
-                continue
-        
-        if not conn:
-            raise Exception("Nao foi possivel estabelecer conexao com nenhum modo SSL")
-        cur = conn.cursor()
-        
-        # Nome do arquivo de saída
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = f"database_export_{timestamp}.sql"
-        
-        print(f"   Output: {output_file}")
-        
-        # Obter informações do banco
-        cur.execute("SELECT current_database(), version();")
-        db_info = cur.fetchone()
-        print(f"   Database: {db_info[0]}")
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            # Cabeçalho
-            f.write(f"-- Database Export\n")
-            f.write(f"-- Database: {db_info[0]}\n")
-            f.write(f"-- PostgreSQL Version: {db_info[1]}\n")
-            f.write(f"-- Export Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"--\n\n")
+    def connect(self) -> bool:
+        """Estabelece conexão com o banco de dados"""
+        try:
+            from sqlalchemy import create_engine, text
             
-            # Obter todas as tabelas
-            cur.execute("""
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public' 
-                AND table_type = 'BASE TABLE'
-                ORDER BY table_name;
-            """)
-            tables = [row[0] for row in cur.fetchall()]
+            # Converter para usar psycopg3 (já instalado)
+            if self.database_url.startswith('postgresql://'):
+                db_url = self.database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+            else:
+                db_url = self.database_url
             
-            print(f"   Encontradas {len(tables)} tabelas")
+            # Adicionar parâmetros SSL
+            if '?' not in db_url:
+                db_url = f"{db_url}?sslmode=require"
+            else:
+                db_url = f"{db_url}&sslmode=require"
             
-            # Exportar estrutura e dados de cada tabela
-            for table in tables:
-                print(f"   Exportando tabela: {table}")
+            print("Conectando ao banco de dados...", end=" ", flush=True)
+            
+            self.engine = create_engine(
+                db_url,
+                echo=False,
+                pool_pre_ping=True,
+                connect_args={
+                    "sslmode": "require",
+                    "connect_timeout": 10
+                }
+            )
+            
+            # Testar conexão
+            with self.engine.connect() as conn:
+                result = conn.execute(text("SELECT current_database(), version();"))
+                db_info = result.fetchone()
+                print("[OK] Conectado")
+                print(f"  Database: {db_info[0]}")
+                print(f"  PostgreSQL: {db_info[1].split(',')[0]}")
+                return True
                 
-                # Obter estrutura da tabela
-                cur.execute(f"""
-                    SELECT column_name, data_type, character_maximum_length, 
-                           is_nullable, column_default
-                    FROM information_schema.columns
-                    WHERE table_name = %s AND table_schema = 'public'
-                    ORDER BY ordinal_position;
-                """, (table,))
+        except Exception as e:
+            error_msg = str(e)
+            print("[ERRO] Falhou")
+            
+            if "could not translate host name" in error_msg or "Name or service not known" in error_msg:
+                print("\nERRO: Banco de dados nao encontrado ou suspenso.")
+                print("\nSolucoes:")
+                print("1. Verifique se o banco esta ativo no Render Dashboard")
+                print("2. Tente reativar o banco temporariamente")
+                print("3. Verifique backups automaticos no Render Dashboard")
+            elif "SSL" in error_msg or "connection" in error_msg.lower():
+                print(f"\nERRO: {error_msg[:200]}")
+                print("\nO banco pode estar suspenso ou inacessivel.")
+                print("Tente reativar o banco no Render Dashboard antes de executar novamente.")
+            else:
+                print(f"\nERRO: {error_msg[:200]}")
+            return False
+    
+    def get_tables(self) -> List[str]:
+        """Retorna lista de tabelas do banco"""
+        from sqlalchemy import inspect
+        inspector = inspect(self.engine)
+        return inspector.get_table_names()
+    
+    def export_table_structure(self, table: str, file_handle) -> Tuple[List[str], int]:
+        """Exporta estrutura de uma tabela"""
+        from sqlalchemy import inspect
+        
+        inspector = inspect(self.engine)
+        columns = inspector.get_columns(table)
+        col_names = [col['name'] for col in columns]
+        
+        # Escrever DROP TABLE
+        file_handle.write(f"\n-- ============================================\n")
+        file_handle.write(f"-- Table: {table}\n")
+        file_handle.write(f"-- ============================================\n")
+        file_handle.write(f"DROP TABLE IF EXISTS {table} CASCADE;\n\n")
+        
+        # Escrever CREATE TABLE
+        file_handle.write(f"CREATE TABLE {table} (\n")
+        
+        col_defs = []
+        for col in columns:
+            col_name = col['name']
+            col_type = str(col['type'])
+            
+            # Limpar tipo SQLAlchemy para formato SQL padrão
+            if 'VARCHAR' in col_type.upper():
+                if hasattr(col['type'], 'length') and col['type'].length:
+                    col_type = f"VARCHAR({col['type'].length})"
+                else:
+                    col_type = "TEXT"
+            elif 'INTEGER' in col_type.upper() or 'INT' in col_type.upper():
+                col_type = "INTEGER"
+            elif 'BOOLEAN' in col_type.upper() or 'BOOL' in col_type.upper():
+                col_type = "BOOLEAN"
+            elif 'TIMESTAMP' in col_type.upper() or 'DATETIME' in col_type.upper():
+                col_type = "TIMESTAMP"
+            elif 'DATE' in col_type.upper():
+                col_type = "DATE"
+            elif 'TEXT' in col_type.upper():
+                col_type = "TEXT"
+            
+            nullable = "" if col.get('nullable', True) else " NOT NULL"
+            default = f" DEFAULT {col['default']}" if col.get('default') else ""
+            
+            col_def = f"    {col_name} {col_type}{nullable}{default}".strip()
+            col_defs.append(col_def)
+        
+        file_handle.write(",\n".join(col_defs))
+        file_handle.write("\n);\n\n")
+        
+        return col_names, len(columns)
+    
+    def export_table_data(self, table: str, col_names: List[str], file_handle) -> int:
+        """Exporta dados de uma tabela"""
+        from sqlalchemy import text
+        
+        row_count = 0
+        
+        try:
+            with self.engine.connect() as conn:
+                # Usar stream para tabelas grandes
+                result = conn.execute(text(f"SELECT * FROM {table}"))
                 
-                columns = cur.fetchall()
+                file_handle.write(f"-- Data for table: {table}\n")
                 
-                # Criar CREATE TABLE
-                f.write(f"\n-- Table: {table}\n")
-                f.write(f"DROP TABLE IF EXISTS {table} CASCADE;\n")
-                f.write(f"CREATE TABLE {table} (\n")
+                batch_size = 1000
+                batch = []
                 
-                col_defs = []
-                for col in columns:
-                    col_name, data_type, max_length, is_nullable, default = col
-                    col_def = f"    {col_name} {data_type}"
-                    if max_length:
-                        col_def += f"({max_length})"
-                    if is_nullable == 'NO':
-                        col_def += " NOT NULL"
-                    if default:
-                        col_def += f" DEFAULT {default}"
-                    col_defs.append(col_def)
-                
-                f.write(",\n".join(col_defs))
-                f.write("\n);\n\n")
-                
-                # Exportar dados
-                cur.execute(f"SELECT * FROM {table};")
-                rows = cur.fetchall()
-                
-                if rows:
-                    f.write(f"-- Data for table: {table}\n")
-                    col_names = [col[0] for col in columns]
+                for row in result:
+                    values = []
+                    for val in row:
+                        if val is None:
+                            values.append("NULL")
+                        elif isinstance(val, str):
+                            # Escapar caracteres especiais
+                            val_escaped = val.replace("\\", "\\\\").replace("'", "''")
+                            values.append(f"'{val_escaped}'")
+                        elif isinstance(val, (int, float)):
+                            values.append(str(val))
+                        elif isinstance(val, bool):
+                            values.append("TRUE" if val else "FALSE")
+                        elif hasattr(val, 'isoformat'):  # datetime/date
+                            values.append(f"'{val.isoformat()}'")
+                        elif isinstance(val, bytes):
+                            # Dados binários - usar hex
+                            values.append(f"'\\x{val.hex()}'")
+                        else:
+                            val_str = str(val).replace("\\", "\\\\").replace("'", "''")
+                            values.append(f"'{val_str}'")
                     
-                    for row in rows:
-                        values = []
-                        for i, val in enumerate(row):
-                            if val is None:
-                                values.append("NULL")
-                            elif isinstance(val, str):
-                                # Escapar aspas simples
-                                val_escaped = val.replace("'", "''")
-                                values.append(f"'{val_escaped}'")
-                            elif isinstance(val, (int, float)):
-                                values.append(str(val))
-                            elif isinstance(val, bool):
-                                values.append("TRUE" if val else "FALSE")
-                            elif isinstance(val, (bytes, bytearray)):
-                                # Para dados binários, usar hex
-                                values.append(f"'\\x{val.hex()}'")
-                            else:
-                                val_str = str(val).replace("'", "''")
-                                values.append(f"'{val_str}'")
+                    batch.append(f"INSERT INTO {table} ({', '.join(col_names)}) VALUES ({', '.join(values)});\n")
+                    row_count += 1
+                    
+                    # Escrever em lotes para melhor performance
+                    if len(batch) >= batch_size:
+                        file_handle.writelines(batch)
+                        file_handle.flush()
+                        batch = []
+                        if row_count % 100 == 0:
+                            print(f"    {row_count} registros...", end="\r", flush=True)
+                
+                # Escrever resto do batch
+                if batch:
+                    file_handle.writelines(batch)
+                
+                file_handle.write("\n")
+                
+        except Exception as e:
+            print(f"\n    AVISO: Erro ao exportar dados de {table}: {str(e)[:100]}")
+            file_handle.write(f"-- ERRO ao exportar dados: {str(e)[:200]}\n\n")
+        
+        return row_count
+    
+    def export(self, output_file: Optional[str] = None) -> bool:
+        """Exporta todo o banco de dados"""
+        if not self.engine:
+            print("ERRO: Não há conexão com o banco de dados.")
+            return False
+        
+        try:
+            from sqlalchemy import text
+            
+            # Gerar nome do arquivo se não fornecido
+            if not output_file:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_file = f"database_export_{timestamp}.sql"
+            
+            self.output_file = output_file
+            
+            print(f"\nExportando para: {output_file}")
+            print("-" * 60)
+            
+            # Obter lista de tabelas
+            tables = self.get_tables()
+            total_tables = len(tables)
+            
+            if total_tables == 0:
+                print("AVISO: Nenhuma tabela encontrada no banco de dados.")
+                return False
+            
+            print(f"Tabelas encontradas: {total_tables}\n")
+            
+            # Abrir arquivo para escrita
+            with open(output_file, 'w', encoding='utf-8') as f:
+                # Escrever cabeçalho
+                f.write("-- ============================================\n")
+                f.write("-- Database Export\n")
+                f.write(f"-- Export Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"-- Database: {self.database_url.split('@')[1].split('/')[1] if '@' in self.database_url else 'unknown'}\n")
+                f.write(f"-- Total Tables: {total_tables}\n")
+                f.write("-- ============================================\n\n")
+                
+                # Configurar encoding
+                f.write("SET client_encoding = 'UTF8';\n\n")
+                
+                total_rows = 0
+                
+                # Exportar cada tabela
+                for idx, table in enumerate(tables, 1):
+                    print(f"[{idx}/{total_tables}] {table}", end=" ... ", flush=True)
+                    
+                    try:
+                        # Exportar estrutura
+                        col_names, col_count = self.export_table_structure(table, f)
                         
-                        f.write(f"INSERT INTO {table} ({', '.join(col_names)}) VALUES ({', '.join(values)});\n")
-                    f.write("\n")
-        
-        cur.close()
-        conn.close()
-        
-        file_size = os.path.getsize(output_file) / (1024 * 1024)  # MB
-        print(f"[OK] Exportacao concluida com sucesso!")
-        print(f"   Arquivo: {output_file}")
-        print(f"   Tamanho: {file_size:.2f} MB")
-        return True
-        
-    except ImportError:
-        print("[ERRO] psycopg nao esta instalado. Instale com: pip install psycopg[binary]")
-        return False
-    except Exception as e:
-        print(f"[ERRO] Erro ao exportar: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+                        # Exportar dados
+                        row_count = self.export_table_data(table, col_names, f)
+                        total_rows += row_count
+                        
+                        print(f"[OK] ({row_count} registros, {col_count} colunas)")
+                        
+                    except Exception as e:
+                        print(f"[ERRO] {str(e)[:50]}")
+                        f.write(f"-- ERRO ao exportar tabela {table}: {str(e)[:200]}\n\n")
+                
+                # Escrever rodapé
+                f.write("\n-- ============================================\n")
+                f.write(f"-- Export completed\n")
+                f.write(f"-- Total Tables: {total_tables}\n")
+                f.write(f"-- Total Rows: {total_rows}\n")
+                f.write(f"-- Export Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("-- ============================================\n")
+            
+            # Estatísticas finais
+            file_size = os.path.getsize(output_file)
+            file_size_mb = file_size / (1024 * 1024)
+            
+            print("-" * 60)
+            print(f"\n[OK] Exportacao concluida com sucesso!")
+            print(f"  Arquivo: {output_file}")
+            print(f"  Tamanho: {file_size_mb:.2f} MB ({file_size:,} bytes)")
+            print(f"  Tabelas: {total_tables}")
+            print(f"  Registros: {total_rows:,}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"\n[ERRO] Erro durante exportacao: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
+
 
 def main():
     """Função principal"""
     print("=" * 60)
-    print("Exportador de Banco de Dados PostgreSQL")
+    print("Database Export Tool")
     print("=" * 60)
     print()
     
-    # Tentar primeiro com pg_dump (mais rápido e completo)
-    if not export_with_pg_dump():
-        # Se falhar, tentar com psycopg
-        if not export_with_psycopg():
-            print()
-            print("[ERRO] Nao foi possivel exportar o banco de dados.")
-            print()
-            print("Opções:")
-            print("1. Instale pg_dump (parte do PostgreSQL):")
-            print("   - Windows: https://www.postgresql.org/download/windows/")
-            print("   - Linux: sudo apt-get install postgresql-client")
-            print("   - macOS: brew install postgresql")
-            print()
-            print("2. Ou instale psycopg:")
-            print("   pip install psycopg[binary]")
-            sys.exit(1)
+    exporter = DatabaseExporter(DATABASE_URL)
     
-    print()
-    print("=" * 60)
+    # Tentar conectar
+    if not exporter.connect():
+        print("\nNão foi possível conectar ao banco de dados.")
+        print("\nVerifique:")
+        print("1. Se o banco está ativo no Render Dashboard")
+        print("2. Se a URL do banco está correta")
+        print("3. Se há problemas de rede/firewall")
+        sys.exit(1)
+    
+    # Exportar
+    success = exporter.export()
+    
+    if success:
+        print("\n" + "=" * 60)
+        print("Próximos passos:")
+        print("1. Verifique o arquivo SQL gerado")
+        print("2. Importe no novo banco de dados:")
+        print(f"   psql 'nova_url_do_banco' -f {exporter.output_file}")
+        print("=" * 60)
+        sys.exit(0)
+    else:
+        print("\nExportação falhou. Verifique os erros acima.")
+        sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
-

@@ -1,5 +1,5 @@
 """
-Migração para Postgres: adiciona coluna `foto_base64` à tabela `associado` caso não exista.
+Migração para Postgres: cria tabela `associado` completa se não existir, ou adiciona coluna `foto_base64` caso contrário.
 Uso: python migrate_postgres_associado.py
 """
 import os
@@ -41,22 +41,43 @@ def migrate(retries: int = 8, delay: float = 3.0) -> int:
             conn.autocommit = True
             cur = conn.cursor()
 
-            print('Executando: garantir coluna foto_base64 em associado ...')
-            # Criar coluna caso não exista
+            print('Executando: CREATE TABLE IF NOT EXISTS associado ...')
+            # Create table with all fields from app.py
             cur.execute('''
                 CREATE TABLE IF NOT EXISTS associado (
-                    id SERIAL PRIMARY KEY
+                    id SERIAL PRIMARY KEY,
+                    nome_completo VARCHAR(200) NOT NULL,
+                    cpf VARCHAR(14) NOT NULL UNIQUE,
+                    data_nascimento DATE NOT NULL,
+                    endereco TEXT NOT NULL,
+                    telefone VARCHAR(20) NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    status VARCHAR(20) DEFAULT 'pendente',
+                    tipo_associado VARCHAR(20) DEFAULT 'contribuinte',
+                    valor_mensalidade NUMERIC(10, 2) DEFAULT 0.00,
+                    desconto_tipo VARCHAR(10),
+                    desconto_valor NUMERIC(10, 2) DEFAULT 0.00,
+                    ativo BOOLEAN DEFAULT TRUE,
+                    carteira_pdf VARCHAR(300),
+                    carteira_pdf_base64 TEXT,
+                    foto VARCHAR(300),
+                    foto_base64 TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             ''')
 
+            # Ensure columns exist even if table existed before
             alters = [
                 "ALTER TABLE associado ADD COLUMN IF NOT EXISTS foto_base64 TEXT;",
+                "ALTER TABLE associado ADD COLUMN IF NOT EXISTS carteira_pdf_base64 TEXT;",
+                "ALTER TABLE associado ADD COLUMN IF NOT EXISTS ativo BOOLEAN DEFAULT TRUE;",
+                "ALTER TABLE associado ADD COLUMN IF NOT EXISTS valor_mensalidade NUMERIC(10, 2) DEFAULT 0.00;",
             ]
             for stmt in alters:
                 try:
                     cur.execute(stmt)
                 except Exception as e:
-                    print('Aviso ao aplicar ALTER TABLE:', e)
+                    print(f'Aviso ao aplicar {stmt}: {e}')
 
             print('Migração associado executada com sucesso (Postgres).')
             cur.close()
